@@ -1,0 +1,154 @@
+parameters:
+  - name: azureServiceConnection
+    displayName: Azure service connection
+    type: string
+
+  - name: environmentName
+    displayName: Environment
+    type: string
+    values:
+      - dev
+      - test
+      - prod
+
+  - name: workloadName
+    displayName: Workload name
+    type: string
+
+  - name: resourceGroupName
+    displayName: Resource group name
+    type: string
+
+  - name: validationLevel
+    displayName: ARM validation level
+    type: string
+    default: Provider
+    values:
+      - Provider
+      - ProviderNoRbac
+      - Template
+
+  - name: whatIfResultFormat
+    displayName: What-if result format
+    type: string
+    default: FullResourcePayloads
+    values:
+      - FullResourcePayloads
+      - ResourceIdOnly
+
+stages:
+  - stage: Validate
+    displayName: Validate ${{ parameters.environmentName }}
+    variables:
+      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
+      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
+      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+    jobs:
+      - job: ValidateBicep
+        displayName: Compile and validate Bicep
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: Validate Bicep
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: pscore
+              scriptLocation: scriptPath
+              scriptPath: '$(scriptPath)'
+              arguments: >
+                -Action Validate
+                -ResourceGroupName "${{ parameters.resourceGroupName }}"
+                -TemplateFile "$(templateFile)"
+                -ParameterFile "$(parameterFile)"
+                -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-validate-$(Build.BuildId)"
+                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-validate"
+                -ValidationLevel "${{ parameters.validationLevel }}"
+                -EnsureBicep
+
+          - publish: $(Build.ArtifactStagingDirectory)/bicep-validate
+            aartifact: ${{ parameters.environmentName }}-bicep-validate
+            condition: always()
+
+  - stage: WhatIf
+    displayName: What-if ${{ parameters.environmentName }}
+    dependsOn: Validate
+    variables:
+      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
+      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
+      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+    jobs:
+      - job: WhatIf
+        displayName: Run Bicep what-if
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: What-if Bicep
+            inputs:
+              azureSubscription: ${{ parameters.azureServiceConnection }}
+              scriptType: pscore
+              scriptLocation: scriptPath
+              scriptPath: '$(scriptPath)'
+              arguments: >
+                -Action WhatIf
+                -ResourceGroupName "${{ parameters.resourceGroupName }}"
+                -TemplateFile "$(templateFile)"
+                -ParameterFile "$(parameterFile)"
+                -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-whatif-$(Build.BuildId)"
+                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-whatif"
+                -ValidationLevel "${{ parameters.validationLevel }}"
+                -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
+                -EnsureBicep
+
+          - publish: $(Build.ArtifactStagingDirectory)/bicep-whatif
+            artifact: ${{ parameters.environmentName }}-bicep-whatif
+            condition: always()
+
+# Deploy is restricted to main/non-PR runs in YAML.
+# Additional approval and branch-control gates should be configured on the matching Azure DevOps Environment.
+
+  - stage: Deploy
+
+  - stage: Deploy
+    displayName: Deploy ${{ parameters.environmentName }}
+    dependsOn: WhatIf
+    condition: >
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        ne(variables['Build.Reason'], 'PullRequest')
+      )
+    variables:
+      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
+      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
+      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+    jobs:
+      - deployment: DeployInfrastructure
+        displayName: Deploy infrastructure
+        environment: '${{ parameters.environmentName }}'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: Deploy Bicep
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    scriptType: pscore
+                    scriptLocation: scriptPath
+                    scriptPath: '$(scriptPath)'
+                    arguments: >
+                      -Action Deploy
+                      -ResourceGroupName "${{ parameters.resourceGroupName }}"
+                      -TemplateFile "$(templateFile)"
+                      -ParameterFile "$(parameterFile)"
+                      -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
+                      -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-deploy"
+                      -EnsureBicep
+
+                - publish: $(Build.ArtifactStagingDirectory)/bicep-deploy
+                  artifact: ${{ parameters.environmentName }}-bicep-deploy
+                  condition: always()

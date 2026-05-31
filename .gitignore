@@ -1,0 +1,45 @@
+# Local tooling
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/*
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.ps1xml
+*.psm1.tmp
+
+# Terraform, if ever used by exception
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Secrets / local config
+*.env
+.env
+*.secret
+*.key
+*.pem
+
+# Bicep / ARM generated output
+compiled-template.json
+*-result.json
+metadata.json
+
+# Deployment artifacts
+artifacts/
+out/
+dist/
+bin/
+obj/
+
+# Azure DevOps local/test output
+.bicep/
+.azure/

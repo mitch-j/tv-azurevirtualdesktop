@@ -1,20 +1,540 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# [Repository Name]
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+## Purpose
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+> Note: This is a template repository.
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+This repository is an Azure Infrastructure as Code template repository.
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+It is intended to provide a standardized starting point for future Azure infrastructure deployments using:
+
+- Bicep
+- Azure DevOps Pipelines
+- Environment-specific parameter files
+- Shared Bicep type and configuration files
+- A reusable deployment script
+
+This repository is an infrastructure repository, not an application repository.
+
+## First-Time Setup
+
+Before using this template for a real workload, complete the setup checklist:
+
+[First time setup checklist](/first-time-setup.mdfirst-time-set)
+
+## Ownership
+
+| Item                      | Details            |
+|---------------------------|--------------------|
+| Owning Team               | `[team-name]`      |
+| Technical Owner           | `[name-or-group]`  |
+| Operational Support Owner | `[team-name]`      |
+| SME(s)                    | `[names-or-group]` |
+
+## Azure Scope
+
+| Item             | Details                         |
+|------------------|---------------------------------|
+| Azure Tenant     | `[tenant-name-or-id]`           |
+| Management Group | `[management-group-name-or-id]` |
+| Subscription     | `[subscription-name-or-id]`     |
+| Resource Group   | `[resource-group-name]`         |
+| Region(s)        | `[azure-region-list]`           |
+| Environment(s)   | `dev`, `test`, `prod`           |
+
+## Repository Structure
+
+```text
+.
+├── docs/
+│   └── deployment.md
+├── infra/
+│   ├── main.bicep
+│   ├── modules/
+│   │   ├── app-service.bicep
+│   │   ├── key-vault.bicep
+│   │   └── storage-account.bicep
+│   ├── parameters/
+│   │   ├── dev.bicepparam
+│   │   ├── test.bicepparam
+│   │   └── prod.bicepparam
+│   └── shared/
+│       ├── config.bicep
+│       └── types.bicep
+├── pipelines/
+│   ├── azure-pipelines-dev.yml
+│   ├── azure-pipelines-test.yml
+│   ├── azure-pipelines-prod.yml
+│   └── templates/
+│       └── bicep-deployment-template.yml
+└── scripts/
+    └── Invoke-BicepDeployment.ps1
+```
+
+## Infrastructure Entry Point
+
+The primary Bicep deployment entry point is:
+
+```text
+infra/main.bicep
+```
+
+Environment-specific parameter files are stored in:
+
+```text
+infra/parameters/
+```
+
+| Environment | Parameter File                     |
+|-------------|------------------------------------|
+| Dev         | `infra/parameters/dev.bicepparam`  |
+| Test        | `infra/parameters/test.bicepparam` |
+| Prod        | `infra/parameters/prod.bicepparam` |
+
+## Shared Bicep Files
+
+Shared Bicep types and reusable configuration are stored under:
+
+```text
+infra/shared/
+```
+
+| File           | Purpose                                                                 |
+|----------------|-------------------------------------------------------------------------|
+| `types.bicep`  | Defines shared type contracts used by templates and modules             |
+| `config.bicep` | Defines shared environment mappings, defaults, and naming abbreviations |
+
+### `types.bicep`
+
+`types.bicep` should define reusable contracts only. It should not contain environment-specific resource names, subscription IDs, resource group names, or other workload-specific values.
+
+Examples of appropriate content:
+
+- Deployment environment names
+- Azure policy-compliant tag value types
+- Required tag object shape
+- Existing resource reference shapes
+- Shared module input object types
+
+### `config.bicep`
+
+`config.bicep` should define reusable defaults and mappings.
+
+Examples of appropriate content:
+
+- Environment short name mappings
+- Azure policy-compliant environment tag mappings
+- Default log retention values
+- Resource abbreviation mappings
+- Default deployment behavior flags
+
+Workload-specific values should generally live in the appropriate `.bicepparam` file, not in `config.bicep`.
+
+## Environment Naming
+
+This template separates short deployment environment names from Azure policy-compliant tag values.
+
+| Deployment Environment | Azure `Environment` Tag |
+|------------------------|-------------------------|
+| `dev`                  | `Development`           |
+| `test`                 | `Stage`                 |
+| `prod`                 | `Production`            |
+
+The short deployment environment value is used for:
+
+- Pipeline selection
+- Parameter file selection
+- Resource naming suffixes
+- Deployment targeting
+
+The Azure policy-compliant environment value is used for:
+
+- Azure resource tags
+- Governance
+- Cost reporting
+- Azure Policy compliance
+
+## Required Tags
+
+Azure resources deployed from this template must use the standard required tags:
+
+| Tag           | Purpose                                                                 |
+|---------------|-------------------------------------------------------------------------|
+| `Environment` | Identifies the lifecycle stage of the resource                          |
+| `Division`    | Identifies the owning VP-level organizational unit                      |
+| `Product`     | Identifies the business product or service associated with the resource |
+
+The `Environment` tag should be derived from `environmentName` through the shared environment configuration map.
+
+The `Division` and `Product` values should be supplied by the workload-specific parameter file.
+
+Example:
+
+```bicep
+param environmentName = 'dev'
+param division = 'Information Technology'
+param product = '<product-name>'
+```
+
+The deployment should produce tags similar to:
+
+```bicep
+{
+  Environment: 'Development'
+  Division: 'Information Technology'
+  Product: '<product-name>'
+}
+```
+
+## Workload Name vs. Product Name
+
+`workloadName` and `product` are intentionally separate.
+
+| Parameter      | Meaning                                        | Example     | Used For                             |
+|----------------|------------------------------------------------|-------------|--------------------------------------|
+| `workloadName` | Technical name of the deployable workload      | `order-api` | Resource names and deployment naming |
+| `product`      | Approved business product or service tag value | `OMS`       | Azure tags and cost reporting        |
+
+A single product may have multiple workloads.
+
+Example:
+
+```bicep
+param workloadName = 'oms-api'
+param product = 'OMS'
+```
+
+## Parameter Files
+
+Each environment should have a matching `.bicepparam` file.
+
+Recommended minimal pattern:
+
+```bicep
+using '../main.bicep'
+
+param environmentName = 'dev'
+param location = '<azure-region>'
+param workloadName = '<workload-name>'
+param division = 'Information Technology'
+param product = '<product-name>'
+param repositoryName = '<repository-name>'
+```
+
+Use the appropriate environment value in each parameter file:
+
+| File              | `environmentName` |
+|-------------------|-------------------|
+| `dev.bicepparam`  | `dev`             |
+| `test.bicepparam` | `test`            |
+| `prod.bicepparam` | `prod`            |
+
+Parameter files should not contain secrets, credentials, private keys, or certificate material.
+
+Parameter files are expected to contain deployable values before pipeline execution. The deployment script blocks unreplaced placeholders such as `<workload-name>` or `<product-name>` before calling Azure CLI.
+
+## Pipelines
+
+This repository uses environment-specific Azure DevOps pipeline entry points and a shared pipeline stage template.
+
+| Pipeline                                            | Purpose                                     |
+|-----------------------------------------------------|---------------------------------------------|
+| `pipelines/azure-pipelines-dev.yml`                 | Dev validation, what-if, and deployment     |
+| `pipelines/azure-pipelines-test.yml`                | Test validation, what-if, and deployment    |
+| `pipelines/azure-pipelines-prod.yml`                | Prod validation, what-if, and deployment    |
+| `pipelines/templates/bicep-deployment-template.yml` | Shared Validate, What-if, and Deploy stages |
+
+For detailed deployment steps, approval behavior, rollback guidance, and troubleshooting, see [`docs/deployment.md`](docs/deployment.md).
+
+### Dev Pipeline
+
+The dev pipeline is configured to run on changes to:
+
+- `infra/**`
+- `scripts/**`
+- `pipelines/**`
+
+Documentation-only changes under `docs/**` are excluded.
+
+### Test and Prod Pipelines
+
+The test and prod pipelines are configured with:
+
+```yaml
+trigger: none
+pr: none
+```
+
+These pipelines are intended to be run manually or through an approved release process.
+
+## Pipeline Stages
+
+The shared pipeline template defines three stages:
+
+| Stage      | Purpose                                           |
+|------------|---------------------------------------------------|
+| `Validate` | Lints, builds, and validates the Bicep deployment |
+| `WhatIf`   | Runs Azure deployment what-if                     |
+| `Deploy`   | Creates the Azure deployment                      |
+
+The stages use:
+
+```text
+scripts/Invoke-BicepDeployment.ps1
+```
+
+## Azure DevOps Environment Approvals
+
+The deployment stage uses an Azure DevOps deployment job with the environment name matching the target environment:
+
+- `dev`
+- `test`
+- `prod`
+
+Deployment approval requirements are managed through Azure DevOps Environments, not directly in the YAML pipeline.
+
+Recommended environment approval configuration:
+
+| Environment | Approval Requirement                             |
+|-------------|--------------------------------------------------|
+| dev         | Optional                                         |
+| test        | Optional or required, depending on workload risk |
+| prod        | Required                                         |
+
+For production deployments, configure the `prod` Azure DevOps Environment with required approvers before allowing deployment.
+
+The pipeline itself prevents deployment during pull request validation and only allows deployment from the `main` branch. Environment approvals provide the final manual gate before infrastructure changes are applied.
+
+## Azure DevOps Environment Branch Control
+
+For additional deployment protection, configure Branch control checks on Azure DevOps Environments.
+
+Recommended configuration:
+
+| Environment | Allowed Branches  | Protection Requirement |
+|-------------|-------------------|------------------------|
+| dev         | `refs/heads/main` | Optional               |
+| test        | `refs/heads/main` | Recommended            |
+| prod        | `refs/heads/main` | Required               |
+
+For production deployments, the `prod` environment should require:
+
+- Approval checks
+- Branch control limited to `refs/heads/main`
+- Branch protection enabled on `main`
+
+This provides defense in depth:
+
+1. Pull request policies control what can merge to `main`.
+2. Pipeline YAML prevents deployment from pull request builds.
+3. Pipeline YAML limits deployment to `main`.
+4. Azure DevOps Environment approvals require human approval before deployment.
+5. Azure DevOps Environment branch control prevents deployment from unapproved branches even if the YAML is changed incorrectly.
+
+## Deployment Script
+
+The deployment script supports three actions:
+
+| Action     | Purpose                                               |
+|------------|-------------------------------------------------------|
+| `Validate` | Runs Bicep lint/build and Azure deployment validation |
+| `WhatIf`   | Runs Bicep lint/build and Azure deployment what-if    |
+| `Deploy`   | Runs Bicep lint/build and creates the deployment      |
+
+Script path:
+
+```text
+scripts/Invoke-BicepDeployment.ps1
+```
+
+Common script parameters include:
+
+| Parameter            | Purpose                                    |
+|----------------------|--------------------------------------------|
+| `Action`             | `Validate`, `WhatIf`, or `Deploy`          |
+| `ResourceGroupName`  | Target Azure resource group                |
+| `TemplateFile`       | Path to `infra/main.bicep`                 |
+| `ParameterFile`      | Path to the environment `.bicepparam` file |
+| `DeploymentName`     | Optional deployment name                   |
+| `ArtifactOutputPath` | Output path for deployment artifacts       |
+| `ValidationLevel`    | ARM validation level                       |
+| `WhatIfResultFormat` | What-if output format                      |
+| `SkipBuild`          | Skips Bicep build                          |
+| `SkipLint`           | Skips Bicep lint                           |
+
+The script writes deployment artifacts including:
+
+- `metadata.json`
+- `compiled-template.json`
+- `<action>-result.json`
+- `summary.md`
+
+## Local Validation
+
+From the repository root, run:
+
+```powershell
+bicep build .\infra\main.bicep
+```
+
+Validate an environment parameter file with Azure CLI:
+
+```powershell
+az deployment group validate `
+  --resource-group '<resource-group-name>' `
+  --template-file '.\infra\main.bicep' `
+  --parameters '@.\infra\parameters\dev.bicepparam'
+```
+
+Run what-if:
+
+```powershell
+az deployment group what-if `
+  --resource-group '<resource-group-name>' `
+  --template-file '.\infra\main.bicep' `
+  --parameters '@.\infra\parameters\dev.bicepparam'
+```
+
+Run the repository deployment script locally:
+
+```powershell
+.\scripts\Invoke-BicepDeployment.ps1 `
+  -Action Validate `
+  -ResourceGroupName '<resource-group-name>' `
+  -TemplateFile '.\infra\main.bicep' `
+  -ParameterFile '.\infra\parameters\dev.bicepparam'
+```
+
+## Tooling Requirements
+
+The following tools are expected for local development:
+
+| Tool                    | Purpose                                      |
+|-------------------------|----------------------------------------------|
+| Azure CLI               | Azure authentication and deployment commands |
+| Bicep CLI               | Bicep build, lint, and compile               |
+| PowerShell 7+           | Running deployment scripts                   |
+| Visual Studio Code      | Recommended editor                           |
+| Bicep VS Code extension | Bicep language support                       |
+
+Check local Bicep version:
+
+```powershell
+bicep --version
+```
+
+Check Azure CLI-managed Bicep version:
+
+```powershell
+az bicep version
+```
+
+Install Azure CLI-managed Bicep if needed:
+
+```powershell
+az bicep install
+```
+
+Upgrade Azure CLI-managed Bicep:
+
+```powershell
+az bicep upgrade
+```
+
+## Service Connections
+
+Each environment pipeline requires an Azure DevOps service connection.
+
+| Environment | Service Connection               | Scope     |
+|-------------|----------------------------------|-----------|
+| Dev         | `<dev-service-connection-name>`  | `<scope>` |
+| Test        | `<test-service-connection-name>` | `<scope>` |
+| Prod        | `<prod-service-connection-name>` | `<scope>` |
+
+Service connections must follow least-privilege access principles.
+
+## Deployment Workflow
+
+Recommended workflow:
+
+1. Create a feature branch.
+2. Make Bicep, parameter, pipeline, script, or documentation changes.
+3. Run local Bicep validation where practical.
+4. Open a pull request.
+5. Review pipeline validation results.
+6. Review what-if output before approving deployments.
+7. Merge the pull request.
+8. Deploy through the approved Azure DevOps pipeline.
+
+## Security
+
+This repository must not contain:
+
+- Plaintext credentials
+- Client secrets
+- Private keys
+- Certificates
+- Unmanaged deployment credentials
+- Production-only secrets in parameter files
+
+Approved secret and identity patterns include:
+
+- Azure Key Vault references
+- Azure DevOps service connections
+- Managed identities
+- Approved enterprise secret management systems
+
+## Module Guidance
+
+Reusable Azure resource modules should be stored under:
+
+```text
+infra/modules/
+```
+
+Modules should:
+
+- Accept required values as parameters
+- Accept standard tags from `main.bicep`
+- Avoid hardcoded subscription IDs, resource group names, and environment names
+- Use shared types where useful
+- Keep resource-specific defaults inside the module when appropriate
+
+Example module call pattern:
+
+```bicep
+module exampleModule './modules/example.bicep' = {
+  name: 'example-${environmentConfig.shortName}'
+  params: {
+    location: location
+    tags: standardTags
+  }
+}
+```
+
+## Documentation
+
+Additional documentation may be stored under:
+
+```text
+docs/
+```
+
+Recommended docs include:
+
+| Document                  | Purpose                                           |
+|---------------------------|---------------------------------------------------|
+| `docs/deployment.md`      | Deployment process and environment-specific notes |
+| `docs/architecture.md`    | Architecture and design context                   |
+| `docs/validation-plan.md` | Validation and testing approach                   |
+| `docs/operations.md`      | Operational support notes                         |
+
+## Exceptions
+
+Any exception to the Azure IaC repository standard must be documented and approved before production deployment.
+
+| Item                | Details           |
+|---------------------|-------------------|
+| Exception Required  | `[No]`            |
+| Exception Reference | `[link-or-na]`    |
+| Approver            | `[name-or-group]` |

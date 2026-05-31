@@ -1,0 +1,21 @@
+name: test-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none
+
+pr: none
+
+variables:
+  workloadName: <workload-name>
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      azureServiceConnection: "<test-service-connection-name>"
+      environmentName: test
+      workloadName: $(workloadName)
+      resourceGroupName: "<test-resource-group-name>"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads

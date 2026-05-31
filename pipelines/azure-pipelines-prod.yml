@@ -1,0 +1,21 @@
+name: prod-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none
+
+pr: none
+
+variables:
+  workloadName: <workload-name>
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      azureServiceConnection: '<prod-service-connection-name>'
+      environmentName: prod
+      workloadName: $(workloadName)
+      resourceGroupName: '<prod-resource-group-name>'
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads

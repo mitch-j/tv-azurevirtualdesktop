@@ -1,0 +1,232 @@
+@description('Short deployment environment names used by repo pipelines and parameter files.')
+@export()
+type DeploymentEnvironmentName = 'dev' | 'test' | 'prod' | 'e2e' | 'poc'
+
+@description('Azure policy-compliant Environment tag values.')
+@export()
+type TagEnvironmentName =
+  | 'Development'
+  | 'Dev/Stage'
+  | 'Stage'
+  | 'Production'
+  | 'Proof of Concept'
+  | 'End to End'
+
+@description('Azure policy-compliant Division tag values.')
+@export()
+type DivisionName =
+  | 'Information Technology'
+  | 'Finance'
+  | 'Marketing'
+  | 'Ecommerce'
+  | 'Sales and Business Development'
+  | 'Lumber and Building Materials'
+  | 'Administration'
+  | 'Logistics'
+  | 'Merchandising'
+  | 'Shared'
+
+@description('Required standard Azure resource tags.')
+@export()
+type StandardTags = {
+  Environment: TagEnvironmentName
+  Division: DivisionName
+  Product: string
+}
+
+@description('Standard environment configuration used by shared repo templates.')
+@export()
+type EnvironmentConfig = {
+  @description('Short environment name used in resource names.')
+  shortName: DeploymentEnvironmentName
+
+  @description('Azure policy-compliant Environment tag value.')
+  tagEnvironment: TagEnvironmentName
+
+  @description('Default diagnostic log retention in days.')
+  logRetentionDays: int
+
+  @description('Optional support email address for this environment.')
+  supportEmail: string?
+}
+
+@description('Map of supported deployment environments to standard settings.')
+@export()
+type EnvironmentConfigMap = {
+  dev: EnvironmentConfig
+  test: EnvironmentConfig
+  prod: EnvironmentConfig
+  e2e: EnvironmentConfig
+  poc: EnvironmentConfig
+}
+
+@description('Generic reference to an existing Azure resource.')
+@export()
+type ExistingResourceRef = {
+  @description('Resource name.')
+  name: string
+
+  @description('Resource group name.')
+  resourceGroupName: string
+
+  @description('Subscription ID.')
+  subscriptionId: string
+}
+
+@description('Generic reference to an existing virtual network.')
+@export()
+type ExistingVnetRef = {
+  @description('Resource name.')
+  name: string
+
+  @description('Resource group name.')
+  resourceGroupName: string
+
+  @description('Subscription ID.')
+  subscriptionId: string
+
+  @description('Optional full resource ID. Use this when the VNet is easier to pass directly.')
+  resourceId: string?
+}
+
+@description('Subnet configuration for virtual network modules.')
+@export()
+type SubnetConfig = {
+  @description('Short purpose to include in the subnet name.')
+  purpose: string?
+
+  @description('Subnet address prefix.')
+  addressPrefix: string
+
+  @description('Enable or disable network policies for private endpoints.')
+  privateEndpointNetworkPolicies: 'Enabled' | 'Disabled'?
+
+  @description('Enable or disable network policies for private link services.')
+  privateLinkServiceNetworkPolicies: 'Enabled' | 'Disabled'?
+}
+
+@description('Virtual network peering configuration.')
+@export()
+type PeeringConfig = {
+  @description('Optional peering name override.')
+  name: string?
+
+  @description('Allow traffic between the two virtual networks.')
+  allowVirtualNetworkAccess: bool?
+
+  @description('Allow forwarded traffic from network virtual appliances or gateways.')
+  allowForwardedTraffic: bool?
+
+  @description('Allow this VNet to share its VPN or ExpressRoute gateway.')
+  allowGatewayTransit: bool?
+
+  @description('Allow this VNet to use the remote VNet gateway.')
+  useRemoteGateways: bool?
+}
+
+@description('Additional private DNS virtual network link configuration.')
+@export()
+type AdditionalPrivateDnsVnetLinkConfig = {
+  @description('Private DNS virtual network link name.')
+  linkName: string
+
+  @description('Whether auto-registration is enabled for the linked virtual network.')
+  registrationEnabled: bool?
+
+  @description('DNS resolution policy for the virtual network link.')
+  resolutionPolicy: 'NxDomainRedirect' | 'Default'?
+
+  @description('Resource ID of the linked virtual network.')
+  virtualNetworkId: string
+}
+
+@description('Private DNS zone configuration.')
+@export()
+type PrivateDnsZoneConfig = {
+  @description('Private DNS zone name.')
+  name: string
+
+  @description('Whether to create a link to the resolver virtual network.')
+  createResolverVnetLink: bool?
+
+  @description('Whether auto-registration is enabled on the resolver VNet link.')
+  resolverAutoRegistrationEnabled: bool?
+
+  @description('Whether internet fallback is enabled where supported.')
+  enableInternetFallback: bool?
+
+  @description('Additional VNet links to create for this private DNS zone.')
+  additionalLinks: AdditionalPrivateDnsVnetLinkConfig[]?
+}
+
+@description('Private DNS resolver reference.')
+@export()
+type PrivateDnsResolverConfig = {
+  @description('Resource name.')
+  name: string
+
+  @description('Resource group name.')
+  resourceGroupName: string
+
+  @description('Subscription ID.')
+  subscriptionId: string
+
+  @description('Private DNS resolver virtual network resource ID.')
+  vnetId: string
+}
+
+@description('Target DNS server configuration for DNS forwarding rules.')
+@sealed()
+@export()
+type TargetDnsServerConfig = {
+  @description('Target DNS server IP address.')
+  ipAddress: string
+
+  @description('Target DNS server port.')
+  port: int?
+}
+
+@description('Private DNS resolver forwarding rule configuration.')
+@sealed()
+@export()
+type ForwardingRuleConfig = {
+  @description('Forwarding rule name.')
+  name: string
+
+  @description('Domain suffix to forward. Example: corp.local.')
+  domainName: string
+
+  @description('Whether this rule is enabled.')
+  enabled: bool?
+
+  @description('Target DNS servers for this rule.')
+  targetDnsServers: TargetDnsServerConfig[]
+}
+
+@description('Private DNS forwarding ruleset virtual network link configuration.')
+@sealed()
+@export()
+type ForwardingRulesetLinkConfig = {
+  @description('Ruleset virtual network link name.')
+  name: string
+
+  @description('Resource ID of the linked virtual network.')
+  virtualNetworkId: string
+}
+
+@description('Private DNS forwarding ruleset configuration.')
+@sealed()
+@export()
+type ForwardingRulesetManagedConfig = {
+  @description('Forwarding ruleset name.')
+  name: string
+
+  @description('Optional outbound endpoint resource IDs. Defaults should be handled by the consuming module.')
+  outboundEndpointIds: string[]?
+
+  @description('Forwarding rules to create in this ruleset.')
+  rules: ForwardingRuleConfig[]?
+
+  @description('Virtual networks to link to this ruleset.')
+  vnetLinks: ForwardingRulesetLinkConfig[]?
+}

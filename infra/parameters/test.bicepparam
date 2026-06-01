@@ -1,8 +1,10 @@
 using '../main.bicep'
 
+/* This parameter file configures the deployment for the test environment. */
+
 param environmentName = 'test'
-param location = '<azure-region>'
-param repositoryName = '<repository-name>'
+param location = 'useast'
+param repositoryName = 'tv-azurevirtualdesktop'
 param division = 'Information Technology'
-param product = '<product-name>'
-param workloadName = '<workload-name>'
+param product = 'AVD'
+param workloadName = 'test-workload'

@@ -1,3 +1,6 @@
+metadata name = 'Type Definitions'
+metadata description = 'This Bicep file defines shared types used across the IaC templates. It includes standard tag values, environment configurations, and resource reference types for consistent deployment practices.'
+
 @description('Short deployment environment names used by repo pipelines and parameter files.')
 @export()
 type DeploymentEnvironmentName = 'dev' | 'test' | 'prod' | 'e2e' | 'poc'

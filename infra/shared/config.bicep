@@ -1,3 +1,6 @@
+metadata name = 'Configuration Values'
+metadata description = 'This Bicep file defines standard configuration values used across the IaC templates. It includes environment settings, resource type abbreviations, and default behavior flags for consistent deployment practices.'
+
 import {
   EnvironmentConfigMap
 } from './types.bicep'
@@ -19,7 +22,7 @@ var environmentConfigMap EnvironmentConfigMap = {
     shortName: 'prod'
     tagEnvironment: 'Production'
     logRetentionDays: 90
-    supportEmail: '<support-email>'
+    supportEmail: 'operations@doitbest.com'
   }
   e2e: {
     shortName: 'e2e'

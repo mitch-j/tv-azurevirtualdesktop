@@ -1,14 +1,12 @@
-# [Repository Name]
+# tv-azurevirtualdesktop
 
 ## Purpose
 
-> Note: This is a template repository.
+Infrastructure as Code repository for the True Value Azure Virtual Desktop.
 
-This repository is an Azure Infrastructure as Code template repository.
+it deploys the required resources for a full Azure Virtual Desktop environment for use in the True Value environment.
 
-It is intended to provide a standardized starting point for future Azure infrastructure deployments using:
-
-- Bicep
+- Host-Pools for each of the three user workloads defiend.
 - Azure DevOps Pipelines
 - Environment-specific parameter files
 - Shared Bicep type and configuration files
@@ -16,31 +14,25 @@ It is intended to provide a standardized starting point for future Azure infrast
 
 This repository is an infrastructure repository, not an application repository.
 
-## First-Time Setup
-
-Before using this template for a real workload, complete the setup checklist:
-
-[First time setup checklist](/first-time-setup.mdfirst-time-set)
-
 ## Ownership
 
-| Item                      | Details            |
-|---------------------------|--------------------|
-| Owning Team               | `[team-name]`      |
-| Technical Owner           | `[name-or-group]`  |
-| Operational Support Owner | `[team-name]`      |
-| SME(s)                    | `[names-or-group]` |
+| Item                      | Details             |
+|---------------------------|---------------------|
+| Owning Team               | Systems Engineering |
+| Technical Owner           | Mitch Jurisch       |
+| Operational Support Owner | Operations/SA       |
+| SME(s)                    | Mitch Jurisch       |
 
 ## Azure Scope
 
-| Item             | Details                         |
-|------------------|---------------------------------|
-| Azure Tenant     | `[tenant-name-or-id]`           |
-| Management Group | `[management-group-name-or-id]` |
-| Subscription     | `[subscription-name-or-id]`     |
-| Resource Group   | `[resource-group-name]`         |
-| Region(s)        | `[azure-region-list]`           |
-| Environment(s)   | `dev`, `test`, `prod`           |
+| Item             | Details                   |
+|------------------|---------------------------|
+| Azure Tenant     | truevalue.onmicrosoft.com |
+| Management Group | Corp                      |
+| Subscription     | avd-sub-poc, avd-sub-prod |
+| Resource Group   | `[resource-group-name]`   |
+| Region(s)        | useast                    |
+| Environment(s)   | poc, prod                 |
 
 ## Repository Structure
 
@@ -49,19 +41,29 @@ Before using this template for a real workload, complete the setup checklist:
 ├── docs/
 │   └── deployment.md
 ├── infra/
-│   ├── main.bicep
 │   ├── modules/
-│   │   ├── app-service.bicep
-│   │   ├── key-vault.bicep
-│   │   └── storage-account.bicep
+│   │   ├── bootstrap
+│   │   │    ├── bootstrap.bicep
+│   │   │    └──  poc.bicepparam
+│   │   ├── controlplane/
+│   │   │    ├── main.bicep
+│   │   │    └──  poc.bicepparam
+│   │   ├── compute/
+│   │   │    └── session-hosts.bicep
+│   │   ├── monitoring/
+│   │   │    └── monitoring.bicep
+│   │   ├── network/
+│   │   │    └── peering.bicep
+│   │   │    └── spoke-vnet.bicep
+│   │   └──  storage/
+│   │        └── fxlogic.bicep
 │   ├── parameters/
-│   │   ├── dev.bicepparam
-│   │   ├── test.bicepparam
-│   │   └── prod.bicepparam
 │   └── shared/
+│       ├── naming.bicep
 │       ├── config.bicep
 │       └── types.bicep
 ├── pipelines/
+│   ├── azure-pipelines-poc.yml
 │   ├── azure-pipelines-dev.yml
 │   ├── azure-pipelines-test.yml
 │   ├── azure-pipelines-prod.yml
@@ -87,6 +89,7 @@ infra/parameters/
 
 | Environment | Parameter File                     |
 |-------------|------------------------------------|
+| POC         | `infra/parameters/poc.bicepparam`  |
 | Dev         | `infra/parameters/dev.bicepparam`  |
 | Test        | `infra/parameters/test.bicepparam` |
 | Prod        | `infra/parameters/prod.bicepparam` |
@@ -136,6 +139,7 @@ This template separates short deployment environment names from Azure policy-com
 
 | Deployment Environment | Azure `Environment` Tag |
 |------------------------|-------------------------|
+| `poc`                  | `Proof of Concept`      |
 | `dev`                  | `Development`           |
 | `test`                 | `Stage`                 |
 | `prod`                 | `Production`            |
@@ -171,18 +175,18 @@ The `Division` and `Product` values should be supplied by the workload-specific 
 Example:
 
 ```bicep
-param environmentName = 'dev'
+param environmentName = 'poc'
 param division = 'Information Technology'
-param product = '<product-name>'
+param product = 'Azure Virtual Desktop'
 ```
 
 The deployment should produce tags similar to:
 
 ```bicep
 {
-  Environment: 'Development'
+  Environment: 'Production'
   Division: 'Information Technology'
-  Product: '<product-name>'
+  Product: 'Azure Virtual Desktop'
 }
 ```
 

@@ -7,6 +7,7 @@ parameters:
     displayName: Environment
     type: string
     values:
+      - poc
       - dev
       - test
       - prod
@@ -15,8 +16,30 @@ parameters:
     displayName: Workload name
     type: string
 
+  - name: deploymentScope
+    displayName: Deployment scope
+    type: string
+    default: ResourceGroup
+    values:
+      - ResourceGroup
+      - Subscription
+
+  - name: deploymentLocation
+    displayName: Subscription deployment location
+    type: string
+    default: eastus
+
   - name: resourceGroupName
-    displayName: Resource group name
+    displayName: Resource group name for resource group scoped deployments
+    type: string
+    default: ''
+
+  - name: templateFile
+    displayName: Bicep template file
+    type: string
+
+  - name: parameterFile
+    displayName: Bicep parameter file
     type: string
 
   - name: validationLevel
@@ -40,8 +63,6 @@ stages:
   - stage: Validate
     displayName: Validate ${{ parameters.environmentName }}
     variables:
-      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
-      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
       - job: ValidateBicep
@@ -58,24 +79,24 @@ stages:
               scriptPath: '$(scriptPath)'
               arguments: >
                 -Action Validate
+                -DeploymentScope "${{ parameters.deploymentScope }}"
+                -DeploymentLocation "${{ parameters.deploymentLocation }}"
                 -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                -TemplateFile "$(templateFile)"
-                -ParameterFile "$(parameterFile)"
+                -TemplateFile "${{ parameters.templateFile }}"
+                -ParameterFile "${{ parameters.parameterFile }}"
                 -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-validate-$(Build.BuildId)"
                 -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-validate"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
 
           - publish: $(Build.ArtifactStagingDirectory)/bicep-validate
-            aartifact: ${{ parameters.environmentName }}-bicep-validate
+            artifact: ${{ parameters.environmentName }}-bicep-validate
             condition: always()
 
   - stage: WhatIf
     displayName: What-if ${{ parameters.environmentName }}
     dependsOn: Validate
     variables:
-      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
-      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
       - job: WhatIf
@@ -92,9 +113,11 @@ stages:
               scriptPath: '$(scriptPath)'
               arguments: >
                 -Action WhatIf
+                -DeploymentScope "${{ parameters.deploymentScope }}"
+                -DeploymentLocation "${{ parameters.deploymentLocation }}"
                 -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                -TemplateFile "$(templateFile)"
-                -ParameterFile "$(parameterFile)"
+                -TemplateFile "${{ parameters.templateFile }}"
+                -ParameterFile "${{ parameters.parameterFile }}"
                 -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-whatif-$(Build.BuildId)"
                 -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-whatif"
                 -ValidationLevel "${{ parameters.validationLevel }}"
@@ -105,11 +128,8 @@ stages:
             artifact: ${{ parameters.environmentName }}-bicep-whatif
             condition: always()
 
-# Deploy is restricted to main/non-PR runs in YAML.
-# Additional approval and branch-control gates should be configured on the matching Azure DevOps Environment.
-
-  - stage: Deploy
-
+  # Deploy is restricted to main/non-PR runs in YAML.
+  # Add approvals and branch-control checks on the matching Azure DevOps Environment.
   - stage: Deploy
     displayName: Deploy ${{ parameters.environmentName }}
     dependsOn: WhatIf
@@ -120,8 +140,6 @@ stages:
         ne(variables['Build.Reason'], 'PullRequest')
       )
     variables:
-      templateFile: '$(Build.SourcesDirectory)/infra/main.bicep'
-      parameterFile: '$(Build.SourcesDirectory)/infra/parameters/${{ parameters.environmentName }}.bicepparam'
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
       - deployment: DeployInfrastructure
@@ -142,9 +160,11 @@ stages:
                     scriptPath: '$(scriptPath)'
                     arguments: >
                       -Action Deploy
+                      -DeploymentScope "${{ parameters.deploymentScope }}"
+                      -DeploymentLocation "${{ parameters.deploymentLocation }}"
                       -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                      -TemplateFile "$(templateFile)"
-                      -ParameterFile "$(parameterFile)"
+                      -TemplateFile "${{ parameters.templateFile }}"
+                      -ParameterFile "${{ parameters.parameterFile }}"
                       -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
                       -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-deploy"
                       -EnsureBicep

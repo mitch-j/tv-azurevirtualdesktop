@@ -4,8 +4,16 @@ param(
     [ValidateSet('Validate', 'WhatIf', 'Deploy')]
     [string]$Action,
 
-    [Parameter(Mandatory)]
-    [string]$ResourceGroupName,
+    [Parameter()]
+    [ValidateSet('ResourceGroup', 'Subscription')]
+    [string]$DeploymentScope = 'ResourceGroup',
+
+    [Parameter()]
+    [string]$DeploymentLocation = 'eastus',
+
+    [Parameter()]
+    [AllowEmptyString()]
+    [string]$ResourceGroupName = '',
 
     [Parameter(Mandatory)]
     [string]$TemplateFile,
@@ -159,7 +167,10 @@ try {
 
     Write-Section "Checking script inputs"
 
-    Test-TemplatePlaceholder -Name 'ResourceGroupName' -Value $ResourceGroupName
+    if ($DeploymentScope -eq 'ResourceGroup') {
+        Test-TemplatePlaceholder -Name 'ResourceGroupName' -Value $ResourceGroupName
+    }
+    Test-TemplatePlaceholder -Name 'DeploymentLocation' -Value $DeploymentLocation
     Test-TemplatePlaceholder -Name 'TemplateFile' -Value $TemplateFile
     Test-TemplatePlaceholder -Name 'ParameterFile' -Value $ParameterFile
     Test-TemplatePlaceholder -Name 'DeploymentName' -Value $DeploymentName
@@ -167,6 +178,14 @@ try {
 
     if ([string]::IsNullOrWhiteSpace($DeploymentName)) {
         $DeploymentName = New-DefaultDeploymentName -Action $Action
+    }
+
+    if ($DeploymentScope -eq 'ResourceGroup' -and [string]::IsNullOrWhiteSpace($ResourceGroupName)) {
+        throw "ResourceGroupName is required when DeploymentScope is ResourceGroup."
+    }
+
+    if ($DeploymentScope -eq 'Subscription' -and [string]::IsNullOrWhiteSpace($DeploymentLocation)) {
+        throw "DeploymentLocation is required when DeploymentScope is Subscription."
     }
 
     if (-not (Test-Path $TemplateFile)) {
@@ -203,6 +222,8 @@ try {
     $metadata = [ordered]@{
         action            = $Action
         generatedAtUtc    = (Get-Date).ToUniversalTime().ToString("o")
+        deploymentScope   = $DeploymentScope
+        deploymentLocation = $DeploymentLocation
         resourceGroupName = $ResourceGroupName
         templateFile      = $TemplateFile
         parameterFile     = $ParameterFile
@@ -233,44 +254,81 @@ try {
             --outfile $compiledTemplatePath
     }
 
-    $commonArgs = @(
-        '--name', $DeploymentName,
-        '--resource-group', $ResourceGroupName,
-        '--template-file', $TemplateFile,
-        '--parameters', "@$ParameterFile"
-    )
+    if ($DeploymentScope -eq 'ResourceGroup') {
+        $deploymentCommandScope = 'group'
+        $commonArgs = @(
+            '--name', $DeploymentName,
+            '--resource-group', $ResourceGroupName,
+            '--template-file', $TemplateFile,
+            '--parameters', "@$ParameterFile"
+        )
+    }
+    else {
+        $deploymentCommandScope = 'sub'
+        $commonArgs = @(
+            '--name', $DeploymentName,
+            '--location', $DeploymentLocation,
+            '--template-file', $TemplateFile,
+            '--parameters', "@$ParameterFile"
+        )
+    }
 
     switch ($Action) {
         'Validate' {
-            Write-Section "Validating deployment"
+            Write-Section "Validating $DeploymentScope deployment"
 
-            $result = az deployment group validate `
-                @commonArgs `
-                --validation-level $ValidationLevel `
-                --output json
+            if ($deploymentCommandScope -eq 'group') {
+                $result = az deployment group validate `
+                    @commonArgs `
+                    --validation-level $ValidationLevel `
+                    --output json
+            }
+            else {
+                $result = az deployment sub validate `
+                    @commonArgs `
+                    --validation-level $ValidationLevel `
+                    --output json
+            }
 
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'WhatIf' {
-            Write-Section "Running what-if"
+            Write-Section "Running $DeploymentScope what-if"
 
-            $result = az deployment group what-if `
-                @commonArgs `
-                --validation-level $ValidationLevel `
-                --result-format $WhatIfResultFormat `
-                --no-pretty-print `
-                --output json
+            if ($deploymentCommandScope -eq 'group') {
+                $result = az deployment group what-if `
+                    @commonArgs `
+                    --validation-level $ValidationLevel `
+                    --result-format $WhatIfResultFormat `
+                    --no-pretty-print `
+                    --output json
+            }
+            else {
+                $result = az deployment sub what-if `
+                    @commonArgs `
+                    --validation-level $ValidationLevel `
+                    --result-format $WhatIfResultFormat `
+                    --no-pretty-print `
+                    --output json
+            }
 
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'Deploy' {
-            Write-Section "Creating deployment"
+            Write-Section "Creating $DeploymentScope deployment"
 
-            $result = az deployment group create `
-                @commonArgs `
-                --output json
+            if ($deploymentCommandScope -eq 'group') {
+                $result = az deployment group create `
+                    @commonArgs `
+                    --output json
+            }
+            else {
+                $result = az deployment sub create `
+                    @commonArgs `
+                    --output json
+            }
 
             Save-JsonText -JsonText $result -Path $resultPath
         }
@@ -284,6 +342,8 @@ try {
 | Field            | Value                 |
 |------------------|-----------------------|
 | Action           | $Action               |
+| Scope            | $DeploymentScope      |
+| Location         | $DeploymentLocation   |
 | Resource group   | $ResourceGroupName    |
 | Template file    | $TemplateFile         |
 | Parameter file   | $ParameterFile        |

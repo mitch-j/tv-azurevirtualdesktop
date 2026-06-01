@@ -3,7 +3,7 @@ metadata description = 'This Bicep file defines shared types used across the IaC
 
 @description('Short deployment environment names used by repo pipelines and parameter files.')
 @export()
-type DeploymentEnvironmentName = 'dev' | 'test' | 'prod' | 'e2e' | 'poc'
+type EnvironmentName = 'dev' | 'test' | 'prod' | 'e2e' | 'poc'
 
 @description('Azure policy-compliant Environment tag values.')
 @export()
@@ -31,7 +31,7 @@ type DivisionName =
 
 @description('Required standard Azure resource tags.')
 @export()
-type StandardTags = {
+type standardTags = {
   Environment: TagEnvironmentName
   Division: DivisionName
   Product: string
@@ -41,7 +41,7 @@ type StandardTags = {
 @export()
 type EnvironmentConfig = {
   @description('Short environment name used in resource names.')
-  shortName: DeploymentEnvironmentName
+  shortName: EnvironmentName
 
   @description('Azure policy-compliant Environment tag value.')
   tagEnvironment: TagEnvironmentName
@@ -220,7 +220,7 @@ type ForwardingRulesetLinkConfig = {
 @description('Private DNS forwarding ruleset configuration.')
 @sealed()
 @export()
-type ForwardingRulesetManagedConfig = {
+type forwardingRulesetManagedConfig = {
   @description('Forwarding ruleset name.')
   name: string
 

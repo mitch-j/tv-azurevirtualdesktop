@@ -76,10 +76,24 @@ var diagnosticDefaults = {
 
 @description('Common placeholder values used by the repo template. Replace these in real workload repos.')
 @export()
-var templatePlaceholders = {
-  location: '<azure-region>'
-  workloadName: '<workload-name>'
-  repositoryName: '<repository-name>'
-  product: '<product-name>'
+var commonConfig = {
+  namePrefix: 'tv'
+  location: 'eastus'
+  workloadName: 'avd'
+  repositoryName: 'tv-azurevirtualdesktop'
+  product: 'Azure Virtual Desktop'
   division: 'Information Technology'
+  resourceGroupTypes: [
+    'controlplane'
+    'network'
+    'profiles'
+    'secrets'
+  ]
+}
+
+@description('Standard tags applied to all resources. Extend or override in specific modules as needed.')
+@export()
+var standardTags = {
+  Division: commonConfig.division
+  Product: commonConfig.product
 }

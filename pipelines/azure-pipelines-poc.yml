@@ -1,4 +1,4 @@
-name: dev-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
+name: poc-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
   branches:
@@ -25,7 +25,10 @@ pr:
       - docs/**
 
 variables:
-  workloadName: <workload-name>
+  workloadName: avd
+  environmentName: poc
+  azureServiceConnection: tv-avd-core-poc
+  deploymentLocation: eastus
 
 pool:
   vmImage: ubuntu-latest
@@ -33,9 +36,12 @@ pool:
 stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
-      azureServiceConnection: '<poc-service-connection-name>'
+      azureServiceConnection: tv-avd-core-poc
       environmentName: poc
-      workloadName: $(workloadName)
-      resourceGroupName: '<poc-resource-group-name>'
+      workloadName: avd
+      deploymentScope: Subscription
+      deploymentLocation: eastus
+      templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/bootstrap.bicep'
+      parameterFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam'
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

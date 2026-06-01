@@ -22,6 +22,7 @@ param(
     [string]$ParameterFile,
 
     [Parameter()]
+    [AllowEmptyString()]
     [string]$DeploymentName,
 
     [Parameter()]
@@ -56,14 +57,39 @@ function Write-Section {
 
 function Save-JsonText {
     param(
-        [Parameter(Mandatory)]
+        [Parameter()]
+        [AllowEmptyString()]
         [string]$JsonText,
 
         [Parameter(Mandatory)]
         [string]$Path
     )
 
+    if ([string]::IsNullOrWhiteSpace($JsonText)) {
+        $JsonText = '{ "status": "Succeeded", "message": "Azure CLI returned no JSON output." }'
+    }
+
     $JsonText | Out-File -FilePath $Path -Encoding utf8
+}
+
+function Invoke-AzCliJson {
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory)]
+        [string]$OperationName
+    )
+
+    $output = & az @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    $text = ($output | Out-String).Trim()
+
+    if ($exitCode -ne 0) {
+        throw "$OperationName failed with exit code $exitCode. Azure CLI output: $text"
+    }
+
+    return $text
 }
 
 function Test-TemplatePlaceholder {
@@ -74,10 +100,13 @@ function Test-TemplatePlaceholder {
 
         [Parameter(Mandatory)]
         [AllowEmptyString()]
-        [string]$Value
+        [string]$Value,
+
+        [Parameter()]
+        [switch]$AllowEmpty
     )
 
-    if ([string]::IsNullOrWhiteSpace($Value)) {
+    if (-not $AllowEmpty -and [string]::IsNullOrWhiteSpace($Value)) {
         throw "$Name is empty or whitespace."
     }
 
@@ -99,7 +128,7 @@ function Test-DeploymentTooling {
     }
 
     try {
-        $azureCliVersionJson = az version --output json
+        $azureCliVersionJson = Invoke-AzCliJson -OperationName 'az version' -Arguments @('version', '--output', 'json')
         $azureCliVersion = $azureCliVersionJson | ConvertFrom-Json
     }
     catch {
@@ -110,14 +139,16 @@ function Test-DeploymentTooling {
         Write-Section "Ensuring Azure CLI-managed Bicep is installed"
 
         try {
-            az bicep install
+            & az bicep install --only-show-errors
+            if ($LASTEXITCODE -ne 0) { throw "az bicep install exited with code $LASTEXITCODE" }
         }
         catch {
             throw "Failed to install Azure CLI-managed Bicep. Error: $_"
         }
 
         try {
-            az bicep upgrade
+            & az bicep upgrade --only-show-errors
+            if ($LASTEXITCODE -ne 0) { throw "az bicep upgrade exited with code $LASTEXITCODE" }
         }
         catch {
             throw "Failed to upgrade Azure CLI-managed Bicep. Error: $_"
@@ -125,7 +156,8 @@ function Test-DeploymentTooling {
     }
 
     try {
-        $bicepVersion = az bicep version
+        $bicepVersion = (& az bicep version --only-show-errors 2>&1 | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0) { throw $bicepVersion }
     }
     catch {
         throw "Azure CLI-managed Bicep is not available. Run 'az bicep install' on the agent image, add -EnsureBicep when calling this script, or add an install step before deployment. Error: $_"
@@ -165,20 +197,21 @@ function New-DefaultDeploymentName {
 try {
     Write-Section "Preparing $Action operation"
 
+    if ([string]::IsNullOrWhiteSpace($DeploymentName)) {
+        $DeploymentName = New-DefaultDeploymentName -Action $Action
+    }
+
     Write-Section "Checking script inputs"
 
     if ($DeploymentScope -eq 'ResourceGroup') {
         Test-TemplatePlaceholder -Name 'ResourceGroupName' -Value $ResourceGroupName
     }
+
     Test-TemplatePlaceholder -Name 'DeploymentLocation' -Value $DeploymentLocation
     Test-TemplatePlaceholder -Name 'TemplateFile' -Value $TemplateFile
     Test-TemplatePlaceholder -Name 'ParameterFile' -Value $ParameterFile
     Test-TemplatePlaceholder -Name 'DeploymentName' -Value $DeploymentName
     Test-TemplatePlaceholder -Name 'ArtifactOutputPath' -Value $ArtifactOutputPath
-
-    if ([string]::IsNullOrWhiteSpace($DeploymentName)) {
-        $DeploymentName = New-DefaultDeploymentName -Action $Action
-    }
 
     if ($DeploymentScope -eq 'ResourceGroup' -and [string]::IsNullOrWhiteSpace($ResourceGroupName)) {
         throw "ResourceGroupName is required when DeploymentScope is ResourceGroup."
@@ -202,8 +235,8 @@ try {
 
     if ($parameterFileContent -match '<[^>]+>') {
         $placeholderValues = [regex]::Matches($parameterFileContent, '<[^>]+>') |
-            ForEach-Object { $_.Value } |
-            Sort-Object -Unique
+        ForEach-Object { $_.Value } |
+        Sort-Object -Unique
 
         throw "Parameter file contains unreplaced template placeholders: $($placeholderValues -join ', ')"
     }
@@ -220,21 +253,21 @@ try {
     Write-Section "Capturing metadata"
 
     $metadata = [ordered]@{
-        action            = $Action
-        generatedAtUtc    = (Get-Date).ToUniversalTime().ToString("o")
-        deploymentScope   = $DeploymentScope
+        action             = $Action
+        generatedAtUtc     = (Get-Date).ToUniversalTime().ToString('o')
+        deploymentScope    = $DeploymentScope
         deploymentLocation = $DeploymentLocation
-        resourceGroupName = $ResourceGroupName
-        templateFile      = $TemplateFile
-        parameterFile     = $ParameterFile
-        deploymentName    = $DeploymentName
-        validationLevel   = $ValidationLevel
-        buildId           = $env:BUILD_BUILDID
-        buildNumber       = $env:BUILD_BUILDNUMBER
-        sourceBranch      = $env:BUILD_SOURCEBRANCH
-        sourceVersion     = $env:BUILD_SOURCEVERSION
-        azureCliVersion   = $tooling.azureCliVersion
-        bicepVersion      = $tooling.bicepVersion
+        resourceGroupName  = $ResourceGroupName
+        templateFile       = $TemplateFile
+        parameterFile      = $ParameterFile
+        deploymentName     = $DeploymentName
+        validationLevel    = $ValidationLevel
+        buildId            = $env:BUILD_BUILDID
+        buildNumber        = $env:BUILD_BUILDNUMBER
+        sourceBranch       = $env:BUILD_SOURCEBRANCH
+        sourceVersion      = $env:BUILD_SOURCEVERSION
+        azureCliVersion    = $tooling.azureCliVersion
+        bicepVersion       = $tooling.bicepVersion
     }
 
     $metadata | ConvertTo-Json -Depth 20 | Out-File -FilePath $metadataPath -Encoding utf8
@@ -242,21 +275,24 @@ try {
     if (-not $SkipLint) {
         Write-Section "Linting Bicep template"
 
-        az bicep lint `
-            --file $TemplateFile
+        & az bicep lint --file $TemplateFile --only-show-errors
+        if ($LASTEXITCODE -ne 0) {
+            throw "Bicep lint failed with exit code $LASTEXITCODE."
+        }
     }
 
     if (-not $SkipBuild) {
         Write-Section "Building Bicep template"
 
-        az bicep build `
-            --file $TemplateFile `
-            --outfile $compiledTemplatePath
+        & az bicep build --file $TemplateFile --outfile $compiledTemplatePath --only-show-errors
+        if ($LASTEXITCODE -ne 0) {
+            throw "Bicep build failed with exit code $LASTEXITCODE."
+        }
     }
 
     if ($DeploymentScope -eq 'ResourceGroup') {
-        $deploymentCommandScope = 'group'
-        $commonArgs = @(
+        $baseArgs = @(
+            'deployment', 'group',
             '--name', $DeploymentName,
             '--resource-group', $ResourceGroupName,
             '--template-file', $TemplateFile,
@@ -264,8 +300,8 @@ try {
         )
     }
     else {
-        $deploymentCommandScope = 'sub'
-        $commonArgs = @(
+        $baseArgs = @(
+            'deployment', 'sub',
             '--name', $DeploymentName,
             '--location', $DeploymentLocation,
             '--template-file', $TemplateFile,
@@ -277,59 +313,40 @@ try {
         'Validate' {
             Write-Section "Validating $DeploymentScope deployment"
 
-            if ($deploymentCommandScope -eq 'group') {
-                $result = az deployment group validate `
-                    @commonArgs `
-                    --validation-level $ValidationLevel `
-                    --output json
-            }
-            else {
-                $result = az deployment sub validate `
-                    @commonArgs `
-                    --validation-level $ValidationLevel `
-                    --output json
-            }
+            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'validate') + $baseArgs[2..($baseArgs.Count - 1)] + @(
+                '--validation-level', $ValidationLevel,
+                '--only-show-errors',
+                '--output', 'json'
+            )
 
+            $result = Invoke-AzCliJson -OperationName 'az deployment validate' -Arguments $deploymentArgs
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'WhatIf' {
             Write-Section "Running $DeploymentScope what-if"
 
-            if ($deploymentCommandScope -eq 'group') {
-                $result = az deployment group what-if `
-                    @commonArgs `
-                    --validation-level $ValidationLevel `
-                    --result-format $WhatIfResultFormat `
-                    --no-pretty-print `
-                    --output json
-            }
-            else {
-                $result = az deployment sub what-if `
-                    @commonArgs `
-                    --validation-level $ValidationLevel `
-                    --result-format $WhatIfResultFormat `
-                    --no-pretty-print `
-                    --output json
-            }
+            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'what-if') + $baseArgs[2..($baseArgs.Count - 1)] + @(
+                '--validation-level', $ValidationLevel,
+                '--result-format', $WhatIfResultFormat,
+                '--no-pretty-print',
+                '--only-show-errors',
+                '--output', 'json'
+            )
 
+            $result = Invoke-AzCliJson -OperationName 'az deployment what-if' -Arguments $deploymentArgs
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'Deploy' {
             Write-Section "Creating $DeploymentScope deployment"
 
-            if ($deploymentCommandScope -eq 'group') {
-                $result = az deployment group create `
-                    @commonArgs `
-                    --output json
-            }
-            else {
-                $result = az deployment sub create `
-                    @commonArgs `
-                    --output json
-            }
+            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'create') + $baseArgs[2..($baseArgs.Count - 1)] + @(
+                '--only-show-errors',
+                '--output', 'json'
+            )
 
+            $result = Invoke-AzCliJson -OperationName 'az deployment create' -Arguments $deploymentArgs
             Save-JsonText -JsonText $result -Path $resultPath
         }
     }
@@ -349,7 +366,7 @@ try {
 | Parameter file   | $ParameterFile        |
 | Deployment name  | $DeploymentName       |
 | Validation level | $ValidationLevel      |
-| Generated UTC    | $((Get-Date).ToUniversalTime().ToString("o")) |
+| Generated UTC    | $((Get-Date).ToUniversalTime().ToString('o')) |
 
 ## Artifacts
 

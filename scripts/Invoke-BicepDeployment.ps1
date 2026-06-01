@@ -15,8 +15,9 @@ param(
     [AllowEmptyString()]
     [string]$ResourceGroupName = '',
 
-    [Parameter(Mandatory)]
-    [string]$TemplateFile,
+    [Parameter()]
+    [AllowEmptyString()]
+    [string]$TemplateFile = '',
 
     [Parameter(Mandatory)]
     [string]$ParameterFile,
@@ -50,7 +51,6 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Section {
     param([string]$Message)
-
     Write-Host ""
     Write-Host "========== $Message =========="
 }
@@ -81,6 +81,7 @@ function Invoke-AzCliJson {
         [string]$OperationName
     )
 
+    Write-Host "az $($Arguments -join ' ')"
     $output = & az @Arguments 2>&1
     $exitCode = $LASTEXITCODE
     $text = ($output | Out-String).Trim()
@@ -90,6 +91,29 @@ function Invoke-AzCliJson {
     }
 
     return $text
+}
+
+function Invoke-NativeCommand {
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory)]
+        [string]$OperationName
+    )
+
+    Write-Host "az $($Arguments -join ' ')"
+    $output = & az @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    $text = ($output | Out-String).Trim()
+
+    if ($exitCode -ne 0) {
+        throw "$OperationName failed with exit code $exitCode. Azure CLI output: $text"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($text)) {
+        Write-Host $text
+    }
 }
 
 function Test-TemplatePlaceholder {
@@ -116,10 +140,7 @@ function Test-TemplatePlaceholder {
 }
 
 function Test-DeploymentTooling {
-    param(
-        [Parameter()]
-        [switch]$EnsureBicep
-    )
+    param([switch]$EnsureBicep)
 
     Write-Section "Checking deployment tooling"
 
@@ -127,44 +148,21 @@ function Test-DeploymentTooling {
         throw "Azure CLI was not found on this agent."
     }
 
-    try {
-        $azureCliVersionJson = Invoke-AzCliJson -OperationName 'az version' -Arguments @('version', '--output', 'json')
-        $azureCliVersion = $azureCliVersionJson | ConvertFrom-Json
-    }
-    catch {
-        throw "Azure CLI was found, but 'az version' failed. Confirm Azure CLI is installed correctly and available in PATH. Error: $_"
-    }
+    $azureCliVersionJson = Invoke-AzCliJson -OperationName 'az version' -Arguments @('version', '--output', 'json')
+    $azureCliVersion = $azureCliVersionJson | ConvertFrom-Json
 
     if ($EnsureBicep) {
         Write-Section "Ensuring Azure CLI-managed Bicep is installed"
-
-        try {
-            & az bicep install --only-show-errors
-            if ($LASTEXITCODE -ne 0) { throw "az bicep install exited with code $LASTEXITCODE" }
-        }
-        catch {
-            throw "Failed to install Azure CLI-managed Bicep. Error: $_"
-        }
-
-        try {
-            & az bicep upgrade --only-show-errors
-            if ($LASTEXITCODE -ne 0) { throw "az bicep upgrade exited with code $LASTEXITCODE" }
-        }
-        catch {
-            throw "Failed to upgrade Azure CLI-managed Bicep. Error: $_"
-        }
+        Invoke-NativeCommand -OperationName 'az bicep install' -Arguments @('bicep', 'install', '--only-show-errors')
+        Invoke-NativeCommand -OperationName 'az bicep upgrade' -Arguments @('bicep', 'upgrade', '--only-show-errors')
     }
 
-    try {
-        $bicepVersion = (& az bicep version --only-show-errors 2>&1 | Out-String).Trim()
-        if ($LASTEXITCODE -ne 0) { throw $bicepVersion }
-    }
-    catch {
-        throw "Azure CLI-managed Bicep is not available. Run 'az bicep install' on the agent image, add -EnsureBicep when calling this script, or add an install step before deployment. Error: $_"
-    }
+    $bicepVersionOutput = & az bicep version --only-show-errors 2>&1
+    $bicepExitCode = $LASTEXITCODE
+    $bicepVersion = ($bicepVersionOutput | Out-String).Trim()
 
-    if ([string]::IsNullOrWhiteSpace($bicepVersion)) {
-        throw "Azure CLI-managed Bicep version could not be determined. Run 'az bicep install' on the agent image, add -EnsureBicep when calling this script, or add an install step before deployment."
+    if ($bicepExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($bicepVersion)) {
+        throw "Azure CLI-managed Bicep is not available. Run 'az bicep install' on the agent image, add -EnsureBicep when calling this script, or add an install step before deployment. Error: $bicepVersion"
     }
 
     Write-Host "Azure CLI version: $($azureCliVersion.'azure-cli')"
@@ -194,6 +192,28 @@ function New-DefaultDeploymentName {
     return "bicep-$actionName-$timestamp"
 }
 
+function Get-BicepParamUsingPath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ParameterFilePath
+    )
+
+    $content = Get-Content -Path $ParameterFilePath -Raw
+    $match = [regex]::Match($content, '(?m)^\s*using\s+[''" ](?<path>[^''" ]+)[''" ]')
+
+    if (-not $match.Success) {
+        return $null
+    }
+
+    $usingPath = $match.Groups['path'].Value
+    if ([System.IO.Path]::IsPathRooted($usingPath)) {
+        return $usingPath
+    }
+
+    $parameterDirectory = Split-Path -Path $ParameterFilePath -Parent
+    return [System.IO.Path]::GetFullPath((Join-Path $parameterDirectory $usingPath))
+}
+
 try {
     Write-Section "Preparing $Action operation"
 
@@ -203,30 +223,38 @@ try {
 
     Write-Section "Checking script inputs"
 
+    $isBicepParam = [System.IO.Path]::GetExtension($ParameterFile).Equals('.bicepparam', [System.StringComparison]::OrdinalIgnoreCase)
+
     if ($DeploymentScope -eq 'ResourceGroup') {
         Test-TemplatePlaceholder -Name 'ResourceGroupName' -Value $ResourceGroupName
     }
+    else {
+        Test-TemplatePlaceholder -Name 'ResourceGroupName' -Value $ResourceGroupName -AllowEmpty
+    }
 
     Test-TemplatePlaceholder -Name 'DeploymentLocation' -Value $DeploymentLocation
-    Test-TemplatePlaceholder -Name 'TemplateFile' -Value $TemplateFile
+    Test-TemplatePlaceholder -Name 'TemplateFile' -Value $TemplateFile -AllowEmpty:$isBicepParam
     Test-TemplatePlaceholder -Name 'ParameterFile' -Value $ParameterFile
     Test-TemplatePlaceholder -Name 'DeploymentName' -Value $DeploymentName
     Test-TemplatePlaceholder -Name 'ArtifactOutputPath' -Value $ArtifactOutputPath
-
-    if ($DeploymentScope -eq 'ResourceGroup' -and [string]::IsNullOrWhiteSpace($ResourceGroupName)) {
-        throw "ResourceGroupName is required when DeploymentScope is ResourceGroup."
-    }
 
     if ($DeploymentScope -eq 'Subscription' -and [string]::IsNullOrWhiteSpace($DeploymentLocation)) {
         throw "DeploymentLocation is required when DeploymentScope is Subscription."
     }
 
-    if (-not (Test-Path $TemplateFile)) {
+    if (-not (Test-Path $ParameterFile)) {
+        throw "Parameter file not found: $ParameterFile"
+    }
+
+    if (-not $isBicepParam -and -not (Test-Path $TemplateFile)) {
         throw "Template file not found: $TemplateFile"
     }
 
-    if (-not (Test-Path $ParameterFile)) {
-        throw "Parameter file not found: $ParameterFile"
+    if ($isBicepParam) {
+        $usingTemplatePath = Get-BicepParamUsingPath -ParameterFilePath $ParameterFile
+        if (-not [string]::IsNullOrWhiteSpace($usingTemplatePath) -and -not (Test-Path $usingTemplatePath)) {
+            throw "The Bicep parameters file uses '$usingTemplatePath', but that template file was not found. Update the 'using' line in the .bicepparam file or move/rename the template."
+        }
     }
 
     Write-Section "Checking parameter file placeholders"
@@ -246,6 +274,7 @@ try {
     New-Item -ItemType Directory -Force -Path $ArtifactOutputPath | Out-Null
 
     $compiledTemplatePath = Join-Path $ArtifactOutputPath "compiled-template.json"
+    $compiledParametersPath = Join-Path $ArtifactOutputPath "compiled-parameters.json"
     $resultPath = Join-Path $ArtifactOutputPath "$($Action.ToLowerInvariant())-result.json"
     $metadataPath = Join-Path $ArtifactOutputPath "metadata.json"
     $summaryPath = Join-Path $ArtifactOutputPath "summary.md"
@@ -254,12 +283,13 @@ try {
 
     $metadata = [ordered]@{
         action             = $Action
-        generatedAtUtc     = (Get-Date).ToUniversalTime().ToString('o')
         deploymentScope    = $DeploymentScope
-        deploymentLocation = $DeploymentLocation
+        generatedAtUtc     = (Get-Date).ToUniversalTime().ToString('o')
         resourceGroupName  = $ResourceGroupName
+        deploymentLocation = $DeploymentLocation
         templateFile       = $TemplateFile
         parameterFile      = $ParameterFile
+        isBicepParam       = $isBicepParam
         deploymentName     = $DeploymentName
         validationLevel    = $ValidationLevel
         buildId            = $env:BUILD_BUILDID
@@ -275,78 +305,70 @@ try {
     if (-not $SkipLint) {
         Write-Section "Linting Bicep template"
 
-        & az bicep lint --file $TemplateFile --only-show-errors
-        if ($LASTEXITCODE -ne 0) {
-            throw "Bicep lint failed with exit code $LASTEXITCODE."
+        if ($isBicepParam) {
+            $usingTemplatePath = Get-BicepParamUsingPath -ParameterFilePath $ParameterFile
+            if (-not [string]::IsNullOrWhiteSpace($usingTemplatePath)) {
+                Invoke-NativeCommand -OperationName 'az bicep lint' -Arguments @('bicep', 'lint', '--file', $usingTemplatePath)
+            }
+            else {
+                Write-Host "Skipping lint because no using statement was found in $ParameterFile."
+            }
+        }
+        else {
+            Invoke-NativeCommand -OperationName 'az bicep lint' -Arguments @('bicep', 'lint', '--file', $TemplateFile)
         }
     }
 
     if (-not $SkipBuild) {
         Write-Section "Building Bicep template"
 
-        & az bicep build --file $TemplateFile --outfile $compiledTemplatePath --only-show-errors
-        if ($LASTEXITCODE -ne 0) {
-            throw "Bicep build failed with exit code $LASTEXITCODE."
+        if ($isBicepParam) {
+            Invoke-NativeCommand -OperationName 'az bicep build-params' -Arguments @('bicep', 'build-params', '--file', $ParameterFile, '--outfile', $compiledParametersPath)
+        }
+        else {
+            Invoke-NativeCommand -OperationName 'az bicep build' -Arguments @('bicep', 'build', '--file', $TemplateFile, '--outfile', $compiledTemplatePath)
         }
     }
 
-    if ($DeploymentScope -eq 'ResourceGroup') {
-        $baseArgs = @(
-            'deployment', 'group',
-            '--name', $DeploymentName,
-            '--resource-group', $ResourceGroupName,
-            '--template-file', $TemplateFile,
-            '--parameters', "@$ParameterFile"
-        )
+    $baseArgs = @('--name', $DeploymentName)
+
+    if ($DeploymentScope -eq 'Subscription') {
+        $scopeArgs = @('deployment', 'sub')
+        $baseArgs += @('--location', $DeploymentLocation)
     }
     else {
-        $baseArgs = @(
-            'deployment', 'sub',
-            '--name', $DeploymentName,
-            '--location', $DeploymentLocation,
-            '--template-file', $TemplateFile,
-            '--parameters', "@$ParameterFile"
-        )
+        $scopeArgs = @('deployment', 'group')
+        $baseArgs += @('--resource-group', $ResourceGroupName)
+    }
+
+    if ($isBicepParam) {
+        # For .bicepparam files, pass the file directly and do not pass --template-file.
+        # Prefixing with @ makes Azure CLI treat it like a JSON/inline parameter file.
+        $deploymentArgs = $baseArgs + @('--parameters', $ParameterFile)
+    }
+    else {
+        $deploymentArgs = $baseArgs + @('--template-file', $TemplateFile, '--parameters', "@$ParameterFile")
     }
 
     switch ($Action) {
         'Validate' {
-            Write-Section "Validating $DeploymentScope deployment"
-
-            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'validate') + $baseArgs[2..($baseArgs.Count - 1)] + @(
-                '--validation-level', $ValidationLevel,
-                '--only-show-errors',
-                '--output', 'json'
-            )
-
-            $result = Invoke-AzCliJson -OperationName 'az deployment validate' -Arguments $deploymentArgs
+            Write-Section "Validating deployment"
+            $deploymentArgsFinal = $scopeArgs + @('validate') + $deploymentArgs + @('--validation-level', $ValidationLevel, '--output', 'json')
+            $result = Invoke-AzCliJson -OperationName 'az deployment validate' -Arguments $deploymentArgsFinal
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'WhatIf' {
-            Write-Section "Running $DeploymentScope what-if"
-
-            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'what-if') + $baseArgs[2..($baseArgs.Count - 1)] + @(
-                '--validation-level', $ValidationLevel,
-                '--result-format', $WhatIfResultFormat,
-                '--no-pretty-print',
-                '--only-show-errors',
-                '--output', 'json'
-            )
-
-            $result = Invoke-AzCliJson -OperationName 'az deployment what-if' -Arguments $deploymentArgs
+            Write-Section "Running what-if"
+            $deploymentArgsFinal = $scopeArgs + @('what-if') + $deploymentArgs + @('--validation-level', $ValidationLevel, '--result-format', $WhatIfResultFormat, '--no-pretty-print', '--output', 'json')
+            $result = Invoke-AzCliJson -OperationName 'az deployment what-if' -Arguments $deploymentArgsFinal
             Save-JsonText -JsonText $result -Path $resultPath
         }
 
         'Deploy' {
-            Write-Section "Creating $DeploymentScope deployment"
-
-            $deploymentArgs = @($baseArgs[0], $baseArgs[1], 'create') + $baseArgs[2..($baseArgs.Count - 1)] + @(
-                '--only-show-errors',
-                '--output', 'json'
-            )
-
-            $result = Invoke-AzCliJson -OperationName 'az deployment create' -Arguments $deploymentArgs
+            Write-Section "Creating deployment"
+            $deploymentArgsFinal = $scopeArgs + @('create') + $deploymentArgs + @('--output', 'json')
+            $result = Invoke-AzCliJson -OperationName 'az deployment create' -Arguments $deploymentArgsFinal
             Save-JsonText -JsonText $result -Path $resultPath
         }
     }
@@ -356,23 +378,24 @@ try {
     $summary = @"
 # Bicep $Action Summary
 
-| Field            | Value                 |
-|------------------|-----------------------|
-| Action           | $Action               |
-| Scope            | $DeploymentScope      |
-| Location         | $DeploymentLocation   |
-| Resource group   | $ResourceGroupName    |
-| Template file    | $TemplateFile         |
-| Parameter file   | $ParameterFile        |
-| Deployment name  | $DeploymentName       |
-| Validation level | $ValidationLevel      |
-| Generated UTC    | $((Get-Date).ToUniversalTime().ToString('o')) |
+| Field | Value |
+|---|---|
+| Action | $Action |
+| Deployment scope | $DeploymentScope |
+| Resource group | $ResourceGroupName |
+| Deployment location | $DeploymentLocation |
+| Template file | $TemplateFile |
+| Parameter file | $ParameterFile |
+| Parameter file type | $(if ($isBicepParam) { '.bicepparam' } else { 'JSON parameters' }) |
+| Deployment name | $DeploymentName |
+| Validation level | $ValidationLevel |
+| Generated UTC | $((Get-Date).ToUniversalTime().ToString('o')) |
 
 ## Artifacts
 
 - ``metadata.json``
 - ``$($Action.ToLowerInvariant())-result.json``
-$(if (-not $SkipBuild) { "- ``compiled-template.json``" })
+$(if (-not $SkipBuild -and $isBicepParam) { "- ``compiled-parameters.json``" } elseif (-not $SkipBuild) { "- ``compiled-template.json``" })
 
 ## Result
 

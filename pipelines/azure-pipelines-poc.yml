@@ -27,7 +27,7 @@ pr:
 variables:
   workloadName: avd
   environmentName: poc
-  azureServiceConnection: tv-avd-core-poc
+  azureServiceConnection: tv-avd-poc-deploy-sc
   deploymentLocation: eastus
 
 pool:
@@ -36,12 +36,12 @@ pool:
 stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
-      azureServiceConnection: tv-avd-core-poc
+      azureServiceConnection: tv-avd-poc-deploy-sc
       environmentName: poc
       workloadName: avd
       deploymentScope: Subscription
       deploymentLocation: eastus
-      templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/bootstrap.bicep'
+      templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep'
       parameterFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam'
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

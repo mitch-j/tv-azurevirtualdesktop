@@ -27,6 +27,7 @@ pr:
 variables:
   workloadName: avd
   environmentName: poc
+  azureDevOpsEnvironment: poc-avd
   azureServiceConnection: tv-avd-poc-deploy-sc
   deploymentLocation: eastus
 
@@ -37,7 +38,7 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: bootstrap
-      azureDevOpsEnvironment: poc-avd
+      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
       workloadName: $(environmentName)-$(workloadName)-bootstrap
@@ -48,15 +49,16 @@ stages:
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
 
+
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: serviceobjects
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: poc-avd
+      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
-      workloadName: $(environmentName)-$(workloadName)serviceobjects
+      workloadName: $(environmentName)-$(workloadName)-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/main.bicep"
@@ -69,7 +71,7 @@ stages:
       deploymentUnitName: storage
       deployDependsOn:
         - Deploy_serviceobjects
-      azureDevOpsEnvironment: poc-avd
+      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
       workloadName: $(environmentName)-$(workloadName)-storage

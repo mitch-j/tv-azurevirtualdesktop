@@ -37,9 +37,10 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: bootstrap
+      azureDevOpsEnvironment: poc-avd-bootstrap
       azureServiceConnection: tv-avd-poc-deploy-sc
       environmentName: poc
-      workloadName: avd
+      workloadName: avd-bootstrap
       deploymentScope: Subscription
       deploymentLocation: eastus
       templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep'
@@ -50,8 +51,9 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: controlplane
-      dependsOn:
+      deployDependsOn:
         - Deploy_bootstrap
+      azureDevOpsEnvironment: poc-avd-controlplane
       azureServiceConnection: tv-avd-poc-deploy-sc
       environmentName: poc
       workloadName: avd-controlplane

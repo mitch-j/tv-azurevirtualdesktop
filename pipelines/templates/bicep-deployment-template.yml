@@ -8,10 +8,18 @@ parameters:
     type: string
     default: infrastructure
 
-  - name: dependsOn
-    displayName: Prior stages this deployment unit depends on
+  - name: validationDependsOn
     type: object
     default: []
+
+  - name: deployDependsOn
+    type: object
+    default: []
+
+  - name: azureDevOpsEnvironment
+    displayName: Azure DevOps environment used for deployment approvals
+    type: string
+    default: ''
 
   - name: environmentName
     displayName: Environment
@@ -71,13 +79,13 @@ parameters:
 
 stages:
   - stage: Validate_${{ parameters.deploymentUnitName }}
-    displayName: Validate ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
-    dependsOn: ${{ parameters.dependsOn }}
+    displayName: Validate ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
+    dependsOn: ${{ parameters.validationDependsOn }}
     variables:
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
       - job: ValidateBicep
-        displayName: Compile and validate Bicep
+        displayName: Compile and Validate Bicep
         steps:
           - checkout: self
 
@@ -105,7 +113,7 @@ stages:
             condition: always()
 
   - stage: WhatIf_${{ parameters.deploymentUnitName }}
-    displayName: What-if ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
+    displayName: What-if ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
     dependsOn: Validate_${{ parameters.deploymentUnitName }}
     variables:
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
@@ -140,20 +148,24 @@ stages:
             condition: always()
 
   - stage: Deploy_${{ parameters.deploymentUnitName }}
-    displayName: Deploy ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
-    dependsOn: WhatIf_${{ parameters.deploymentUnitName }}
+    displayName: Deploy ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
+    dependsOn:
+      - WhatIf_${{ parameters.deploymentUnitName }}
+      - ${{ each dependency in parameters.deployDependsOn }}:
+        - ${{ dependency }}
     condition: >
       and(
         succeeded(),
         eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-        ne(variables['Build.Reason'], 'PullRequest')
+        ne(variables['Build.Reason'], 'PullRequest'),
+        in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI', 'Manual')
       )
     variables:
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
       - deployment: DeployInfrastructure
-        displayName: Deploy infrastructure
-        environment: '${{ parameters.environmentName }}'
+        displayName: Deploy Infrastructure
+        environment: '${{ parameters.azureDevOpsEnvironment }}'
         strategy:
           runOnce:
             deploy:

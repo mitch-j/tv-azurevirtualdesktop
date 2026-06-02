@@ -59,4 +59,12 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
   }
 ]
 
+resource desktopVirtualizationProvider 'Microsoft.Resources/resourceProviders@2025-04-01' = {
+  name: 'Microsoft.DesktopVirtualization'
+}
+
+resource authorizationProvider 'Microsoft.Resources/resourceProviders@2021-04-01' = {
+  name: 'Microsoft.Authorization'
+}
+
 output resourceGroups array = resourceGroupNames

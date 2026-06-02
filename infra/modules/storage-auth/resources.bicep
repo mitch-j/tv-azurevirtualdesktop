@@ -1,5 +1,12 @@
 targetScope = 'resourceGroup'
 
+/*
+AVD Deployment / Storage-Auth Deployment
+
+Deploys:
+- Correct RBAC roles for the newly created Storage Account
+*/
+
 @description('FSLogix storage account name.')
 param storageAccountName string
 

@@ -1,8 +1,6 @@
 using 'main.bicep'
 
 param environment = 'poc'
-param storageAccountName = 'tvavdstfslolcwxakyvbv5rk'
-param storageResourceGroupName = 'tv-avd-rg-storage-poc'
 param fslogixShareName = 'profiles'
 
 // Admin/operator groups that can manage FSLogix share ACLs

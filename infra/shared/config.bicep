@@ -36,6 +36,32 @@ var environmentConfigMap EnvironmentConfigMap = {
   }
 }
 
+@description('Standard Azure resource type keys used for naming.')
+@export()
+var resourceType = {
+  appService: 'appService'
+  appServicePlan: 'appServicePlan'
+  applicationInsights: 'applicationInsights'
+  containerRegistry: 'containerRegistry'
+  functionApp: 'functionApp'
+  keyVault: 'keyVault'
+  logAnalyticsWorkspace: 'logAnalyticsWorkspace'
+  managedIdentity: 'managedIdentity'
+  privateEndpoint: 'privateEndpoint'
+  privateDnsZone: 'privateDnsZone'
+  resourceGroup: 'resourceGroup'
+  storageAccount: 'storageAccount'
+  subnet: 'subnet'
+  virtualNetwork: 'virtualNetwork'
+  hostPool: 'hostPool'
+  desktopApplicationGroup: 'desktopApplicationGroup'
+  workspace: 'workspace'
+  scalingPlan: 'scalingPlan'
+  computeGallery: 'computeGallery'
+  imageTemplate: 'imageTemplate'
+  sessionHost: 'sessionHost'
+}
+
 @description('Standard Azure resource type abbreviations used for naming.')
 @export()
 var resourceAbbreviationMap = {
@@ -57,6 +83,9 @@ var resourceAbbreviationMap = {
   desktopApplicationGroup: 'vdag'
   workspace: 'vdws'
   scalingPlan: 'vdscaling'
+  computeGallery: 'gal'
+  imageTemplate: 'it'
+  sessionHost: 'vdsh'
 }
 
 @description('Default module behavior flags. Override in parameters or module inputs when needed.')
@@ -87,12 +116,40 @@ var commonConfig = {
   repositoryName: 'tv-azurevirtualdesktop'
   product: 'Azure Virtual Desktop'
   division: 'Information Technology'
-  resourceGroupTypes: [
-    'serviceobjects'
-    'network'
-    'profiles'
-    'secrets'
-  ]
+}
+
+@description('Standard purpose keys used for naming.')
+@export()
+var resourcePurpose = {
+  serviceObjects: 'serviceObjects'
+  storage: 'storage'
+  network: 'network'
+  compute: 'compute'
+  sessionHosts: 'sessionHosts'
+  opsPooled: 'opsPooled'
+  devPooled: 'devPooled'
+  devPersonal: 'devPersonal'
+  diagnostics: 'diagnostics'
+  bootDiagnostics: 'bootDiagnostics'
+  images: 'images'
+  logs: 'logs'
+}
+
+@description('Standard purpose name segments used in resource names.')
+@export()
+var resourcePurposeMap = {
+  serviceObjects: 'serviceobjects'
+  storage: 'storage'
+  network: 'network'
+  compute: 'compute'
+  sessionHosts: 'sessionhosts'
+  opsPooled: 'ops-pooled'
+  devPooled: 'dev-pooled'
+  devPersonal: 'dev-personal'
+  diagnostics: 'diag'
+  bootDiagnostics: 'bootdiag'
+  images: 'img'
+  logs: 'log'
 }
 
 @description('Standard tags applied to all resources. Extend or override in specific modules as needed.')

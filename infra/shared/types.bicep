@@ -50,6 +50,10 @@ type ResourceTypeName =
   | 'desktopApplicationGroup'
   | 'workspace'
   | 'scalingPlan'
+  | 'computeGallery'
+  | 'imageTemplate'
+  | 'sessionHost'
+
 
 @description('Required standard Azure resource tags.')
 @export()
@@ -343,3 +347,19 @@ type WorkspaceConfig = {
   @description('Public network access setting.')
   publicNetworkAccess: 'Enabled' | 'Disabled'?
 }
+
+@description('Supported purpose keys for standard naming.')
+@export()
+type PurposeName =
+  | 'serviceObjects'
+  | 'storage'
+  | 'network'
+  | 'compute'
+  | 'sessionHosts'
+  | 'opsPooled'
+  | 'devPooled'
+  | 'devPersonal'
+  | 'diagnostics'
+  | 'bootDiagnostics'
+  | 'images'
+  | 'logs'

@@ -37,7 +37,7 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: bootstrap
-      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureDevOpsEnvironment: poc-avd
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
       workloadName: $(environmentName)-$(workloadName)-bootstrap
@@ -53,7 +53,7 @@ stages:
       deploymentUnitName: serviceobjects
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureDevOpsEnvironment: poc-avd
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
       workloadName: $(environmentName)-$(workloadName)serviceobjects
@@ -69,7 +69,7 @@ stages:
       deploymentUnitName: storage
       deployDependsOn:
         - Deploy_serviceobjects
-      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureDevOpsEnvironment: poc-avd
       azureServiceConnection: $(azureServiceConnection)
       environmentName: $(environmentName)
       workloadName: $(environmentName)-$(workloadName)-storage

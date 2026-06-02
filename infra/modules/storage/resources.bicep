@@ -77,15 +77,11 @@ module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
 
     kind: 'FileStorage'
     skuName: 'Premium_LRS'
-    accessTier: 'Premium'
 
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false
     allowCrossTenantReplication: false
-
-    // Keep true until identity-based auth is fully configured and tested.
-    // Turning this off too early is a delightful way to lock yourself out of SMB troubleshooting.
     allowSharedKeyAccess: true
 
     publicNetworkAccess: enablePublicNetworkAccess ? 'Enabled' : 'Disabled'
@@ -108,7 +104,6 @@ module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
       shares: [
         {
           name: fslogixShareName
-          accessTier: 'Premium'
           enabledProtocols: 'SMB'
           shareQuota: fslogixShareQuotaGiB
         }

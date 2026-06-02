@@ -41,7 +41,7 @@ stages:
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
-      workloadName: $(environmentName)-$(workloadName)-bootstrap
+      workloadName: $(workloadName)-bootstrap
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
@@ -58,7 +58,7 @@ stages:
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
-      workloadName: $(environmentName)-$(workloadName)-serviceobjects
+      workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/main.bicep"
@@ -74,7 +74,7 @@ stages:
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
-      workloadName: $(environmentName)-$(workloadName)-storage
+      workloadName: $(workloadName)-storage
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/storage/main.bicep"

@@ -20,6 +20,7 @@ import {
 import {
   commonConfig
   environmentConfigMap
+  resourceType
 } from '../../shared/config.bicep'
 
 import {
@@ -37,9 +38,9 @@ var environmentConfig = environmentConfigMap[environment]
 
 var hostPoolNames = [
   for hostPoolItem in hostPools: resourceNameWithPurpose(
-    'hostPool',
     commonConfig.namePrefix,
     commonConfig.workloadName,
+    'hostPool',
     hostPoolItem.name,
     environmentConfig.shortName
   )
@@ -48,27 +49,27 @@ var hostPoolNames = [
 var desktopApplicationGroups = [
   for (hostPoolItem, i) in hostPools: {
     name: resourceNameWithPurpose(
-      'desktopApplicationGroup',
       commonConfig.namePrefix,
       commonConfig.workloadName,
+      resourceType.desktopApplicationGroup,
       hostPoolItem.desktopApplicationGroup.name,
       environmentConfig.shortName
     )
     id: resourceId(
       'Microsoft.DesktopVirtualization/applicationGroups',
       resourceNameWithPurpose(
-        'desktopApplicationGroup',
         commonConfig.namePrefix,
         commonConfig.workloadName,
+        resourceType.desktopApplicationGroup,
         hostPoolItem.desktopApplicationGroup.name,
         environmentConfig.shortName
       )
     )
     hostPoolName: hostPoolNames[i]
     workspaceName: resourceNameWithPurpose(
-      'workspace',
       commonConfig.namePrefix,
       commonConfig.workloadName,
+      resourceType.workspace,
       hostPoolItem.desktopApplicationGroup.workspaceName,
       environmentConfig.shortName
     )
@@ -82,9 +83,9 @@ var desktopApplicationGroups = [
 var workspaceDeployments = [
   for workspaceItem in workspaces: {
     name: resourceNameWithPurpose(
-      'workspace',
       commonConfig.namePrefix,
       commonConfig.workloadName,
+      resourceType.workspace,
       workspaceItem.name,
       environmentConfig.shortName
     )
@@ -173,9 +174,13 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
       description: workspaceDeployment.?description ?? ''
       publicNetworkAccess: workspaceDeployment.?publicNetworkAccess ?? 'Disabled'
 
-      applicationGroupReferences: [
-        for appGroup in desktopApplicationGroups: appGroup.id
-      ]
+      applicationGroupReferences: map(
+        filter(
+          desktopApplicationGroups,
+          appGroup => appGroup.workspaceConfigName == workspaceDeployment.configName
+        ),
+        appGroup => appGroup.id
+      )
 
       lock: {
         kind: 'CanNotDelete'

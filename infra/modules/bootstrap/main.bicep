@@ -7,6 +7,8 @@ session hosts. This module is designed to be run once per subscription/environme
 for subsequent module deployments.
 */
 
+/*
+
 import {
   EnvironmentName
 } from '../../shared/types.bicep'
@@ -23,7 +25,6 @@ import {
 
 @description('Short deployment environment name used by pipelines and parameter files.')
 param environment EnvironmentName
-
 var location = commonConfig.location
 
 var environmentConfig = environmentConfigMap[environment]
@@ -32,6 +33,7 @@ var environmentConfig = environmentConfigMap[environment]
 var tags = union(standardTags, {
   Environment: environmentConfig.tagEnvironment
 })
+
 
 var resourceGroupNames = [
   for resourceGroupType in commonConfig.resourceGroupTypes: {
@@ -44,6 +46,7 @@ var resourceGroupNames = [
     )
   }
 ]
+
 
 module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
   for (rg, i) in resourceGroupNames: {
@@ -60,3 +63,4 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
 ]
 
 output resourceGroups array = resourceGroupNames
+*/

@@ -277,7 +277,7 @@ type RoleAssignmentConfig = {
 @export()
 type DesktopApplicationGroupConfig = {
   @description('Short name used in the generated desktop application group name.')
-  name: string
+  name: PurposeName
 
   @description('Friendly display name.')
   friendlyName: string?
@@ -286,7 +286,7 @@ type DesktopApplicationGroupConfig = {
   description: string?
 
   @description('Short workspace name where this app group should be published.')
-  workspaceName: string
+  workspaceName: PurposeName
 
   @description('RBAC assignments scoped to the application group.')
   rbacAssignments: RoleAssignmentConfig[]?
@@ -296,7 +296,7 @@ type DesktopApplicationGroupConfig = {
 @export()
 type HostPoolConfig = {
   @description('Short name used in the generated host pool name.')
-  name: string
+  name: PurposeName
 
   @description('Friendly display name.')
   friendlyName: string?
@@ -336,7 +336,7 @@ type HostPoolConfig = {
 @export()
 type WorkspaceConfig = {
   @description('Short name used in the generated workspace name.')
-  name: string
+  name: PurposeName
 
   @description('Friendly display name.')
   friendlyName: string?
@@ -359,6 +359,10 @@ type PurposeName =
   | 'opsPooled'
   | 'devPooled'
   | 'devPersonal'
+  | 'opsDesktop'
+  | 'devPooledDesktop'
+  | 'devPersonalDesktop'
+  | 'primary'
   | 'diagnostics'
   | 'bootDiagnostics'
   | 'images'

@@ -134,7 +134,7 @@ var storageSuffix = az.environment().suffixes.storage
 var fileEndpointSuffix = 'file.${storageSuffix}'
 
 output storageAccountName string = fslogixStorage.outputs.name
-output storageAccountId string = fslogixStorage.outputs.resourceId
+output storageAccountResourceId string = fslogixStorage.outputs.resourceId
 output fileShareNames array = [
   fslogixShareName
 ]

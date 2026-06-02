@@ -84,7 +84,7 @@ module storageResources './resources.bicep' = {
 
 output resourceGroupName string = storageRGName
 output storageAccountName string = storageResources.outputs.storageAccountName
-output storageAccountId string = storageResources.outputs.storageAccountId
+output storageAccountResourceId string = storageResources.outputs.storageAccountResourceId
 output fileShareNames array = storageResources.outputs.fileShareNames
 output fileSharePaths array = storageResources.outputs.fileSharePaths
 output fslogixProfilePath string = storageResources.outputs.fslogixProfilePath

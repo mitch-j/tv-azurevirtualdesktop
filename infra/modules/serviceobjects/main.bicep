@@ -27,20 +27,20 @@ var tags = union(standardTags, {
 
 var environmentConfig = environmentConfigMap[environment]
 
-var controlPlaneResourceGroupName = resourceGroupName(
+var serviceobjectsResourceGroupName = resourceGroupName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  'controlplane',
+  'serviceobjects',
   environmentConfigMap[environment].shortName
 )
 
-resource controlPlaneRg 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
-  name: controlPlaneResourceGroupName
+resource serviceobjectsRg 'Microsoft.Resources/resourceGroups@2024-11-01' existing = {
+  name: serviceobjectsResourceGroupName
 }
 
-module controlPlaneResources './resources.bicep' = {
-  name: 'deploy-avd-controlplane-${environmentConfig.shortName}'
-  scope: controlPlaneRg
+module serviceobjectsResources './resources.bicep' = {
+  name: 'deploy-avd-serviceobjects-${environmentConfig.shortName}'
+  scope: serviceobjectsRg
   params: {
     environment: environment
     tags: tags
@@ -50,8 +50,8 @@ module controlPlaneResources './resources.bicep' = {
   }
 }
 
-output workspaceNames array = controlPlaneResources.outputs.workspaceNames
-output workspaceIds array = controlPlaneResources.outputs.workspaceIds
-output hostPools array = controlPlaneResources.outputs.hostPools
-output hostPoolIds array = controlPlaneResources.outputs.hostPoolIds
-output desktopApplicationGroupIds array = controlPlaneResources.outputs.desktopApplicationGroupIds
+output workspaceNames array = serviceobjectsResources.outputs.workspaceNames
+output workspaceIds array = serviceobjectsResources.outputs.workspaceIds
+output hostPools array = serviceobjectsResources.outputs.hostPools
+output hostPoolIds array = serviceobjectsResources.outputs.hostPoolIds
+output desktopApplicationGroupIds array = serviceobjectsResources.outputs.desktopApplicationGroupIds

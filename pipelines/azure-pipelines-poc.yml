@@ -43,23 +43,23 @@ stages:
       workloadName: avd-bootstrap
       deploymentScope: Subscription
       deploymentLocation: eastus
-      templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep'
-      parameterFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam'
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
 
   - template: templates/bicep-deployment-template.yml
     parameters:
-      deploymentUnitName: controlplane
+      deploymentUnitName: serviceobjects
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: poc-avd-controlplane
+      azureDevOpsEnvironment: poc-avd-serviceobjects
       azureServiceConnection: tv-avd-poc-deploy-sc
       environmentName: poc
-      workloadName: avd-controlplane
+      workloadName: avd-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: eastus
-      templateFile: '$(Build.SourcesDirectory)/infra/modules/controlplane/main.bicep'
-      parameterFile: '$(Build.SourcesDirectory)/infra/modules/controlplane/poc.bicepparam'
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

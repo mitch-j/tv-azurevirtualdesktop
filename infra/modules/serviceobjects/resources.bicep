@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 /*
-AVD Deployment - Control Plane Resources
+AVD Deployment - Service Objects Resources
 
 Deploys:
 - AVD host pools using AVM

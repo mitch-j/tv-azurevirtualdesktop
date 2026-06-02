@@ -45,7 +45,7 @@ This repository is an infrastructure repository, not an application repository.
 │   │   ├── bootstrap
 │   │   │    ├── main.bicep
 │   │   │    └── poc.bicepparam
-│   │   ├── controlplane/
+│   │   ├── serviceobjects/
 │   │   │    ├── main.bicep
 │   │   │    ├── resources.bicep
 │   │   │    └── poc.bicepparam

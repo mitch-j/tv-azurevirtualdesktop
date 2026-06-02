@@ -92,7 +92,7 @@ stages:
           - task: AzureCLI@2
             displayName: Validate Bicep
             inputs:
-              azureSubscription: ${{ parameters.azureServiceConnection }}
+              azureSubscription: '${{ parameters.azureServiceConnection }}'
               scriptType: pscore
               scriptLocation: scriptPath
               scriptPath: '$(scriptPath)'
@@ -104,11 +104,11 @@ stages:
                 -TemplateFile "${{ parameters.templateFile }}"
                 -ParameterFile "${{ parameters.parameterFile }}"
                 -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-validate-$(Build.BuildId)"
-                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-validate"
+                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
 
-          - publish: '$(Build.ArtifactStagingDirectory/bicep-validate'
+          - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate'
             artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate'
             condition: always()
 
@@ -126,7 +126,7 @@ stages:
           - task: AzureCLI@2
             displayName: What-if Bicep
             inputs:
-              azureSubscription: ${{ parameters.azureServiceConnection }}
+              azureSubscription: '${{ parameters.azureServiceConnection }}'
               scriptType: pscore
               scriptLocation: scriptPath
               scriptPath: '$(scriptPath)'
@@ -138,12 +138,12 @@ stages:
                 -TemplateFile "${{ parameters.templateFile }}"
                 -ParameterFile "${{ parameters.parameterFile }}"
                 -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-whatif-$(Build.BuildId)"
-                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-whatif"
+                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
 
-          - publish: '$(Build.ArtifactStagingDirectory/bicep-whatif'
+          - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif'
             artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif'
             condition: always()
 
@@ -175,7 +175,7 @@ stages:
                 - task: AzureCLI@2
                   displayName: Deploy Bicep
                   inputs:
-                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    azureSubscription: '${{ parameters.azureServiceConnection }}'
                     scriptType: pscore
                     scriptLocation: scriptPath
                     scriptPath: '$(scriptPath)'
@@ -187,9 +187,9 @@ stages:
                       -TemplateFile "${{ parameters.templateFile }}"
                       -ParameterFile "${{ parameters.parameterFile }}"
                       -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
-                      -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/bicep-deploy"
+                      -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                       -EnsureBicep
 
-                - publish: '$(Build.ArtifactStagingDirectory/bicep-deploy'
+                - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy'
                   artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy'
                   condition: always()

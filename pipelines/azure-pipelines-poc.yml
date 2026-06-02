@@ -40,7 +40,7 @@ stages:
       deploymentUnitName: bootstrap
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(environmentName)-$(workloadName)-bootstrap
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
@@ -57,7 +57,7 @@ stages:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(environmentName)-$(workloadName)-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)
@@ -73,7 +73,7 @@ stages:
         - Deploy_serviceobjects
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(environmentName)-$(workloadName)-storage
       deploymentScope: Subscription
       deploymentLocation: $(deploymentLocation)

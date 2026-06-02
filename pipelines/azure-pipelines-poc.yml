@@ -63,3 +63,21 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: storage
+      validationDependsOn:
+        - Validate_serviceobjects
+      deployDependsOn:
+        - Deploy_serviceobjects
+      azureDevOpsEnvironment: poc-avd-storage
+      azureServiceConnection: tv-avd-poc-deploy-sc
+      environmentName: poc
+      workloadName: avd-storage
+      deploymentScope: Subscription
+      deploymentLocation: eastus
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/storage/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads

@@ -45,17 +45,21 @@ This repository is an infrastructure repository, not an application repository.
 │   │   ├── bootstrap
 │   │   │    ├── main.bicep
 │   │   │    └── poc.bicepparam
+│   │   ├── compute/
+│   │   │    ├── main.bicep
+│   │   │    ├── resources.bicep
+│   │   │    └── poc.bicepparam
+│   │   ├── network/
+│   │   │    └── peering.bicep
+│   │   │    └── spoke-vnet.bicep
 │   │   ├── serviceobjects/
 │   │   │    ├── main.bicep
 │   │   │    ├── resources.bicep
 │   │   │    └── poc.bicepparam
-│   │   ├── compute/
-│   │   │    └── main.bicep
-│   │   ├── network/
-│   │   │    └── peering.bicep
-│   │   │    └── spoke-vnet.bicep
 │   │   └──  storage/
-│   │        └── fxlogic.bicep
+│   │        ├── main.bicep
+│   │        ├── resources.bicep
+│   │        └── poc.bicepparam
 │   ├── parameters/
 │   └── shared/
 │       ├── naming.bicep
@@ -74,24 +78,12 @@ This repository is an infrastructure repository, not an application repository.
 
 ## Infrastructure Entry Point
 
-The primary Bicep deployment entry point is:
+Each Module deploys resources related to its service area.
+The deployment flow must occur in this order:
 
-```text
-infra/main.bicep
-```
-
-Environment-specific parameter files are stored in:
-
-```text
-infra/parameters/
-```
-
-| Environment | Parameter File                     |
-|-------------|------------------------------------|
-| POC         | `infra/parameters/poc.bicepparam`  |
-| Dev         | `infra/parameters/dev.bicepparam`  |
-| Test        | `infra/parameters/test.bicepparam` |
-| Prod        | `infra/parameters/prod.bicepparam` |
+1. bookstrap
+2. serviceobjects
+3. storage
 
 ## Shared Bicep Files
 
@@ -105,36 +97,9 @@ infra/shared/
 |----------------|-------------------------------------------------------------------------|
 | `types.bicep`  | Defines shared type contracts used by templates and modules             |
 | `config.bicep` | Defines shared environment mappings, defaults, and naming abbreviations |
-
-### `types.bicep`
-
-`types.bicep` should define reusable contracts only. It should not contain environment-specific resource names, subscription IDs, resource group names, or other workload-specific values.
-
-Examples of appropriate content:
-
-- Deployment environment names
-- Azure policy-compliant tag value types
-- Required tag object shape
-- Existing resource reference shapes
-- Shared module input object types
-
-### `config.bicep`
-
-`config.bicep` should define reusable defaults and mappings.
-
-Examples of appropriate content:
-
-- Environment short name mappings
-- Azure policy-compliant environment tag mappings
-- Default log retention values
-- Resource abbreviation mappings
-- Default deployment behavior flags
-
-Workload-specific values should generally live in the appropriate `.bicepparam` file, not in `config.bicep`.
+| `naming.bicep` | Defines shared naming functions to ensure consistent resource naming    |
 
 ## Environment Naming
-
-This template separates short deployment environment names from Azure policy-compliant tag values.
 
 | Deployment Environment | Azure `Environment` Tag |
 |------------------------|-------------------------|
@@ -154,8 +119,6 @@ The Azure policy-compliant environment value is used for:
 
 - Azure resource tags
 - Governance
-- Cost reporting
-- Azure Policy compliance
 
 ## Required Tags
 
@@ -169,7 +132,7 @@ Azure resources deployed from this template must use the standard required tags:
 
 The `Environment` tag should be derived from `environmentName` through the shared environment configuration map.
 
-The `Division` and `Product` values should be supplied by the workload-specific parameter file.
+The `Division` and `Product` values should be consistent across this repository and all resources deployed by it.
 
 Example:
 
@@ -183,7 +146,7 @@ The deployment should produce tags similar to:
 
 ```bicep
 {
-  Environment: 'Production'
+  Environment: 'Proof Of Concept'
   Division: 'Information Technology'
   Product: 'Azure Virtual Desktop'
 }
@@ -209,7 +172,11 @@ param product = 'OMS'
 
 ## Parameter Files
 
-Each environment should have a matching `.bicepparam` file.
+Since this repository is broken down into smaller modules, and the configuration must be identical across these modules, much
+of the configuration information is stored in the config.bicep file. This is imported into each module to ensure consistency across the
+deployment.
+
+Each individual module should have a matching `.bicepparam` file for each environment.
 
 Recommended minimal pattern:
 
@@ -228,6 +195,7 @@ Use the appropriate environment value in each parameter file:
 
 | File              | `environmentName` |
 |-------------------|-------------------|
+| `poc.bicepparam`  | `poc`             |
 | `dev.bicepparam`  | `dev`             |
 | `test.bicepparam` | `test`            |
 | `prod.bicepparam` | `prod`            |
@@ -242,6 +210,7 @@ This repository uses environment-specific Azure DevOps pipeline entry points and
 
 | Pipeline                                            | Purpose                                     |
 |-----------------------------------------------------|---------------------------------------------|
+| `pipelines/azure-pipelines-poc.yml`                 | POC validation, what-if, and deployment     |
 | `pipelines/azure-pipelines-dev.yml`                 | Dev validation, what-if, and deployment     |
 | `pipelines/azure-pipelines-test.yml`                | Test validation, what-if, and deployment    |
 | `pipelines/azure-pipelines-prod.yml`                | Prod validation, what-if, and deployment    |
@@ -249,9 +218,9 @@ This repository uses environment-specific Azure DevOps pipeline entry points and
 
 For detailed deployment steps, approval behavior, rollback guidance, and troubleshooting, see [`docs/deployment.md`](docs/deployment.md).
 
-### Dev Pipeline
+### POC and Dec Pipelines
 
-The dev pipeline is configured to run on changes to:
+The poc and dev pipelines are configured to run on changes to:
 
 - `infra/**`
 - `scripts/**`
@@ -272,7 +241,7 @@ These pipelines are intended to be run manually or through an approved release p
 
 ## Pipeline Stages
 
-The shared pipeline template defines three stages:
+The shared pipeline template defines three stages for each module:
 
 | Stage      | Purpose                                           |
 |------------|---------------------------------------------------|
@@ -316,6 +285,7 @@ Recommended configuration:
 
 | Environment | Allowed Branches  | Protection Requirement |
 |-------------|-------------------|------------------------|
+| poc         | `refs/heads/main` | Optional               |
 | dev         | `refs/heads/main` | Optional               |
 | test        | `refs/heads/main` | Recommended            |
 | prod        | `refs/heads/main` | Required               |
@@ -450,6 +420,7 @@ Each environment pipeline requires an Azure DevOps service connection.
 
 | Environment | Service Connection               | Scope     |
 |-------------|----------------------------------|-----------|
+| Poc         | `<dev-service-connection-name>`  | `<scope>` |
 | Dev         | `<dev-service-connection-name>`  | `<scope>` |
 | Test        | `<test-service-connection-name>` | `<scope>` |
 | Prod        | `<prod-service-connection-name>` | `<scope>` |

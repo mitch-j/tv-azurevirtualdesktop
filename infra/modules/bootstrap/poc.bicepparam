@@ -1,3 +1,3 @@
 using 'main.bicep'
 
-param environment = 'poc'
+// param environment = 'poc'

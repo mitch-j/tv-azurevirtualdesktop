@@ -37,12 +37,12 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: bootstrap
-      azureDevOpsEnvironment: poc-avd-bootstrap
-      azureServiceConnection: tv-avd-poc-deploy-sc
-      environmentName: poc
-      workloadName: avd-bootstrap
+      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(environmentName)-$(workloadName)-bootstrap
       deploymentScope: Subscription
-      deploymentLocation: eastus
+      deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam"
       validationLevel: Provider
@@ -53,12 +53,12 @@ stages:
       deploymentUnitName: serviceobjects
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: poc-avd-serviceobjects
-      azureServiceConnection: tv-avd-poc-deploy-sc
-      environmentName: poc
-      workloadName: avd-serviceobjects
+      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(environmentName)-$(workloadName)serviceobjects
       deploymentScope: Subscription
-      deploymentLocation: eastus
+      deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/poc.bicepparam"
       validationLevel: Provider
@@ -67,16 +67,14 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: storage
-      validationDependsOn:
-        - Validate_serviceobjects
       deployDependsOn:
         - Deploy_serviceobjects
-      azureDevOpsEnvironment: poc-avd-storage
-      azureServiceConnection: tv-avd-poc-deploy-sc
-      environmentName: poc
-      workloadName: avd-storage
+      azureDevOpsEnvironment: $(environmentName)-$(workloadName)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(environmentName)-$(workloadName)-storage
       deploymentScope: Subscription
-      deploymentLocation: eastus
+      deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/storage/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage/poc.bicepparam"
       validationLevel: Provider

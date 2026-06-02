@@ -65,7 +65,7 @@ module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0
 }
 
 module serviceObjectsResources './resources.bicep' = {
-  name: 'deploy-avd-serviceobjects-${environmentConfig.shortName}'
+  name: 'deploy-${commonConfig.workloadName}-serviceobjects-${environmentConfig.shortName}'
   scope: resourceGroup(serviceObjectsRGName)
   dependsOn: [
     serviceObjectsResourceGroup

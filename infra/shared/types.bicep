@@ -367,3 +367,4 @@ type PurposeName =
   | 'bootDiagnostics'
   | 'images'
   | 'logs'
+  | 'fslogix'

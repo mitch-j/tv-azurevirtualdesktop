@@ -40,7 +40,7 @@ var hostPoolNames = [
   for hostPoolItem in hostPools: resourceNameWithPurpose(
     commonConfig.namePrefix,
     commonConfig.workloadName,
-    'hostPool',
+    resourceType.hostPool,
     hostPoolItem.name,
     environmentConfig.shortName
   )

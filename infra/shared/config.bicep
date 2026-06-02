@@ -130,7 +130,7 @@ var resourcePurpose = {
   opsPooled: 'opsPooled'
   devPooled: 'devPooled'
   devPersonal: 'devPersonal'
-  opsDesktop: 'opsDesktop'
+  opsPooledDesktop: 'opsPooledDesktop'
   devPooledDesktop: 'devPooledDesktop'
   devPersonalDesktop: 'devPersonalDesktop'
   primary: 'primary'
@@ -138,6 +138,7 @@ var resourcePurpose = {
   bootDiagnostics: 'bootDiagnostics'
   images: 'images'
   logs: 'logs'
+  fslogix: 'fslogix'
 }
 
 @description('Standard purpose name segments used in resource names.')
@@ -151,14 +152,16 @@ var resourcePurposeMap = {
   opsPooled: 'ops-pooled'
   devPooled: 'dev-pooled'
   devPersonal: 'dev-personal'
-  opsDesktop: 'ops-desktop'
+  opsPooledDesktop: 'ops-pooled-desktop'
+  opsPersonalDesktop: 'ops-personal-desktop'
   devPooledDesktop: 'dev-pooled-desktop'
   devPersonalDesktop: 'dev-personal-desktop'
-  primary: 'primary'
+  primary: 'pri'
   diagnostics: 'diag'
   bootDiagnostics: 'bootdiag'
   images: 'img'
   logs: 'log'
+  fslogix: 'fslogiz'
 }
 
 @description('Standard tags applied to all resources. Extend or override in specific modules as needed.')

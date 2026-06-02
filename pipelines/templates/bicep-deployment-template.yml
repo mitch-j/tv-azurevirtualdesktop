@@ -108,11 +108,7 @@ stages:
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
 
-<<<<<<< HEAD
-          - publish: $(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate
-=======
           - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate'
->>>>>>> 3460a7f835290f8e6a3e29b71ec1684e7d24272b
             artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate'
             condition: always()
 
@@ -147,11 +143,7 @@ stages:
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
 
-<<<<<<< HEAD
-          - publish: $(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif
-=======
           - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif'
->>>>>>> 3460a7f835290f8e6a3e29b71ec1684e7d24272b
             artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif'
             condition: always()
 
@@ -198,10 +190,6 @@ stages:
                       -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                       -EnsureBicep
 
-<<<<<<< HEAD
-                - publish: $(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy
-=======
                 - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy'
->>>>>>> 3460a7f835290f8e6a3e29b71ec1684e7d24272b
                   artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy'
                   condition: always()

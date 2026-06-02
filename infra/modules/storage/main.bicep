@@ -35,7 +35,7 @@ param fslogixShareName string = 'profiles'
 param fslogixShareQuotaGiB int = 1024
 
 @description('Enable public network access. Use false when private endpoints are configured.')
-param enablePublicNetworkAccess bool = true
+param enablePublicNetworkAccess bool = false
 
 @description('Optional subnet resource ID for the Azure Files private endpoint.')
 param privateEndpointSubnetResourceId string = ''

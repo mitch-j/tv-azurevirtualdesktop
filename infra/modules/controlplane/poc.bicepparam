@@ -31,7 +31,7 @@ param hostPools = [
       workspaceName: 'primary'
       rbacAssignments: [
         {
-          principalId: '<entra-group-object-id>'
+          principalId: 'aa09d144-a544-4cc9-b0bc-ff053061445c'
           principalType: 'Group'
           roleDefinitionId: '1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63'
         }
@@ -57,7 +57,7 @@ param hostPools = [
       workspaceName: 'primary'
       rbacAssignments: [
         {
-          principalId: '<entra-group-object-id>'
+          principalId: 'aa09d144-a544-4cc9-b0bc-ff053061445c'
           principalType: 'Group'
           roleDefinitionId: '1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63'
         }
@@ -83,7 +83,7 @@ param hostPools = [
       workspaceName: 'primary'
       rbacAssignments: [
         {
-          principalId: '<entra-group-object-id>'
+          principalId: 'ebdf4719-7e5e-4b65-89a5-2a7d24627f75'
           principalType: 'Group'
           roleDefinitionId: '1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63'
         }

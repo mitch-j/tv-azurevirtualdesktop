@@ -31,7 +31,6 @@ var environmentConfig = environmentConfigMap[environment]
 @description('Tags to add to resource groups deployed by this module.')
 var tags = union(standardTags, {
   Environment: environmentConfig.tagEnvironment
-  Repository: commonConfig.repositoryName
 })
 
 var resourceGroupNames = [

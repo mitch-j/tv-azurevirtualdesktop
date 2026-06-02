@@ -88,7 +88,7 @@ var commonConfig = {
   product: 'Azure Virtual Desktop'
   division: 'Information Technology'
   resourceGroupTypes: [
-    'controlplane'
+    'serviceobjects'
     'network'
     'profiles'
     'secrets'

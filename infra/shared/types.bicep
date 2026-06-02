@@ -29,6 +29,28 @@ type DivisionName =
   | 'Merchandising'
   | 'Shared'
 
+@description('Supported Azure resource type keys for standard naming.')
+@export()
+type ResourceTypeName =
+  | 'appService'
+  | 'appServicePlan'
+  | 'applicationInsights'
+  | 'containerRegistry'
+  | 'functionApp'
+  | 'keyVault'
+  | 'logAnalyticsWorkspace'
+  | 'managedIdentity'
+  | 'privateEndpoint'
+  | 'privateDnsZone'
+  | 'resourceGroup'
+  | 'storageAccount'
+  | 'subnet'
+  | 'virtualNetwork'
+  | 'hostPool'
+  | 'desktopApplicationGroup'
+  | 'workspace'
+  | 'scalingPlan'
+
 @description('Required standard Azure resource tags.')
 @export()
 type standardTags = {
@@ -232,4 +254,92 @@ type forwardingRulesetManagedConfig = {
 
   @description('Virtual networks to link to this ruleset.')
   vnetLinks: ForwardingRulesetLinkConfig[]?
+}
+
+@description('Role assignment configuration.')
+@export()
+type RoleAssignmentConfig = {
+  @description('Microsoft Entra principal object ID.')
+  principalId: string
+
+  @description('Principal type.')
+  principalType: 'User' | 'Group' | 'ServicePrincipal' | 'ForeignGroup'
+
+  @description('Role definition ID GUID.')
+  roleDefinitionId: string
+}
+
+@description('Azure Virtual Desktop desktop application group configuration.')
+@export()
+type DesktopApplicationGroupConfig = {
+  @description('Short name used in the generated desktop application group name.')
+  name: string
+
+  @description('Friendly display name.')
+  friendlyName: string?
+
+  @description('Description.')
+  description: string?
+
+  @description('Short workspace name where this app group should be published.')
+  workspaceName: string
+
+  @description('RBAC assignments scoped to the application group.')
+  rbacAssignments: RoleAssignmentConfig[]?
+}
+
+@description('Azure Virtual Desktop host pool configuration.')
+@export()
+type HostPoolConfig = {
+  @description('Short name used in the generated host pool name.')
+  name: string
+
+  @description('Friendly display name.')
+  friendlyName: string?
+
+  @description('Description.')
+  description: string?
+
+  @description('Host pool type.')
+  hostPoolType: 'Pooled' | 'Personal'
+
+  @description('Load balancer type.')
+  loadBalancerType: 'BreadthFirst' | 'DepthFirst' | 'Persistent'
+
+  @description('Preferred app group type.')
+  preferredAppGroupType: 'Desktop' | 'RailApplications' | 'None'
+
+  @description('Maximum session limit.')
+  maxSessionLimit: int?
+
+  @description('Whether validation environment is enabled.')
+  validationEnvironment: bool?
+
+  @description('Start VM on connect.')
+  startVMOnConnect: bool?
+
+  @description('Custom RDP properties.')
+  customRdpProperty: string?
+
+  @description('Public network access setting.')
+  publicNetworkAccess: 'Enabled' | 'Disabled'?
+
+  @description('Desktop application group for this host pool.')
+  desktopApplicationGroup: DesktopApplicationGroupConfig
+}
+
+@description('Azure Virtual Desktop workspace configuration.')
+@export()
+type WorkspaceConfig = {
+  @description('Short name used in the generated workspace name.')
+  name: string
+
+  @description('Friendly display name.')
+  friendlyName: string?
+
+  @description('Description.')
+  description: string?
+
+  @description('Public network access setting.')
+  publicNetworkAccess: 'Enabled' | 'Disabled'?
 }

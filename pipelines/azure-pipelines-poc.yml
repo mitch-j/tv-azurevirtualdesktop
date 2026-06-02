@@ -36,6 +36,7 @@ pool:
 stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
+      deploymentUnitName: bootstrap
       azureServiceConnection: tv-avd-poc-deploy-sc
       environmentName: poc
       workloadName: avd
@@ -43,5 +44,20 @@ stages:
       deploymentLocation: eastus
       templateFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep'
       parameterFile: '$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam'
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: controlplane
+      dependsOn:
+        - Deploy_bootstrap
+      azureServiceConnection: tv-avd-poc-deploy-sc
+      environmentName: poc
+      workloadName: avd-controlplane
+      deploymentScope: Subscription
+      deploymentLocation: eastus
+      templateFile: '$(Build.SourcesDirectory)/infra/modules/controlplane/main.bicep'
+      parameterFile: '$(Build.SourcesDirectory)/infra/modules/controlplane/poc.bicepparam'
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

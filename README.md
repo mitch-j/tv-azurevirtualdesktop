@@ -43,15 +43,14 @@ This repository is an infrastructure repository, not an application repository.
 ├── infra/
 │   ├── modules/
 │   │   ├── bootstrap
-│   │   │    ├── bootstrap.bicep
-│   │   │    └──  poc.bicepparam
+│   │   │    ├── main.bicep
+│   │   │    └── poc.bicepparam
 │   │   ├── controlplane/
 │   │   │    ├── main.bicep
-│   │   │    └──  poc.bicepparam
+│   │   │    ├── resources.bicep
+│   │   │    └── poc.bicepparam
 │   │   ├── compute/
-│   │   │    └── session-hosts.bicep
-│   │   ├── monitoring/
-│   │   │    └── monitoring.bicep
+│   │   │    └── main.bicep
 │   │   ├── network/
 │   │   │    └── peering.bicep
 │   │   │    └── spoke-vnet.bicep

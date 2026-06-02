@@ -5,6 +5,10 @@ import {
   resourceAbbreviationMap
 } from './config.bicep'
 
+import {
+  ResourceTypeName
+} from './types.bicep'
+
 @description('Builds a standard resource group name.')
 @export()
 func resourceGroupName(
@@ -14,25 +18,24 @@ func resourceGroupName(
   environmentShortName string
 ) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.resourceGroup}-${resourceGroupType}-${environmentShortName}')
 
-@description('Builds a standard Azure resource name using the pattern: abbreviation-prefix-workload-purpose-environment.')
+@description('Builds a standard Azure resource name using the pattern: prefix-workload-abbreviation-environment.')
 @export()
 func resourceName(
-  resourceType string,
+  resourceType ResourceTypeName,
   namePrefix string,
   workloadName string,
-  purpose string,
   environmentShortName string
-) string => toLower('${resourceAbbreviationMap[resourceType]}-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
+) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap[resourceType]}-${environmentShortName}')
 
-@description('Builds a standard Azure resource name using a custom abbreviation.')
+@description('Builds a standard Azure resource name using the pattern: prefix-workload-abbreviation-purpose-environment.')
 @export()
-func resourceNameWithAbbreviation(
-  abbreviation string,
+func resourceNameWithPurpose(
+  resourceType ResourceTypeName,
   namePrefix string,
   workloadName string,
   purpose string,
   environmentShortName string
-) string => toLower('${abbreviation}-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
+) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap[resourceType]}-${purpose}-${environmentShortName}')
 
 @description('Builds a compact name for resources with stricter naming limits.')
 @export()
@@ -40,9 +43,18 @@ func compactName(
   abbreviation string,
   namePrefix string,
   workloadName string,
+  environmentShortName string
+) string => toLower('${namePrefix}${workloadName}${abbreviation}${environmentShortName}')
+
+@description('Builds a compact name for resources with stricter naming limits.')
+@export()
+func compactNameWithPurpose(
+  abbreviation string,
+  namePrefix string,
+  workloadName string,
   purpose string,
   environmentShortName string
-) string => toLower('${abbreviation}${namePrefix}${workloadName}${purpose}${environmentShortName}')
+) string => toLower('${namePrefix}${workloadName}${abbreviation}${purpose}${environmentShortName}')
 
 @description('Builds a storage account name. Storage account names must be lowercase alphanumeric and 3-24 characters.')
 @export()
@@ -51,7 +63,7 @@ func storageAccountName(
   workloadName string,
   purpose string,
   environmentShortName string
-) string => take(toLower(replace('st${namePrefix}${workloadName}${purpose}${environmentShortName}', '-', '')), 24)
+) string => take(toLower(replace('${namePrefix}${workloadName}st${purpose}${environmentShortName}', '-', '')), 24)
 
 @description('Builds a Key Vault name. Key Vault names must be 3-24 characters and may contain only alphanumeric characters and hyphens.')
 @export()
@@ -60,16 +72,7 @@ func keyVaultName(
   workloadName string,
   purpose string,
   environmentShortName string
-) string => take(toLower('kv-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}'), 24)
-
-@description('Builds a Log Analytics workspace name.')
-@export()
-func logAnalyticsWorkspaceName(
-  namePrefix string,
-  workloadName string,
-  purpose string,
-  environmentShortName string
-) string => toLower('log-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
+) string => take(toLower('${namePrefix}-${workloadName}-kv-${purpose}-${environmentShortName}'), 24)
 
 @description('Builds an Azure Compute Gallery name. Gallery names may contain letters, numbers, dots, and underscores. Hyphens are avoided.')
 @export()
@@ -77,58 +80,4 @@ func computeGalleryName(
   namePrefix string,
   workloadName string,
   purpose string
-) string => toLower('gal_${namePrefix}_${workloadName}_${purpose}')
-
-@description('Builds an AVD host pool name.')
-@export()
-func hostPoolName(
-  namePrefix string,
-  workloadName string,
-  poolName string,
-  environmentShortName string
-) string => toLower('vdpool-${namePrefix}-${workloadName}-${poolName}-${environmentShortName}')
-
-@description('Builds an AVD application group name.')
-@export()
-func applicationGroupName(
-  namePrefix string,
-  workloadName string,
-  appGroupName string,
-  environmentShortName string
-) string => toLower('vdag-${namePrefix}-${workloadName}-${appGroupName}-${environmentShortName}')
-
-@description('Builds an AVD workspace name.')
-@export()
-func workspaceName(
-  namePrefix string,
-  workloadName string,
-  purpose string,
-  environmentShortName string
-) string => toLower('vdws-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
-
-@description('Builds an AVD scaling plan name.')
-@export()
-func scalingPlanName(
-  namePrefix string,
-  workloadName string,
-  purpose string,
-  environmentShortName string
-) string => toLower('vdscaling-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
-
-@description('Builds a private endpoint name.')
-@export()
-func privateEndpointName(
-  namePrefix string,
-  workloadName string,
-  targetName string,
-  environmentShortName string
-) string => toLower('pep-${namePrefix}-${workloadName}-${targetName}-${environmentShortName}')
-
-@description('Builds a managed identity name.')
-@export()
-func managedIdentityName(
-  namePrefix string,
-  workloadName string,
-  purpose string,
-  environmentShortName string
-) string => toLower('id-${namePrefix}-${workloadName}-${purpose}-${environmentShortName}')
+) string => toLower('${namePrefix}_${workloadName}_gal_${purpose}')

@@ -53,6 +53,10 @@ var resourceAbbreviationMap = {
   storageAccount: 'st'
   subnet: 'snet'
   virtualNetwork: 'vnet'
+  hostPool: 'vdpool'
+  desktopApplicationGroup: 'vdag'
+  workspace: 'vdws'
+  scalingPlan: 'vdscaling'
 }
 
 @description('Default module behavior flags. Override in parameters or module inputs when needed.')

@@ -3,6 +3,16 @@ parameters:
     displayName: Azure service connection
     type: string
 
+  - name: deploymentUnitName
+    displayName: Deployment unit name
+    type: string
+    default: infrastructure
+
+  - name: dependsOn
+    displayName: Prior stages this deployment unit depends on
+    type: object
+    default: []
+
   - name: environmentName
     displayName: Environment
     type: string
@@ -60,8 +70,9 @@ parameters:
       - ResourceIdOnly
 
 stages:
-  - stage: Validate
-    displayName: Validate ${{ parameters.environmentName }}
+  - stage: Validate_${{ parameters.deploymentUnitName }}
+    displayName: Validate ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
+    dependsOn: ${{ parameters.dependsOn }}
     variables:
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
@@ -93,9 +104,9 @@ stages:
             artifact: ${{ parameters.environmentName }}-bicep-validate
             condition: always()
 
-  - stage: WhatIf
-    displayName: What-if ${{ parameters.environmentName }}
-    dependsOn: Validate
+  - stage: WhatIf_${{ parameters.deploymentUnitName }}
+    displayName: What-if ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
+    dependsOn: Validate_${{ parameters.deploymentUnitName }}
     variables:
       scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
     jobs:
@@ -128,11 +139,9 @@ stages:
             artifact: ${{ parameters.environmentName }}-bicep-whatif
             condition: always()
 
-  # Deploy is restricted to main/non-PR runs in YAML.
-  # Add approvals and branch-control checks on the matching Azure DevOps Environment.
-  - stage: Deploy
-    displayName: Deploy ${{ parameters.environmentName }}
-    dependsOn: WhatIf
+  - stage: Deploy_${{ parameters.deploymentUnitName }}
+    displayName: Deploy ${{ parameters.environmentName }} ${{ parameters.deploymentUnitName }}
+    dependsOn: WhatIf_${{ parameters.deploymentUnitName }}
     condition: >
       and(
         succeeded(),

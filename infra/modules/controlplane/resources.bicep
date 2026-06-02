@@ -173,24 +173,15 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
       description: workspaceDeployment.?description ?? ''
       publicNetworkAccess: workspaceDeployment.?publicNetworkAccess ?? 'Disabled'
 
+      applicationGroupReferences: [
+        for appGroup in desktopApplicationGroups: appGroup.id
+      ]
+
       lock: {
         kind: 'CanNotDelete'
       }
 
       enableTelemetry: false
-    }
-  }
-]
-
-resource workspaceApplicationGroupAssociations 'Microsoft.DesktopVirtualization/workspaces/applicationGroupReferences@2025-10-10' = [
-  for appGroup in desktopApplicationGroups: {
-    name: '${appGroup.workspaceName}/${appGroup.name}'
-    dependsOn: [
-      workspace
-      desktopApplicationGroup
-    ]
-    properties: {
-      applicationGroupPath: resourceId('Microsoft.DesktopVirtualization/applicationGroups', appGroup.name)
     }
   }
 ]

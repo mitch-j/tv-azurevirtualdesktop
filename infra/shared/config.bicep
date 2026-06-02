@@ -131,6 +131,7 @@ var resourcePurpose = {
   devPooled: 'devPooled'
   devPersonal: 'devPersonal'
   opsPooledDesktop: 'opsPooledDesktop'
+  opsePersonalDesktop: 'opsPersonalDesktop'
   devPooledDesktop: 'devPooledDesktop'
   devPersonalDesktop: 'devPersonalDesktop'
   primary: 'primary'

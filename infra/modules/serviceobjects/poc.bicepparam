@@ -25,7 +25,7 @@ param hostPools = [
     customRdpProperty: 'drivestoredirect:s:;audiomode:i:0;videoplaybackmode:i:1;redirectclipboard:i:1;redirectprinters:i:0;devicestoredirect:s:;redirectcomports:i:0;redirectsmartcards:i:0;usbdevicestoredirect:s:;enablecredsspsupport:i:1;redirectwebauthn:i:1;use multimon:i:1;'
     publicNetworkAccess: 'Disabled'
     desktopApplicationGroup: {
-      name: 'opsDesktop'
+      name: 'opsPooledDesktop'
       friendlyName: 'True Value AVD POC Ops Desktop'
       description: 'Desktop application group for Ops pooled users.'
       workspaceName: 'primary'

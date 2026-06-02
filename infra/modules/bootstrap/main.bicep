@@ -56,7 +56,7 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
       location: location
       tags: tags
       lock: {
-        kind: 'CanNotDelete'
+        kind: commonConfig.lockKind
       }
     }
   }

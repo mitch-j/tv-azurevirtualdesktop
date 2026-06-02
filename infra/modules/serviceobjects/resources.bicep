@@ -116,7 +116,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
       publicNetworkAccess: hostPoolItem.?publicNetworkAccess ?? 'Disabled'
 
       lock: {
-        kind: 'CanNotDelete'
+        kind: commonConfig.lockKind
       }
 
       enableTelemetry: false
@@ -151,7 +151,7 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
       ]
 
       lock: {
-        kind: 'CanNotDelete'
+        kind: commonConfig.lockKind
       }
 
       enableTelemetry: false
@@ -183,7 +183,7 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
       )
 
       lock: {
-        kind: 'CanNotDelete'
+        kind: commonConfig.lockKind
       }
 
       enableTelemetry: false

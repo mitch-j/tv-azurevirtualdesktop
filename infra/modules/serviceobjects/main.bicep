@@ -59,7 +59,7 @@ module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0
     location: commonConfig.location
     tags: tags
     lock: {
-      kind: 'CanNotDelete'
+      kind: commonConfig.lockKind
     }
   }
 }

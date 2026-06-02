@@ -116,6 +116,7 @@ var commonConfig = {
   repositoryName: 'tv-azurevirtualdesktop'
   product: 'Azure Virtual Desktop'
   division: 'Information Technology'
+  lockKind: 'None'
 }
 
 @description('Standard purpose keys used for naming.')

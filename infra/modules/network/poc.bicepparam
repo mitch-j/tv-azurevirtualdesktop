@@ -38,7 +38,7 @@ param privateEndpointSubnetAddressPrefix = '10.243.192.32/27'
 // Leave empty unless domain DNS servers are required for AD DS or hybrid join.
 param dnsServers = [
   '10.113.20.3'
-  '10.1133.20.4'
+  '10.113.20.4'
   '172.16.28.10'
 ]
 

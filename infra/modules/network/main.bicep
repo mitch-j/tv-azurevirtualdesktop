@@ -154,6 +154,20 @@ var hubToSpokePeeringName = virtualNetworkPeeringName(
   avdSpokePeeringAlias
 )
 
+var hubVirtualNetworkResourceIdSegments = split(hubVirtualNetworkResourceId, '/')
+
+var hubVirtualNetworkSubscriptionIdFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[2]
+
+var hubVirtualNetworkResourceGroupNameFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[4]
+
+var hubVirtualNetworkNameFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[lastIndexOf(hubVirtualNetworkResourceIdSegments, 'virtualNetworks') + 1]
+
+var effectiveHubSubscriptionId = empty(hubSubscriptionId) ? hubVirtualNetworkSubscriptionIdFromId : hubSubscriptionId
+
+var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? hubVirtualNetworkResourceGroupNameFromId : hubResourceGroupName
+
+var effectiveHubVirtualNetworkName = empty(hubVirtualNetworkName) ? hubVirtualNetworkNameFromId : hubVirtualNetworkName
+
 // Modules
 
 module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' ={
@@ -203,11 +217,11 @@ module spokeToHubPeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualN
   ]
 }
 
-module hubToSpokePeering './hub-to-spoke-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
+module hubToSpokePeering './hub-to-spoke-peering.bicep' = if (!empty(hubVirtualNetworkResourceId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)) {
   name: '${deployment().name}-h2s-peer'
-  scope: resourceGroup(hubSubscriptionId, hubResourceGroupName)
+  scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
   params: {
-    localVirtualNetworkName: hubVirtualNetworkName
+    localVirtualNetworkName: effectiveHubVirtualNetworkName
     remoteVirtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
     peeringName: hubToSpokePeeringName
     allowVirtualNetworkAccess: true

@@ -46,8 +46,6 @@ param(
     [Parameter()]
     [switch]$SkipLint,
 
-    [Parameter()]
-    [switch]$SkipHubToSpokePeering
 )
 
 $ErrorActionPreference = 'Stop'
@@ -421,9 +419,7 @@ try {
         $deploymentArgs = $baseArgs + @('--template-file', $TemplateFile, '--parameters', "@$ParameterFile")
     }
 
-    if ($SkipHubToSpokePeering) {
-        $deploymentArgs += @('--parameters', 'skipHubToSpokePeering=true')
-    }
+
 
     switch ($Action) {
         'Validate' {

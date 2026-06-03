@@ -68,9 +68,6 @@ param hubVirtualNetworkResourceId string = ''
 @description('Subscription ID containing the hub virtual network.')
 param hubSubscriptionId string = ''
 
-@description('Whether to skip creating the hub-to-spoke peering. Used during validation/what-if to avoid cross-subscription nested deployment authorization failures.')
-param skipHubToSpokePeering bool = false
-
 @description('Resource group containing the hub virtual network.')
 param hubResourceGroupName string = ''
 
@@ -220,7 +217,7 @@ module spokeToHubPeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualN
   ]
 }
 
-module hubToSpokePeering './hub-to-spoke-peering.bicep' = if (!skipHubToSpokePeering && !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)) {
+module hubToSpokePeering './hub-to-spoke-peering.bicep' = if (!empty(hubVirtualNetworkResourceId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)) {
   name: '${deployment().name}-h2s-peer'
   scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
   params: {

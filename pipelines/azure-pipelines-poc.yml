@@ -49,7 +49,6 @@ stages:
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
 
-
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: serviceobjects
@@ -83,7 +82,6 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/network/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
-      skipHubToSpokePeering: true
 
   - template: templates/bicep-deployment-template.yml
     parameters:

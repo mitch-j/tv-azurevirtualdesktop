@@ -95,7 +95,7 @@ var enablePrivateEndpoint = !empty(privateEndpointSubnetResourceId)
 // Modules
 
 module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
-  name: 'deploy-${fslogixStorageAccountName}'
+  name: '${deployment().name}-${fslogixStorageAccountName}'
   params: {
     name: fslogixStorageAccountName
     location: commonConfig.location

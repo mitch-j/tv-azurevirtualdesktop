@@ -124,7 +124,7 @@ var workspaceDeployments = [
 
 module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
   for (hostPoolItem, i) in hostPools: {
-    name: 'deploy-${hostPoolNames[i]}'
+    name: '${deployment().name}-${hostPoolNames[i]}'
     params: {
       name: hostPoolNames[i]
       location: commonConfig.location
@@ -152,7 +152,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
 
 module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/application-group:0.4.2' = [
   for (appGroup, i) in desktopApplicationGroups: {
-    name: 'deploy-${appGroup.name}'
+    name: '${deployment().name}-${appGroup.name}'
     dependsOn: [
       hostPool
     ]
@@ -187,7 +187,7 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
 
 module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
   for (workspaceDeployment, i) in workspaceDeployments: {
-    name: 'deploy-${workspaceDeployment.name}'
+    name: '${deployment().name}-${workspaceDeployment.name}'
     dependsOn: [
       desktopApplicationGroup
     ]

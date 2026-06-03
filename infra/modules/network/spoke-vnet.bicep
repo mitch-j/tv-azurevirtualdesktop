@@ -61,7 +61,7 @@ param dnsServers array = []
 // Modules
 
 module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
-  name: 'deploy-${sessionHostNetworkSecurityGroupName}'
+  name: '${deployment().name}-nsg'
   params:{
     name: sessionHostNetworkSecurityGroupName
     location: location
@@ -72,7 +72,7 @@ module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-securi
 
 
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
-  name: 'deploy-${virtualNetworkName}'
+  name: '${deployment().name}-vnet'
   params:{
     name: virtualNetworkName
     location: location

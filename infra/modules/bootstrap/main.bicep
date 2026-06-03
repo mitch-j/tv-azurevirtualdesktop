@@ -72,7 +72,7 @@ var resourceGroupNames = [
 
 module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
   for (rg, i) in resourceGroupNames: {
-    name: 'deploy-rg-${environmentConfig.shortName}-${i}'
+    name: '${deployment().name}-rg'
     params: {
       name: rg.name
       location: location

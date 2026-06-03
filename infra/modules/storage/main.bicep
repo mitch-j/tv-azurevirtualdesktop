@@ -79,7 +79,7 @@ var storageRGName = resourceGroupName(
 // Modules
 
 module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: 'deploy-${storageRGName}'
+  name: '${deployment().name}-stor-rg'
   params: {
     name: storageRGName
     location: commonConfig.location
@@ -88,7 +88,7 @@ module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' =
 }
 
 module storageResources './resources.bicep' = {
-  name: 'deploy-${commonConfig.workloadName}-storage-${environmentConfig.shortName}'
+  name: '${deployment().name}-stor-res'
   scope: resourceGroup(storageRGName)
   dependsOn: [
     storageResourceGroup

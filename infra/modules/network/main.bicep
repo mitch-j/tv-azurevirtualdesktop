@@ -130,7 +130,7 @@ var spokeToHubPeeringName = resourceNameWithPurpose(
 // Modules
 
 module spokeVnet './spoke-vnet.bicep' = {
-  name: 'deploy-avd-network-spoke-${environment}'
+  name: '${deployment().name}-spoke-vnet'
   scope: resourceGroup(networkResourceGroupName)
   params: {
     location: location
@@ -147,7 +147,7 @@ module spokeVnet './spoke-vnet.bicep' = {
 }
 
 module spokePeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
-  name: 'deploy-avd-network-peering-${environment}'
+  name: '${deployment().name}-s2h-peer'
   scope: resourceGroup(networkResourceGroupName)
   params: {
     localVirtualNetworkName: virtualNetworkName

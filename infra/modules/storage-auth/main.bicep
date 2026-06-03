@@ -93,7 +93,7 @@ var fslogixAccountName = storageAccountName(
 // Modules
 
 module storageAuthResources './resources.bicep' = {
-  name: 'deploy-avd-storage-auth-${environment}'
+  name: '${deployment().name}-stor-auth'
   scope: resourceGroup(storageRGName)
   params: {
     storageAccountName: fslogixAccountName

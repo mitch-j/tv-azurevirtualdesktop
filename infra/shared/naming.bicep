@@ -1,15 +1,19 @@
 metadata name = 'Naming Helpers'
 metadata description = 'Reusable naming functions for Azure Virtual Desktop IaC deployments.'
 
+// Imports
+
 import {
   resourceAbbreviationMap
   resourcePurposeMap
 } from './config.bicep'
 
 import {
-  ResourceTypeName
   PurposeName
+  ResourceTypeName
 } from './types.bicep'
+
+// Standard Resource Names
 
 @description('Builds a standard Azure resource name using the pattern: prefix-workload-abbreviation-environment.')
 @export()
@@ -45,7 +49,9 @@ func resourceGroupName(
   environmentShortName
 )
 
-@description('Builds a compact name for resources with stricter naming limits.')
+// Compact Resource Names
+
+@description('Builds a compact resource name using the pattern: prefixworkloadabbreviationenvironment.')
 @export()
 func compactName(
   namePrefix string,
@@ -54,7 +60,7 @@ func compactName(
   environmentShortName string
 ) string => toLower('${namePrefix}${workloadName}${resourceAbbreviationMap[resourceType]}${environmentShortName}')
 
-@description('Builds a compact name for resources with stricter naming limits.')
+@description('Builds a compact resource name with purpose using the pattern: prefixworkloadabbreviationpurposeenvironment.')
 @export()
 func compactNameWithPurpose(
   namePrefix string,
@@ -64,9 +70,18 @@ func compactNameWithPurpose(
   environmentShortName string
 ) string => toLower('${namePrefix}${workloadName}${resourceAbbreviationMap[resourceType]}${replace(resourcePurposeMap[purpose], '-', '')}${environmentShortName}')
 
-/* Storage Account Naming function usage example:
+// Storage Account Names
 
-First generate a deterministic unique suffix for the storage account using the uniqueString function with stable inputs:
+/*
+Storage account names must be globally unique and meet strict naming limits.
+
+Recommended pattern:
+1. Generate a deterministic suffix with stable inputs.
+2. Pass the suffix into storageAccountName().
+3. Let the helper build a compact, lower-case storage account name.
+
+Example:
+
 var storageUniqueSuffix = uniqueString(
   subscription().id,
   resourceGroup().id,
@@ -76,7 +91,6 @@ var storageUniqueSuffix = uniqueString(
   environmentConfigMap[environment].shortName
 )
 
-Then build the storage account name using the helper function with the precomputed suffix:
 var diagnosticsStorageAccountName = storageAccountName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
@@ -95,6 +109,8 @@ func storageAccountName(
   environmentShortName string,
   uniqueSuffix string
 ) string => '${take(toLower(replace('${namePrefix}${workloadName}${resourceAbbreviationMap.storageAccount}${replace(resourcePurposeMap[purpose], '-', '')}${environmentShortName}', '-', '')), 11)}${uniqueSuffix}'
+
+// Service-Specific Resource Names
 
 @description('Builds a Key Vault name. Key Vault names must be 3-24 characters and may contain only alphanumeric characters and hyphens.')
 @export()

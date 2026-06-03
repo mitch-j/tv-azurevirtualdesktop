@@ -1,6 +1,8 @@
 metadata name = 'Type Definitions'
 metadata description = 'This Bicep file defines shared types used across the IaC templates. It includes standard tag values, environment configurations, and resource reference types for consistent deployment practices.'
 
+// Environment Types
+
 @description('Short deployment environment names used by repo pipelines and parameter files.')
 @export()
 type EnvironmentName = 'dev' | 'test' | 'prod' | 'e2e' | 'poc'
@@ -14,54 +16,6 @@ type TagEnvironmentName =
   | 'Production'
   | 'Proof of Concept'
   | 'End to End'
-
-@description('Azure policy-compliant Division tag values.')
-@export()
-type DivisionName =
-  | 'Information Technology'
-  | 'Finance'
-  | 'Marketing'
-  | 'Ecommerce'
-  | 'Sales and Business Development'
-  | 'Lumber and Building Materials'
-  | 'Administration'
-  | 'Logistics'
-  | 'Merchandising'
-  | 'Shared'
-
-@description('Supported Azure resource type keys for standard naming.')
-@export()
-type ResourceTypeName =
-  | 'appService'
-  | 'appServicePlan'
-  | 'applicationInsights'
-  | 'containerRegistry'
-  | 'functionApp'
-  | 'keyVault'
-  | 'logAnalyticsWorkspace'
-  | 'managedIdentity'
-  | 'privateEndpoint'
-  | 'privateDnsZone'
-  | 'resourceGroup'
-  | 'storageAccount'
-  | 'subnet'
-  | 'virtualNetwork'
-  | 'hostPool'
-  | 'desktopApplicationGroup'
-  | 'workspace'
-  | 'scalingPlan'
-  | 'computeGallery'
-  | 'imageTemplate'
-  | 'sessionHost'
-
-
-@description('Required standard Azure resource tags.')
-@export()
-type standardTags = {
-  Environment: TagEnvironmentName
-  Division: DivisionName
-  Product: string
-}
 
 @description('Standard environment configuration used by shared repo templates.')
 @export()
@@ -88,6 +42,81 @@ type EnvironmentConfigMap = {
   e2e: EnvironmentConfig
   poc: EnvironmentConfig
 }
+
+// Tag Types
+
+@description('Azure policy-compliant Division tag values.')
+@export()
+type DivisionName =
+  | 'Information Technology'
+  | 'Finance'
+  | 'Marketing'
+  | 'Ecommerce'
+  | 'Sales and Business Development'
+  | 'Lumber and Building Materials'
+  | 'Administration'
+  | 'Logistics'
+  | 'Merchandising'
+  | 'Shared'
+
+@description('Required standard Azure resource tags.')
+@export()
+type StandardTags = {
+  Environment: TagEnvironmentName
+  Division: DivisionName
+  Product: string
+}
+
+// Naming Types
+
+@description('Supported Azure resource type keys for standard naming.')
+@export()
+type ResourceTypeName =
+  | 'appService'
+  | 'appServicePlan'
+  | 'applicationInsights'
+  | 'containerRegistry'
+  | 'functionApp'
+  | 'keyVault'
+  | 'logAnalyticsWorkspace'
+  | 'managedIdentity'
+  | 'privateEndpoint'
+  | 'privateDnsZone'
+  | 'resourceGroup'
+  | 'storageAccount'
+  | 'subnet'
+  | 'virtualNetwork'
+  | 'hostPool'
+  | 'desktopApplicationGroup'
+  | 'workspace'
+  | 'scalingPlan'
+  | 'computeGallery'
+  | 'imageTemplate'
+  | 'sessionHost'
+
+@description('Supported purpose keys for standard naming.')
+@export()
+type PurposeName =
+  | 'serviceObjects'
+  | 'storage'
+  | 'network'
+  | 'compute'
+  | 'sessionHosts'
+  | 'opsPooled'
+  | 'devPooled'
+  | 'devPersonal'
+  | 'opsPooledDesktop'
+  | 'opsPersonalDesktop'
+  | 'devPooledDesktop'
+  | 'devPersonalDesktop'
+  | 'primary'
+  | 'diagnostics'
+  | 'bootDiagnostics'
+  | 'images'
+  | 'logs'
+  | 'fslogix'
+
+// Existing Resource References
 
 @description('Generic reference to an existing Azure resource.')
 @export()
@@ -117,6 +146,8 @@ type ExistingVnetRef = {
   @description('Optional full resource ID. Use this when the VNet is easier to pass directly.')
   resourceId: string?
 }
+
+// Network Types
 
 @description('Subnet configuration for virtual network modules.')
 @export()
@@ -153,6 +184,8 @@ type PeeringConfig = {
   useRemoteGateways: bool?
 }
 
+// Private DNS Zone Types
+
 @description('Additional private DNS virtual network link configuration.')
 @export()
 type AdditionalPrivateDnsVnetLinkConfig = {
@@ -187,6 +220,8 @@ type PrivateDnsZoneConfig = {
   @description('Additional VNet links to create for this private DNS zone.')
   additionalLinks: AdditionalPrivateDnsVnetLinkConfig[]?
 }
+
+// Private DNS Resolver Types
 
 @description('Private DNS resolver reference.')
 @export()
@@ -246,7 +281,7 @@ type ForwardingRulesetLinkConfig = {
 @description('Private DNS forwarding ruleset configuration.')
 @sealed()
 @export()
-type forwardingRulesetManagedConfig = {
+type ForwardingRulesetManagedConfig = {
   @description('Forwarding ruleset name.')
   name: string
 
@@ -260,6 +295,8 @@ type forwardingRulesetManagedConfig = {
   vnetLinks: ForwardingRulesetLinkConfig[]?
 }
 
+// RBAC Types
+
 @description('Role assignment configuration.')
 @export()
 type RoleAssignmentConfig = {
@@ -271,6 +308,24 @@ type RoleAssignmentConfig = {
 
   @description('Role definition ID GUID.')
   roleDefinitionId: string
+}
+
+// Azure Virtual Desktop Types
+
+@description('Azure Virtual Desktop workspace configuration.')
+@export()
+type WorkspaceConfig = {
+  @description('Short name used in the generated workspace name.')
+  name: PurposeName
+
+  @description('Friendly display name.')
+  friendlyName: string?
+
+  @description('Description.')
+  description: string?
+
+  @description('Public network access setting.')
+  publicNetworkAccess: 'Enabled' | 'Disabled'?
 }
 
 @description('Azure Virtual Desktop desktop application group configuration.')
@@ -331,41 +386,3 @@ type HostPoolConfig = {
   @description('Desktop application group for this host pool.')
   desktopApplicationGroup: DesktopApplicationGroupConfig
 }
-
-@description('Azure Virtual Desktop workspace configuration.')
-@export()
-type WorkspaceConfig = {
-  @description('Short name used in the generated workspace name.')
-  name: PurposeName
-
-  @description('Friendly display name.')
-  friendlyName: string?
-
-  @description('Description.')
-  description: string?
-
-  @description('Public network access setting.')
-  publicNetworkAccess: 'Enabled' | 'Disabled'?
-}
-
-@description('Supported purpose keys for standard naming.')
-@export()
-type PurposeName =
-  | 'serviceObjects'
-  | 'storage'
-  | 'network'
-  | 'compute'
-  | 'sessionHosts'
-  | 'opsPooled'
-  | 'devPooled'
-  | 'devPersonal'
-  | 'opsPooledDesktop'
-  | 'opsPersonalDesktop'
-  | 'devPooledDesktop'
-  | 'devPersonalDesktop'
-  | 'primary'
-  | 'diagnostics'
-  | 'bootDiagnostics'
-  | 'images'
-  | 'logs'
-  | 'fslogix'

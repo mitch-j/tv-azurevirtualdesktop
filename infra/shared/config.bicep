@@ -1,9 +1,13 @@
 metadata name = 'Configuration Values'
 metadata description = 'This Bicep file defines standard configuration values used across the IaC templates. It includes environment settings, resource type abbreviations, and default behavior flags for consistent deployment practices.'
 
+// Imports
+
 import {
   EnvironmentConfigMap
 } from './types.bicep'
+
+// Environment Configuration
 
 @description('Standard environment settings used across deployment templates.')
 @export()
@@ -35,6 +39,50 @@ var environmentConfigMap EnvironmentConfigMap = {
     logRetentionDays: 30
   }
 }
+
+// Repository Defaults
+
+@description('Shared repository and workload configuration values used across modules.')
+@export()
+var commonConfig = {
+  namePrefix: 'tv'
+  location: 'eastus'
+  workloadName: 'avd'
+  repositoryName: 'tv-azurevirtualdesktop'
+  product: 'Azure Virtual Desktop'
+  division: 'Information Technology'
+  lockKind: 'None'
+}
+
+@description('Standard tags applied to all resources. Extend or override in specific modules as needed.')
+@export()
+var StandardTags = {
+  Division: commonConfig.division
+  Product: commonConfig.product
+}
+
+// Deployment Defaults
+
+@description('Default module behavior flags. Override in parameters or module inputs when needed.')
+@export()
+var deploymentDefaults = {
+  enableDiagnosticSettings: true
+  enablePrivateEndpoints: true
+  enablePublicNetworkAccess: false
+  enablePurgeProtection: true
+  enableSoftDelete: true
+}
+
+@description('Default diagnostic categories by general resource pattern. Resource-specific modules may override these.')
+@export()
+var diagnosticDefaults = {
+  metrics: [
+    'AllMetrics'
+  ]
+  logs: []
+}
+
+// Resource Type Naming
 
 @description('Standard Azure resource type keys used for naming.')
 @export()
@@ -88,36 +136,7 @@ var resourceAbbreviationMap = {
   sessionHost: 'vdsh'
 }
 
-@description('Default module behavior flags. Override in parameters or module inputs when needed.')
-@export()
-var deploymentDefaults = {
-  enableDiagnosticSettings: true
-  enablePrivateEndpoints: true
-  enablePublicNetworkAccess: false
-  enablePurgeProtection: true
-  enableSoftDelete: true
-}
-
-@description('Default diagnostic categories by general resource pattern. Resource-specific modules may override these.')
-@export()
-var diagnosticDefaults = {
-  metrics: [
-    'AllMetrics'
-  ]
-  logs: []
-}
-
-@description('Common placeholder values used by the repo template. Replace these in real workload repos.')
-@export()
-var commonConfig = {
-  namePrefix: 'tv'
-  location: 'eastus'
-  workloadName: 'avd'
-  repositoryName: 'tv-azurevirtualdesktop'
-  product: 'Azure Virtual Desktop'
-  division: 'Information Technology'
-  lockKind: 'None'
-}
+// Resource Purpose Naming
 
 @description('Standard purpose keys used for naming.')
 @export()
@@ -131,7 +150,7 @@ var resourcePurpose = {
   devPooled: 'devPooled'
   devPersonal: 'devPersonal'
   opsPooledDesktop: 'opsPooledDesktop'
-  opsePersonalDesktop: 'opsPersonalDesktop'
+  opsPersonalDesktop: 'opsPersonalDesktop'
   devPooledDesktop: 'devPooledDesktop'
   devPersonalDesktop: 'devPersonalDesktop'
   primary: 'primary'
@@ -162,12 +181,28 @@ var resourcePurposeMap = {
   bootDiagnostics: 'bootdiag'
   images: 'img'
   logs: 'log'
-  fslogix: 'fslogiz'
+  fslogix: 'fslogix'
 }
 
-@description('Standard tags applied to all resources. Extend or override in specific modules as needed.')
+// Azure Virtual Desktop Defaults
+
+@description('Default Azure Virtual Desktop settings reused across host pools.')
 @export()
-var standardTags = {
-  Division: commonConfig.division
-  Product: commonConfig.product
+var avdDefaults = {
+  customRdpProperty: 'audiocapturemode:i:1;audiomode:i:0;targetisaadjoined:i:1;drivestoredirect:s:;redirectclipboard:i:1;redirectcomports:i:0;redirectprinters:i:1;redirectsmartcards:i:1;screen mode id:i:2;use multimon:i:1;'
+}
+
+// Role Definition IDs
+
+@description('Azure role definition IDs used by Azure Virtual Desktop service object deployments.')
+@export()
+var avdRoleDefinitionIds = {
+  desktopVirtualizationUser: '1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63'
+}
+
+@description('Azure role definition IDs used by Storage Auth deployments.')
+@export()
+var storageRoleDefinitionIds = {
+  fileDataSmbShareContributor: '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb'
+  fileDataSmbShareElevatedContributor: 'a7264617-510b-434b-a828-9731dc254ea7'
 }

@@ -1,14 +1,28 @@
 targetScope = 'subscription'
 
-/* AVD Deployment - Bootstrap Module
-This module is responsible for bootstrapping the foundational infrastructure required for the AVD environment. It
-creates the core resource groups and any shared resources that need to exist before deploying the host pools and
-session hosts. This module is designed to be run once per subscription/environment and sets up the necessary structure
-for subsequent module deployments.
+/*
+AVD Deployment / Bootstrap
+
+Scope:
+- Subscription
+
+Deploys:
+- Core AVD resource groups defined in shared configuration
+
+Does not deploy:
+- Virtual networks or subnets
+- Storage accounts or FSLogix shares
+- AVD host pools, desktop application groups, or workspaces
+- Session host virtual machines
+
+Notes:
+- Resource group ownership may move to individual modules when module-level ownership is preferred.
+- Keep this module focused on subscription-level bootstrap resources only.
 */
 
-/*
+// Imports
 
+/*
 import {
   EnvironmentName
 } from '../../shared/types.bicep'
@@ -16,25 +30,32 @@ import {
 import {
   commonConfig
   environmentConfigMap
-  standardTags
+  StandardTags
 } from '../../shared/config.bicep'
 
 import {
   resourceGroupName
 } from '../../shared/naming.bicep'
 
+// Parameters
+
 @description('Short deployment environment name used by pipelines and parameter files.')
 param environment EnvironmentName
-var location = commonConfig.location
 
+// Variables
+
+// Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Tags to add to resource groups deployed by this module.')
-var tags = union(standardTags, {
+// Azure region used for bootstrap resource group deployment.
+var location = commonConfig.location
+
+// Standard tags applied to resource groups deployed by this module.
+var tags = union(StandardTags, {
   Environment: environmentConfig.tagEnvironment
 })
 
-
+// Resource group names generated from shared resource group type configuration.
 var resourceGroupNames = [
   for resourceGroupType in commonConfig.resourceGroupTypes: {
     type: resourceGroupType
@@ -47,6 +68,7 @@ var resourceGroupNames = [
   }
 ]
 
+// Modules
 
 module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
   for (rg, i) in resourceGroupNames: {
@@ -62,5 +84,8 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
   }
 ]
 
+// Outputs
+
+@description('Resource group names generated and deployed by the bootstrap module.')
 output resourceGroups array = resourceGroupNames
 */

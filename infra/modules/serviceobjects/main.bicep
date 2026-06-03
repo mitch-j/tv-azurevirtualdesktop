@@ -1,7 +1,10 @@
 targetScope = 'subscription'
 
 /*
-AVD Deployment / Service Objects Deployment
+AVD Deployment / Service Objects
+
+Scope:
+- Subscription
 
 Deploys:
 - Service Objects resource group
@@ -10,7 +13,14 @@ Deploys:
 - One or more workspaces
 - Workspace publishing for desktop application groups
 - Desktop Virtualization User RBAC assignments on application groups
+
+Does not deploy:
+- Virtual networks or subnets
+- Storage accounts or FSLogix shares
+- Session host virtual machines
 */
+
+// Imports
 
 import {
   EnvironmentName
@@ -21,7 +31,7 @@ import {
 import {
   commonConfig
   environmentConfigMap
-  standardTags
+  StandardTags
   resourcePurpose
 } from '../../shared/config.bicep'
 
@@ -29,22 +39,28 @@ import {
   resourceGroupName
 } from '../../shared/naming.bicep'
 
-@description('Environment to deploy.')
+// Parameters
+
+@description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
 
-@description('Configuration for workspaces to deploy.')
+@description('Workspace configurations to deploy for the selected environment.')
 param workspaces WorkspaceConfig[]
 
-@description('Configuration for host pools to deploy.')
+@description('Host pool configurations to deploy for the selected environment.')
 param hostPools HostPoolConfig[]
 
+// Variables
+
+@description('Shared environment configuration for the selected deployment environment.')
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Tags to add to resources deployed by this module.')
-var tags = union(standardTags, {
+@description('Standard tags applied to resources deployed by this module.')
+var tags = union(StandardTags, {
   Environment: environmentConfig.tagEnvironment
 })
 
+@description('Name of the resource group that contains AVD service object resources.')
 var serviceObjectsRGName = resourceGroupName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
@@ -52,8 +68,10 @@ var serviceObjectsRGName = resourceGroupName(
   environmentConfig.shortName
 )
 
+// Modules
+
 module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: 'deploy-${serviceObjectsRGName}'
+  name: 'deploy-${commonConfig.workloadName}-serviceobjects-rg-${environmentConfig.shortName}'
   params: {
     name: serviceObjectsRGName
     location: commonConfig.location
@@ -65,7 +83,7 @@ module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0
 }
 
 module serviceObjectsResources './resources.bicep' = {
-  name: 'deploy-${commonConfig.workloadName}-serviceobjects-${environmentConfig.shortName}'
+  name: 'deploy-${commonConfig.workloadName}-serviceobjects-resources-${environmentConfig.shortName}'
   scope: resourceGroup(serviceObjectsRGName)
   dependsOn: [
     serviceObjectsResourceGroup
@@ -78,9 +96,22 @@ module serviceObjectsResources './resources.bicep' = {
   }
 }
 
-output resourceGroupName string = serviceObjectsRGName
+// Outputs
+
+@description('Name of the Service Objects resource group.')
+output serviceObjectsResourceGroupName string = serviceObjectsRGName
+
+@description('Names of the deployed AVD workspaces.')
 output workspaceNames array = serviceObjectsResources.outputs.workspaceNames
+
+@description('Resource IDs of the deployed AVD workspaces.')
 output workspaceIds array = serviceObjectsResources.outputs.workspaceIds
+
+@description('Deployment output objects for the deployed AVD host pools.')
 output hostPools array = serviceObjectsResources.outputs.hostPools
+
+@description('Resource IDs of the deployed AVD host pools.')
 output hostPoolIds array = serviceObjectsResources.outputs.hostPoolIds
+
+@description('Resource IDs of the deployed desktop application groups.')
 output desktopApplicationGroupIds array = serviceObjectsResources.outputs.desktopApplicationGroupIds

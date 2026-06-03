@@ -68,9 +68,29 @@ stages:
 
   - template: templates/bicep-deployment-template.yml
     parameters:
-      deploymentUnitName: storage
+      deploymentUnitName: network
+      validationDependsOn:
+        - Deploy_serviceobjects
       deployDependsOn:
         - Deploy_serviceobjects
+      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: poc
+      workloadName: $(workloadName)-network
+      deploymentScope: Subscription
+      deploymentLocation: $(deploymentLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/network/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/network/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: storage
+      validationDependsOn:
+        - Deploy_network
+      deployDependsOn:
+        - Deploy_network
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc

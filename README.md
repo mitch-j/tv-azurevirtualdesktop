@@ -17,7 +17,7 @@ This repository is an infrastructure repository, not an application repository.
 ## Ownership
 
 | Item                      | Details             |
-|---------------------------|---------------------|
+| ------------------------- | ------------------- |
 | Owning Team               | Systems Engineering |
 | Technical Owner           | Mitch Jurisch       |
 | Operational Support Owner | Operations/SA       |
@@ -26,7 +26,7 @@ This repository is an infrastructure repository, not an application repository.
 ## Azure Scope
 
 | Item             | Details                   |
-|------------------|---------------------------|
+| ---------------- | ------------------------- |
 | Azure Tenant     | truevalue.onmicrosoft.com |
 | Management Group | Corp                      |
 | Subscription     | avd-sub-poc, avd-sub-prod |
@@ -81,9 +81,13 @@ This repository is an infrastructure repository, not an application repository.
 Each Module deploys resources related to its service area.
 The deployment flow must occur in this order:
 
-1. bookstrap
-2. serviceobjects
-3. storage
+| Order | Stage Name     | Description                                              |
+| ----- | -------------- | -------------------------------------------------------- |
+| 1     | bootstrap      | creates baseline resources                               |
+| 2     | serviceobjects | Shared control Plane resources                           |
+| 3     | network        | Builds hub and spoke networking for the AVD subscription |
+| 4     | storage        | FsLogix Profile storage resources                        |
+| 5     | storage-auth   | Grants proper access to the storage resources            |
 
 ## Shared Bicep Files
 
@@ -94,7 +98,7 @@ infra/shared/
 ```
 
 | File           | Purpose                                                                 |
-|----------------|-------------------------------------------------------------------------|
+| -------------- | ----------------------------------------------------------------------- |
 | `types.bicep`  | Defines shared type contracts used by templates and modules             |
 | `config.bicep` | Defines shared environment mappings, defaults, and naming abbreviations |
 | `naming.bicep` | Defines shared naming functions to ensure consistent resource naming    |
@@ -102,7 +106,7 @@ infra/shared/
 ## Environment Naming
 
 | Deployment Environment | Azure `Environment` Tag |
-|------------------------|-------------------------|
+| ---------------------- | ----------------------- |
 | `poc`                  | `Proof of Concept`      |
 | `dev`                  | `Development`           |
 | `test`                 | `Stage`                 |
@@ -125,7 +129,7 @@ The Azure policy-compliant environment value is used for:
 Azure resources deployed from this template must use the standard required tags:
 
 | Tag           | Purpose                                                                 |
-|---------------|-------------------------------------------------------------------------|
+| ------------- | ----------------------------------------------------------------------- |
 | `Environment` | Identifies the lifecycle stage of the resource                          |
 | `Division`    | Identifies the owning VP-level organizational unit                      |
 | `Product`     | Identifies the business product or service associated with the resource |
@@ -157,7 +161,7 @@ The deployment should produce tags similar to:
 `workloadName` and `product` are intentionally separate.
 
 | Parameter      | Meaning                                        | Example     | Used For                             |
-|----------------|------------------------------------------------|-------------|--------------------------------------|
+| -------------- | ---------------------------------------------- | ----------- | ------------------------------------ |
 | `workloadName` | Technical name of the deployable workload      | `order-api` | Resource names and deployment naming |
 | `product`      | Approved business product or service tag value | `OMS`       | Azure tags and cost reporting        |
 
@@ -194,7 +198,7 @@ param repositoryName = '<repository-name>'
 Use the appropriate environment value in each parameter file:
 
 | File              | `environmentName` |
-|-------------------|-------------------|
+| ----------------- | ----------------- |
 | `poc.bicepparam`  | `poc`             |
 | `dev.bicepparam`  | `dev`             |
 | `test.bicepparam` | `test`            |
@@ -209,7 +213,7 @@ Parameter files are expected to contain deployable values before pipeline execut
 This repository uses environment-specific Azure DevOps pipeline entry points and a shared pipeline stage template.
 
 | Pipeline                                            | Purpose                                     |
-|-----------------------------------------------------|---------------------------------------------|
+| --------------------------------------------------- | ------------------------------------------- |
 | `pipelines/azure-pipelines-poc.yml`                 | POC validation, what-if, and deployment     |
 | `pipelines/azure-pipelines-dev.yml`                 | Dev validation, what-if, and deployment     |
 | `pipelines/azure-pipelines-test.yml`                | Test validation, what-if, and deployment    |
@@ -244,7 +248,7 @@ These pipelines are intended to be run manually or through an approved release p
 The shared pipeline template defines three stages for each module:
 
 | Stage      | Purpose                                           |
-|------------|---------------------------------------------------|
+| ---------- | ------------------------------------------------- |
 | `Validate` | Lints, builds, and validates the Bicep deployment |
 | `WhatIf`   | Runs Azure deployment what-if                     |
 | `Deploy`   | Creates the Azure deployment                      |
@@ -268,7 +272,7 @@ Deployment approval requirements are managed through Azure DevOps Environments, 
 Recommended environment approval configuration:
 
 | Environment | Approval Requirement                             |
-|-------------|--------------------------------------------------|
+| ----------- | ------------------------------------------------ |
 | dev         | Optional                                         |
 | test        | Optional or required, depending on workload risk |
 | prod        | Required                                         |
@@ -284,7 +288,7 @@ For additional deployment protection, configure Branch control checks on Azure D
 Recommended configuration:
 
 | Environment | Allowed Branches  | Protection Requirement |
-|-------------|-------------------|------------------------|
+| ----------- | ----------------- | ---------------------- |
 | poc         | `refs/heads/main` | Optional               |
 | dev         | `refs/heads/main` | Optional               |
 | test        | `refs/heads/main` | Recommended            |
@@ -309,7 +313,7 @@ This provides defense in depth:
 The deployment script supports three actions:
 
 | Action     | Purpose                                               |
-|------------|-------------------------------------------------------|
+| ---------- | ----------------------------------------------------- |
 | `Validate` | Runs Bicep lint/build and Azure deployment validation |
 | `WhatIf`   | Runs Bicep lint/build and Azure deployment what-if    |
 | `Deploy`   | Runs Bicep lint/build and creates the deployment      |
@@ -323,7 +327,7 @@ scripts/Invoke-BicepDeployment.ps1
 Common script parameters include:
 
 | Parameter            | Purpose                                    |
-|----------------------|--------------------------------------------|
+| -------------------- | ------------------------------------------ |
 | `Action`             | `Validate`, `WhatIf`, or `Deploy`          |
 | `ResourceGroupName`  | Target Azure resource group                |
 | `TemplateFile`       | Path to `infra/main.bicep`                 |
@@ -383,7 +387,7 @@ Run the repository deployment script locally:
 The following tools are expected for local development:
 
 | Tool                    | Purpose                                      |
-|-------------------------|----------------------------------------------|
+| ----------------------- | -------------------------------------------- |
 | Azure CLI               | Azure authentication and deployment commands |
 | Bicep CLI               | Bicep build, lint, and compile               |
 | PowerShell 7+           | Running deployment scripts                   |
@@ -419,7 +423,7 @@ az bicep upgrade
 Each environment pipeline requires an Azure DevOps service connection.
 
 | Environment | Service Connection               | Scope     |
-|-------------|----------------------------------|-----------|
+| ----------- | -------------------------------- | --------- |
 | Poc         | `<dev-service-connection-name>`  | `<scope>` |
 | Dev         | `<dev-service-connection-name>`  | `<scope>` |
 | Test        | `<test-service-connection-name>` | `<scope>` |
@@ -481,7 +485,7 @@ module exampleModule './modules/example.bicep' = {
   name: 'example-${environmentConfig.shortName}'
   params: {
     location: location
-    tags: standardTags
+    tags: StandardTags
   }
 }
 ```
@@ -497,7 +501,7 @@ docs/
 Recommended docs include:
 
 | Document                  | Purpose                                           |
-|---------------------------|---------------------------------------------------|
+| ------------------------- | ------------------------------------------------- |
 | `docs/deployment.md`      | Deployment process and environment-specific notes |
 | `docs/architecture.md`    | Architecture and design context                   |
 | `docs/validation-plan.md` | Validation and testing approach                   |
@@ -508,7 +512,7 @@ Recommended docs include:
 Any exception to the Azure IaC repository standard must be documented and approved before production deployment.
 
 | Item                | Details           |
-|---------------------|-------------------|
+| ------------------- | ----------------- |
 | Exception Required  | `[No]`            |
 | Exception Reference | `[link-or-na]`    |
 | Approver            | `[name-or-group]` |

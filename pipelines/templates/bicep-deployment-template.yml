@@ -88,6 +88,12 @@ stages:
     dependsOn: ${{ parameters.validationDependsOn }}
     variables:
       scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
+      ${{ if eq(parameters.skipHubToSpokePeering, true) }}:
+        - name: skipHubToSpokePeeringArg
+          value: -SkipHubToSpokePeering
+      ${{ if ne(parameters.skipHubToSpokePeering, true) }}:
+        - name: skipHubToSpokePeeringArg
+          value: ""
     jobs:
       - job: ValidateBicep
         displayName: Compile and Validate Bicep
@@ -113,7 +119,7 @@ stages:
                 -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
-                $(if eq(parameters.skipHubToSpokePeering, true), '-SkipHubToSpokePeering', '')
+                $(skipHubToSpokePeeringArg)
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate"
@@ -124,6 +130,12 @@ stages:
     dependsOn: Validate_${{ parameters.deploymentUnitName }}
     variables:
       scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
+      ${{ if eq(parameters.skipHubToSpokePeering, true) }}:
+        - name: skipHubToSpokePeeringArg
+          value: -SkipHubToSpokePeering
+      ${{ if ne(parameters.skipHubToSpokePeering, true) }}:
+        - name: skipHubToSpokePeeringArg
+          value: ""
     jobs:
       - job: WhatIf
         displayName: Run Bicep what-if
@@ -149,7 +161,7 @@ stages:
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
-                $(if eq(parameters.skipHubToSpokePeering, true), '-SkipHubToSpokePeering', '')
+                $(skipHubToSpokePeeringArg)
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"

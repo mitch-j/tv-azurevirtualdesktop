@@ -40,6 +40,12 @@ var environmentConfigMap EnvironmentConfigMap = {
   }
 }
 
+@description('FSLogix file share')
+@export()
+var fslogixConfig = {
+  shareName: 'profiles'
+}
+
 // Repository Defaults
 
 @description('Shared repository and workload configuration values used across modules.')
@@ -164,6 +170,8 @@ var resourcePurpose = {
   images: 'images'
   logs: 'logs'
   fslogix: 'fslogix'
+  avdToHub: 'avdToHub'
+  hubToAvd: 'hubToAvd'
 }
 
 @description('Standard purpose name segments used in resource names.')
@@ -188,6 +196,8 @@ var resourcePurposeMap = {
   images: 'img'
   logs: 'log'
   fslogix: 'fslogix'
+  avdToHub: 'avd-poc-to-hub-prod'
+  hubToAvd: 'hub-prod-to-avd-poc'
 }
 
 // Azure Virtual Desktop Defaults

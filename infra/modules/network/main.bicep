@@ -7,19 +7,19 @@ Scope:
 - Subscription
 
 Deploys:
+- Network resource group
 - AVD spoke virtual network
 - Session host subnet
 - Private endpoint subnet
 - Session host network security group
 - Optional spoke-to-hub virtual network peering
+- Hub-to-spoke peering
 
 Does not deploy:
-- Network resource group
 - AVD host pools, desktop application groups, or workspaces
 - Storage accounts or FSLogix shares
 - Session host virtual machines
 - Hub virtual network
-- Hub-to-spoke peering
 */
 
 // Imports
@@ -39,6 +39,7 @@ import {
 import {
   resourceGroupName
   resourceNameWithPurpose
+  virtualNetworkPeeringName
 } from '../../shared/naming.bicep'
 
 // Parameters
@@ -63,6 +64,15 @@ param dnsServers array = []
 
 @description('Optional remote hub VNet resource ID. Leave empty to skip peering.')
 param hubVirtualNetworkResourceId string = ''
+
+@description('Subscription ID containing the hub virtual network.')
+param hubSubscriptionId string = ''
+
+@description('Resource group containing the hub virtual network.')
+param hubResourceGroupName string = ''
+
+@description('Name of the hub virtual network.')
+param hubVirtualNetworkName string = ''
 
 // Variables
 
@@ -127,16 +137,36 @@ var sessionHostNetworkSecurityGroupName = resourceNameWithPurpose(
   environmentConfig.shortName
 )
 
-// Name of the optional spoke-to-hub virtual network peering.
-var spokeToHubPeeringName = resourceNameWithPurpose(
+var avdSpokePeeringAlias = '${commonConfig.workloadName}-${environmentConfig.shortName}'
+var hubPeeringAlias = 'hub-prod'
+
+var spokeToHubPeeringName = virtualNetworkPeeringName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourceType.virtualNetworkPeering,
-  resourcePurpose.network,
-  environmentConfig.shortName
+  avdSpokePeeringAlias,
+  hubPeeringAlias
+)
+
+var hubToSpokePeeringName = virtualNetworkPeeringName(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  hubPeeringAlias,
+  avdSpokePeeringAlias
 )
 
 // Modules
+
+module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' ={
+  name: '${deployment().name}-network-rg'
+  params: {
+    name: networkResourceGroupName
+    location: location
+    tags: tags
+    lock: {
+      kind: commonConfig.lockKind
+    }
+  }
+}
 
 module spokeVnet './spoke-vnet.bicep' = {
   name: '${deployment().name}-spoke-vnet'
@@ -156,13 +186,14 @@ module spokeVnet './spoke-vnet.bicep' = {
   }
 }
 
-module spokePeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
+module spokeToHubPeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
   name: '${deployment().name}-s2h-peer'
   scope: resourceGroup(networkResourceGroupName)
   params: {
     localVirtualNetworkName: virtualNetworkName
     remoteVirtualNetworkResourceId: hubVirtualNetworkResourceId
     peeringName: spokeToHubPeeringName
+    allowVirtualNetworkAccess: true
     allowForwardedTraffic: true
     allowGatewayTransit: false
     useRemoteGateways: false
@@ -170,6 +201,20 @@ module spokePeering './spoke-to-hub-peering.bicep' = if (!empty(hubVirtualNetwor
   dependsOn: [
     spokeVnet
   ]
+}
+
+module hubToSpokePeering './hub-to-spoke-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
+  name: '${deployment().name}-h2s-peer'
+  scope: resourceGroup(hubSubscriptionId, hubResourceGroupName)
+  params: {
+    localVirtualNetworkName: hubVirtualNetworkName
+    remoteVirtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
+    peeringName: hubToSpokePeeringName
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    useRemoteGateways: false
+  }
 }
 
 // Outputs
@@ -204,11 +249,20 @@ output sessionHostNetworkSecurityGroupResourceId string = spokeVnet.outputs.sess
 @description('Name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
 output spokeToHubPeeringName string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeeringName : ''
 
+@description('Name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringName string = !empty(hubVirtualNetworkResourceId) ? hubToSpokePeeringName : ''
+
 @description('Resource ID of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceId string = !empty(hubVirtualNetworkResourceId) ? spokePeering!.outputs.peeringResourceId : ''
+output spokeToHubPeeringResourceId string = !empty(hubVirtualNetworkResourceId) ? hubToSpokePeering!.outputs.peeringResourceId : ''
 
 @description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? spokePeering!.outputs.peeringResourceName : ''
+output spokeToHubPeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? hubToSpokePeering!.outputs.peeringResourceName : ''
+
+@description('Resource ID of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringResourceId string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeering!.outputs.peeringResourceId : ''
+
+@description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeering!.outputs.peeringResourceName : ''
 
 @description('Name of the network security group associated with the private endpoint subnet.')
 output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSecurityGroupName

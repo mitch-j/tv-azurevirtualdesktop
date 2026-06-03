@@ -118,6 +118,8 @@ type PurposeName =
   | 'images'
   | 'logs'
   | 'fslogix'
+  | 'avdToHub'
+  | 'hubToAvd'
 
 // Existing Resource References
 
@@ -388,4 +390,37 @@ type HostPoolConfig = {
 
   @description('Desktop application group for this host pool.')
   desktopApplicationGroup: DesktopApplicationGroupConfig
+}
+
+@description('Azure Virtual Desktop Session Hosts Group Configuration.')
+@export()
+type SessionHostGroupConfig = {
+  @description('Stable workload key for this session host group.')
+  name: 'opsPooled' | 'devPersonal' | 'devPooled'
+
+  @description('Purpose key used to calculate the session host resource group name.')
+  resourceGroupPurpose: PurposeName
+
+  @description('Purpose key used to calculate the existing AVD host pool name.')
+  hostPoolPurpose: PurposeName
+
+  @description('Windows computer name prefix. Keep this short enough for the final name to stay within the 15-character NetBIOS limit.')
+  vmNamePrefix: string
+
+  @minValue(0)
+  @description('Number of session hosts to plan for this workload.')
+  vmCount: int
+
+  @description('Azure VM SKU for this workload.')
+  vmSize: string
+
+  @description('OS disk settings for this workload.')
+  osDisk: {
+    @description('Managed disk storage type.')
+    storageAccountType: 'Premium_LRS' | 'StandardSSD_LRS' | 'Standard_LRS'
+
+    @minValue(64)
+    @description('Managed OS disk size in GB.')
+    diskSizeGB: int
+  }
 }

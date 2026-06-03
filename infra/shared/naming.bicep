@@ -6,6 +6,7 @@ metadata description = 'Reusable naming functions for Azure Virtual Desktop IaC 
 import {
   resourceAbbreviationMap
   resourcePurposeMap
+  resourcePurpose
 } from './config.bicep'
 
 import {
@@ -109,6 +110,38 @@ func storageAccountName(
   environmentShortName string,
   uniqueSuffix string
 ) string => '${take(toLower(replace('${namePrefix}${workloadName}${resourceAbbreviationMap.storageAccount}${replace(resourcePurposeMap[purpose], '-', '')}${environmentShortName}', '-', '')), 11)}${uniqueSuffix}'
+
+@description('Builds a directional virtual network peering name.')
+@export()
+func virtualNetworkPeeringName(
+  namePrefix string,
+  workloadName string,
+  sourceName string,
+  targetName string
+) string => '${toLower(namePrefix)}-${toLower(workloadName)}-${resourceAbbreviationMap.virtualNetworkPeering}-${toLower(sourceName)}-to-${toLower(targetName)}'
+
+// This is a helper for FSLogix naming.
+@description('Builds a deterministic name for the FSLogix storage account')
+@export()
+func fslogixStorageAccountName(
+  namePrefix string,
+  workloadName string,
+  environmentShortName string,
+  storageResourceGroupId string
+) string => storageAccountName(
+  namePrefix,
+  workloadName,
+  resourcePurpose.fslogix,
+  environmentShortName,
+  uniqueString(
+    subscription().id,
+    storageResourceGroupId,
+    namePrefix,
+    workloadName,
+    resourcePurpose.fslogix,
+    environmentShortName
+  )
+)
 
 // Service-Specific Resource Names
 

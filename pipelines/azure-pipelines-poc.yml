@@ -83,6 +83,7 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/network/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
+      skipHubToSpokePeering: true
 
   - template: templates/bicep-deployment-template.yml
     parameters:
@@ -121,5 +122,23 @@ stages:
       deploymentLocation: $(deploymentLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: compute
+      validationDependsOn:
+        - Deploy_storageauth
+      deployDependsOn:
+        - Deploy_storageauth
+      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: poc
+      workloadName: $(workloadName)-compute
+      deploymentScope: Subscription
+      deploymentLocation: $(deploymentLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/compute/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

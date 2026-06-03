@@ -19,7 +19,7 @@ parameters:
   - name: azureDevOpsEnvironment
     displayName: Azure DevOps environment used for deployment approvals
     type: string
-    default: ''
+    default: ""
 
   - name: environmentName
     displayName: Environment
@@ -50,7 +50,7 @@ parameters:
   - name: resourceGroupName
     displayName: Resource group name for resource group scoped deployments
     type: string
-    default: ''
+    default: ""
 
   - name: templateFile
     displayName: Bicep template file
@@ -77,26 +77,31 @@ parameters:
       - FullResourcePayloads
       - ResourceIdOnly
 
+  - name: skipHubToSpokePeering
+    displayName: Skip hub-to-spoke peering during validation/what-if
+    type: boolean
+    default: false
+
 stages:
   - stage: Validate_${{ parameters.deploymentUnitName }}
     displayName: Validate ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
     dependsOn: ${{ parameters.validationDependsOn }}
     variables:
-      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+      scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
     jobs:
       - job: ValidateBicep
         displayName: Compile and Validate Bicep
         steps:
           - checkout: self
-            displayName: 'Checkout Bicep Module'
+            displayName: "Checkout Bicep Module"
 
           - task: AzureCLI@2
             displayName: Validate Bicep
             inputs:
-              azureSubscription: '${{ parameters.azureServiceConnection }}'
+              azureSubscription: "${{ parameters.azureServiceConnection }}"
               scriptType: pscore
               scriptLocation: scriptPath
-              scriptPath: '$(scriptPath)'
+              scriptPath: "$(scriptPath)"
               arguments: >
                 -Action Validate
                 -DeploymentScope "${{ parameters.deploymentScope }}"
@@ -108,16 +113,17 @@ stages:
                 -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
+                $(if eq(parameters.skipHubToSpokePeering, true), '-SkipHubToSpokePeering', '')
 
-          - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate'
-            artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate'
+          - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
+            artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate"
             condition: always()
 
   - stage: WhatIf_${{ parameters.deploymentUnitName }}
     displayName: What-if ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
     dependsOn: Validate_${{ parameters.deploymentUnitName }}
     variables:
-      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+      scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
     jobs:
       - job: WhatIf
         displayName: Run Bicep what-if
@@ -127,10 +133,10 @@ stages:
           - task: AzureCLI@2
             displayName: What-if Bicep
             inputs:
-              azureSubscription: '${{ parameters.azureServiceConnection }}'
+              azureSubscription: "${{ parameters.azureServiceConnection }}"
               scriptType: pscore
               scriptLocation: scriptPath
-              scriptPath: '$(scriptPath)'
+              scriptPath: "$(scriptPath)"
               arguments: >
                 -Action WhatIf
                 -DeploymentScope "${{ parameters.deploymentScope }}"
@@ -143,9 +149,10 @@ stages:
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
+                $(if eq(parameters.skipHubToSpokePeering, true), '-SkipHubToSpokePeering', '')
 
-          - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif'
-            artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif'
+          - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
+            artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"
             condition: always()
 
   - stage: Deploy_${{ parameters.deploymentUnitName }}
@@ -153,7 +160,7 @@ stages:
     dependsOn:
       - WhatIf_${{ parameters.deploymentUnitName }}
       - ${{ each dependency in parameters.deployDependsOn }}:
-        - ${{ dependency }}
+          - ${{ dependency }}
     condition: >
       and(
         succeeded(),
@@ -162,11 +169,11 @@ stages:
         in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI', 'Manual')
       )
     variables:
-      scriptPath: '$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1'
+      scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
     jobs:
       - deployment: DeployInfrastructure
         displayName: Deploy Infrastructure
-        environment: '${{ parameters.azureDevOpsEnvironment }}'
+        environment: "${{ parameters.azureDevOpsEnvironment }}"
         strategy:
           runOnce:
             deploy:
@@ -176,10 +183,10 @@ stages:
                 - task: AzureCLI@2
                   displayName: Deploy Bicep
                   inputs:
-                    azureSubscription: '${{ parameters.azureServiceConnection }}'
+                    azureSubscription: "${{ parameters.azureServiceConnection }}"
                     scriptType: pscore
                     scriptLocation: scriptPath
-                    scriptPath: '$(scriptPath)'
+                    scriptPath: "$(scriptPath)"
                     arguments: >
                       -Action Deploy
                       -DeploymentScope "${{ parameters.deploymentScope }}"
@@ -191,6 +198,6 @@ stages:
                       -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                       -EnsureBicep
 
-                - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy'
-                  artifact: '${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy'
+                - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
+                  artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy"
                   condition: always()

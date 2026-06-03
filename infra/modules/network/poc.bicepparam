@@ -48,3 +48,4 @@ param hubVirtualNetworkResourceId = '/subscriptions/3cea8964-57d2-44c4-9c10-0c10
 param hubSubscriptionId = '3cea8964-57d2-44c4-9c10-0c10866165c8'
 param hubResourceGroupName = 'networkvpn-rg-prod'
 param hubVirtualNetworkName = 'hub-vnet-prod'
+param skipHubToSpokePeering = false

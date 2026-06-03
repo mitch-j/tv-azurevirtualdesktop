@@ -214,6 +214,73 @@ function Get-BicepParamUsingPath {
     return [System.IO.Path]::GetFullPath((Join-Path $parameterDirectory $usingPath))
 }
 
+function Remove-BicepComments {
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Content
+    )
+
+    $result = [System.Text.StringBuilder]::new()
+    $inSingleQuotedString = $false
+    $inDoubleQuotedString = $false
+    $inLineComment = $false
+    $inBlockComment = $false
+
+    for ($i = 0; $i -lt $Content.Length; $i++) {
+        $current = $Content[$i]
+        $next = if ($i + 1 -lt $Content.Length) { $Content[$i + 1] } else { [char]0 }
+
+        if ($inLineComment) {
+            if ($current -eq "`r" -or $current -eq "`n") {
+                $inLineComment = $false
+                [void]$result.Append($current)
+            }
+
+            continue
+        }
+
+        if ($inBlockComment) {
+            if ($current -eq '*' -and $next -eq '/') {
+                $inBlockComment = $false
+                $i++
+                continue
+            }
+
+            if ($current -eq "`r" -or $current -eq "`n") {
+                [void]$result.Append($current)
+            }
+
+            continue
+        }
+
+        if (-not $inSingleQuotedString -and -not $inDoubleQuotedString) {
+            if ($current -eq '/' -and $next -eq '/') {
+                $inLineComment = $true
+                $i++
+                continue
+            }
+
+            if ($current -eq '/' -and $next -eq '*') {
+                $inBlockComment = $true
+                $i++
+                continue
+            }
+        }
+
+        if (-not $inDoubleQuotedString -and $current -eq "'") {
+            $inSingleQuotedString = -not $inSingleQuotedString
+        }
+        elseif (-not $inSingleQuotedString -and $current -eq '"') {
+            $inDoubleQuotedString = -not $inDoubleQuotedString
+        }
+
+        [void]$result.Append($current)
+    }
+
+    return $result.ToString()
+}
+
 try {
     Write-Section "Preparing $Action operation"
 
@@ -260,13 +327,14 @@ try {
     Write-Section "Checking parameter file placeholders"
 
     $parameterFileContent = Get-Content -Path $ParameterFile -Raw
+    $parameterFileContentWithoutComments = Remove-BicepComments -Content $parameterFileContent
 
-    if ($parameterFileContent -match '<[^>]+>') {
-        $placeholderValues = [regex]::Matches($parameterFileContent, '<[^>]+>') |
+    if ($parameterFileContentWithoutComments -match '<[^>]+>') {
+        $placeholderValues = [regex]::Matches($parameterFileContentWithoutComments, '<[^>]+>') |
         ForEach-Object { $_.Value } |
         Sort-Object -Unique
 
-        throw "Parameter file contains unreplaced template placeholders: $($placeholderValues -join ', ')"
+        throw "Parameter file contains unreplaced template placeholders outside comments: $($placeholderValues -join ', ')"
     }
 
     $tooling = Test-DeploymentTooling -EnsureBicep:$EnsureBicep

@@ -44,7 +44,7 @@ param(
     [switch]$SkipBuild,
 
     [Parameter()]
-    [switch]$SkipLint,
+    [switch]$SkipLint
 
 )
 

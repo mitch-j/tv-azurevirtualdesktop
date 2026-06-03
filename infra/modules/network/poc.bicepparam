@@ -44,7 +44,4 @@ param dnsServers = [
 
 // Hub Peering
 
-// Leave empty until hub details are ready.
-// Example:
-// param hubVirtualNetworkResourceId = '/subscriptions/<subscription-id>/resourceGroups/<hub-rg>/providers/Microsoft.Network/virtualNetworks/<hub-vnet-name>'
 param hubVirtualNetworkResourceId = '/subscriptions/3cea8964-57d2-44c4-9c10-0c10866165c8/resourceGroups/networkvpn-rg-prod/providers/Microsoft.Network/virtualNetworks/hub-vnet-prod'

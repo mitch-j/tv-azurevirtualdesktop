@@ -7,23 +7,25 @@ Scope:
 - Resource Group
 
 Deploys:
-- Peering from the local/spoke VNet to a remote hub VNet
-- This creates only the spoke-to-hub side
+- A virtual network peering from a remote VNet to a local VNet
 
 Does not deploy:
-- Hub virtual network
-- Hub-to-spoke peering
+- Virtual networks
+
+Notes:
+- Called twice by main.bicep with the local and remote variables reversed to deploy both sides of the peering.
+
 */
 
 // Parameters
 
-@description('Name of the local AVD spoke virtual network.')
+@description('Name of the local AVD virtual network.')
 param localVirtualNetworkName string
 
-@description('Resource ID of the remote hub virtual network.')
+@description('Resource ID of the remote virtual network.')
 param remoteVirtualNetworkResourceId string
 
-@description('Name of the peering from the AVD spoke VNet to the hub VNet.')
+@description('Name of the virtual network peering.')
 param peeringName string
 
 @description('Whether virtual network access is allowed from the local VNet to the remote VNet.')
@@ -44,20 +46,22 @@ module localToRemotePeering 'br/public:avm/res/network/virtual-network/virtual-n
   name: '${deployment().name}-s2h-peer-res'
   params: {
     name: peeringName
-    remoteVirtualNetworkResourceId: remoteVirtualNetworkResourceId
     localVnetName: localVirtualNetworkName
+    remoteVirtualNetworkResourceId: remoteVirtualNetworkResourceId
+
     allowVirtualNetworkAccess: allowVirtualNetworkAccess
     allowForwardedTraffic: allowForwardedTraffic
     allowGatewayTransit: allowGatewayTransit
+
     useRemoteGateways: useRemoteGateways
   }
 }
 
 // Outputs
 
-@description('Resource ID of the spoke-to-hub virtual network peering.')
+@description('Resource ID of the virtual network peering.')
 output peeringResourceId string = localToRemotePeering.outputs.resourceId
 
-@description('Resource name of the spoke-to-hub virtual network peering.')
+@description('Resource name of the virtual network peering.')
 output peeringResourceName string = localToRemotePeering.outputs.name
 

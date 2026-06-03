@@ -124,7 +124,7 @@ var workspaceDeployments = [
 
 module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
   for (hostPoolItem, i) in hostPools: {
-    name: '${deployment().name}-${hostPoolNames[i]}'
+    name: '${deployment().name}-${hostPoolItem.name}'
     params: {
       name: hostPoolNames[i]
       location: commonConfig.location

@@ -26,6 +26,7 @@ Does not deploy:
 
 import {
   EnvironmentName
+  PurposeName
 } from '../../shared/types.bicep'
 
 import {
@@ -42,6 +43,17 @@ import {
   virtualNetworkPeeringName
 } from '../../shared/naming.bicep'
 
+// Types
+
+@sealed()
+type SubnetConfig = {
+  @description('Purpose key used to calculate the subnet name.')
+  purpose: PurposeName
+
+  @description('CIDR block assigned to the subnet.')
+  addressPrefix: string
+}
+
 // Parameters
 
 @description('Deployment environment key used to select shared environment configuration.')
@@ -53,11 +65,11 @@ param location string = deployment().location
 @description('Virtual network address prefixes.')
 param virtualNetworkAddressPrefixes array
 
-@description('Session host subnet address prefix.')
-param sessionHostSubnetAddressPrefix string
+@description('Session host subnet definitions.')
+param sessionHostSubnets SubnetConfig[]
 
-@description('Private endpoint subnet address prefix.')
-param privateEndpointSubnetAddressPrefix string
+@description('Private endpoint subnet definition.')
+param privateEndpointSubnet SubnetConfig
 
 @description('Optional custom DNS servers for the virtual network. Leave empty to use Azure-provided DNS.')
 param dnsServers array = []
@@ -101,23 +113,31 @@ var virtualNetworkName = resourceNameWithPurpose(
   environmentConfig.shortName
 )
 
-// Name of the subnet used by AVD session hosts.
-var sessionHostSubnetName = resourceNameWithPurpose(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourceType.subnet,
-  resourcePurpose.sessionHosts,
-  environmentConfig.shortName
-)
+// Session host subnet names and address prefixes.
+var sessionHostSubnetDefinitions = [
+  for sessionHostSubnet in sessionHostSubnets: {
+    name: resourceNameWithPurpose(
+      commonConfig.namePrefix,
+      commonConfig.workloadName,
+      resourceType.subnet,
+      sessionHostSubnet.purpose,
+      environmentConfig.shortName
+    )
+    addressPrefix: sessionHostSubnet.addressPrefix
+  }
+]
 
-// Name of the subnet reserved for private endpoints.
-var privateEndpointSubnetName = resourceNameWithPurpose(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourceType.subnet,
-  resourcePurpose.privateEndpoints,
-  environmentConfig.shortName
-)
+// Private endpoint subnet name and address prefix.
+var privateEndpointSubnetDefinition = {
+  name: resourceNameWithPurpose(
+    commonConfig.namePrefix,
+    commonConfig.workloadName,
+    resourceType.subnet,
+    privateEndpointSubnet.purpose,
+    environmentConfig.shortName
+  )
+  addressPrefix: privateEndpointSubnet.addressPrefix
+}
 
 // Name of the network security group associated with the private endpoint subnet.
 var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(
@@ -190,11 +210,9 @@ module spokeVnet './spoke-vnet.bicep' = {
     tags: tags
     virtualNetworkName: virtualNetworkName
     virtualNetworkAddressPrefixes: virtualNetworkAddressPrefixes
-    sessionHostSubnetName: sessionHostSubnetName
-    sessionHostSubnetAddressPrefix: sessionHostSubnetAddressPrefix
+    sessionHostSubnets: sessionHostSubnetDefinitions
     privateEndpointNetworkSecurityGroupName: privateEndpointNetworkSecurityGroupName
-    privateEndpointSubnetName: privateEndpointSubnetName
-    privateEndpointSubnetAddressPrefix: privateEndpointSubnetAddressPrefix
+    privateEndpointSubnet: privateEndpointSubnetDefinition
     sessionHostNetworkSecurityGroupName: sessionHostNetworkSecurityGroupName
     dnsServers: dnsServers
   }

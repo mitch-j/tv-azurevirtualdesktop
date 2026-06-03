@@ -30,8 +30,33 @@ param virtualNetworkAddressPrefixes = [
 
 // Subnets
 
-param sessionHostSubnetAddressPrefix = '10.243.192.0/27'
-param privateEndpointSubnetAddressPrefix = '10.243.192.32/27'
+param sessionHostSubnets = [
+  {
+    purpose: 'opsPooled'
+    addressPrefix: '10.243.192.0/27'
+  }
+  {
+    purpose: 'opsPersonal'
+    addressPrefix: '10.243.192.32/27'
+  }
+  {
+    purpose: 'devPersonal'
+    addressPrefix: '10.243.192.64/27'
+  }
+  {
+    purpose: 'devPooled'
+    addressPrefix: '10.243.192.96/27'
+  }
+]
+
+param privateEndpointSubnet = {
+  purpose: 'privateEndpoints'
+  addressPrefix: '10.243.192.128/27'
+}
+
+// Reserved address space:
+// - 10.243.192.160/27 - Future AzureBastionSubnet or management subnet
+// - 10.243.192.192/26 - Future expansion
 
 // DNS
 

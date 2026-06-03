@@ -46,6 +46,9 @@ param sessionHostSubnetName string
 @description('Session host subnet address prefix.')
 param sessionHostSubnetAddressPrefix string
 
+@description('Name of the network security group for the private endpoint subnet.')
+param privateEndpointNetworkSecurityGroupName string
+
 @description('Name of the subnet reserved for private endpoints.')
 param privateEndpointSubnetName string
 
@@ -61,7 +64,7 @@ param dnsServers array = []
 // Modules
 
 module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
-  name: '${deployment().name}-nsg'
+  name: '${deployment().name}-sh-nsg'
   params:{
     name: sessionHostNetworkSecurityGroupName
     location: location
@@ -70,6 +73,14 @@ module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-securi
   }
 }
 
+module privateEndpointNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: '${deployment().name}-pe-nsg'
+  params: {
+    name: privateEndpointNetworkSecurityGroupName
+    location: location
+    tags: tags
+  }
+}
 
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: '${deployment().name}-vnet'
@@ -93,6 +104,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
       {
         addressPrefix: privateEndpointSubnetAddressPrefix
         name: privateEndpointSubnetName
+        networkSecurityGroupResourceId: privateEndpointNetworkSecurityGroup.outputs.resourceId
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
       }
@@ -116,3 +128,6 @@ output privateEndpointSubnetResourceId string = virtualNetwork.outputs.subnetRes
 
 @description('Resource ID of the network security group associated with the session host subnet.')
 output sessionHostNetworkSecurityGroupResourceId string = sessionHostNetworkSecurityGroup.outputs.resourceId
+
+@description('Resource ID of the network security group associated with the private endpoint subnet.')
+output privateEndpointNetworkSecurityGroupResourceId string = privateEndpointNetworkSecurityGroup.outputs.resourceId

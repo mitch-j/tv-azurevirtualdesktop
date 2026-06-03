@@ -109,6 +109,15 @@ var privateEndpointSubnetName = resourceNameWithPurpose(
   environmentConfig.shortName
 )
 
+// Name of the network security group associated with the private endpoint subnet.
+var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.networkSecurityGroup,
+  resourcePurpose.privateEndpoints,
+  environmentConfig.shortName
+)
+
 // Name of the network security group associated with the session host subnet.
 var sessionHostNetworkSecurityGroupName = resourceNameWithPurpose(
   commonConfig.namePrefix,
@@ -139,6 +148,7 @@ module spokeVnet './spoke-vnet.bicep' = {
     virtualNetworkAddressPrefixes: virtualNetworkAddressPrefixes
     sessionHostSubnetName: sessionHostSubnetName
     sessionHostSubnetAddressPrefix: sessionHostSubnetAddressPrefix
+    privateEndpointNetworkSecurityGroupName: privateEndpointNetworkSecurityGroupName
     privateEndpointSubnetName: privateEndpointSubnetName
     privateEndpointSubnetAddressPrefix: privateEndpointSubnetAddressPrefix
     sessionHostNetworkSecurityGroupName: sessionHostNetworkSecurityGroupName
@@ -199,3 +209,10 @@ output spokeToHubPeeringResourceId string = !empty(hubVirtualNetworkResourceId) 
 
 @description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
 output spokeToHubPeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? spokePeering!.outputs.peeringResourceName : ''
+
+@description('Name of the network security group associated with the private endpoint subnet.')
+output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSecurityGroupName
+
+@description('Resource ID of the network security group associated with the private endpoint subnet.')
+output privateEndpointNetworkSecurityGroupResourceId string = spokeVnet.outputs.privateEndpointNetworkSecurityGroupResourceId
+

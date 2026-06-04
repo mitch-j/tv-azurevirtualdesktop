@@ -29,7 +29,7 @@ variables:
   environmentName: poc
   azureDevOpsEnvironment: poc-avd
   azureServiceConnection: tv-avd-poc-deploy-sc
-  deploymentLocation: eastus
+  azureLocation: eastus
 
 pool:
   vmImage: ubuntu-latest
@@ -43,7 +43,7 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-bootstrap
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
+      deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam"
       validationLevel: Provider
@@ -59,9 +59,9 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
-      templateFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/main.bicep"
-      parameterFile: "$(Build.SourcesDirectory)/infra/modules/serviceobjects/poc.bicepparam"
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/service-objects/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/service-objects/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
 
@@ -77,7 +77,7 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-network
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
+      deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/network/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/network/poc.bicepparam"
       validationLevel: Provider
@@ -95,7 +95,7 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-storage
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
+      deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/storage/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage/poc.bicepparam"
       validationLevel: Provider
@@ -117,7 +117,7 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-storageauth
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
+      deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/poc.bicepparam"
       validationLevel: Provider
@@ -135,7 +135,7 @@ stages:
       environmentName: poc
       workloadName: $(workloadName)-compute
       deploymentScope: Subscription
-      deploymentLocation: $(deploymentLocation)
+      deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/compute/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
       validationLevel: Provider

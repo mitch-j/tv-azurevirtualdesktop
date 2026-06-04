@@ -106,6 +106,7 @@ type PurposeName =
   | 'sessionHosts'
   | 'privateEndpoints'
   | 'opsPooled'
+  | 'opsPersonal'
   | 'devPooled'
   | 'devPersonal'
   | 'opsPooledDesktop'
@@ -403,6 +404,15 @@ type SessionHostGroupConfig = {
 
   @description('Purpose key used to calculate the existing AVD host pool name.')
   hostPoolPurpose: PurposeName
+
+  @description('Purpose key used to calculate the existing virtual network resource group name.')
+  networkResourceGroupPurpose: PurposeName
+
+  @description('Purpose key used to calculate the existing virtual network name.')
+  virtualNetworkPurpose: PurposeName
+
+  @description('Purpose key used to calculate the existing session host subnet name.')
+  subnetPurpose: PurposeName
 
   @description('Windows computer name prefix. Keep this short enough for the final name to stay within the 15-character NetBIOS limit.')
   vmNamePrefix: string

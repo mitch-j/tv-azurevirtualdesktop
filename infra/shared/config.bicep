@@ -184,6 +184,7 @@ var resourcePurposeMap = {
   sessionHosts: 'sessionhosts'
   privateEndpoints: 'private-endpoints'
   opsPooled: 'ops-pooled'
+  opsPersonal: 'ops-personal'
   devPooled: 'dev-pooled'
   devPersonal: 'dev-personal'
   opsPooledDesktop: 'ops-pooled-desktop'

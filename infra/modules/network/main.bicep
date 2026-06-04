@@ -188,6 +188,10 @@ var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? hubVirtualNetw
 
 var effectiveHubVirtualNetworkName = empty(hubVirtualNetworkName) ? hubVirtualNetworkNameFromId : hubVirtualNetworkName
 
+var deploySpokeToHubPeering = !empty(hubVirtualNetworkResourceId)
+
+var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)
+
 // Modules
 
 module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' ={
@@ -216,9 +220,12 @@ module spokeVnet './spoke-vnet.bicep' = {
     sessionHostNetworkSecurityGroupName: sessionHostNetworkSecurityGroupName
     dnsServers: dnsServers
   }
+  dependsOn: [
+    networkResourceGroup
+  ]
 }
 
-module spokeToHubPeering './vnet-peering.bicep' = if (!empty(hubVirtualNetworkResourceId)) {
+module spokeToHubPeering './vnet-peering.bicep' = if (deploySpokeToHubPeering) {
   name: '${deployment().name}-s2h-peer'
   scope: resourceGroup(networkResourceGroupName)
   params: {
@@ -235,7 +242,7 @@ module spokeToHubPeering './vnet-peering.bicep' = if (!empty(hubVirtualNetworkRe
   ]
 }
 
-module hubToSpokePeering './vnet-peering.bicep' = if (!empty(hubVirtualNetworkResourceId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)) {
+module hubToSpokePeering './vnet-peering.bicep' = if (deployHubToSpokePeering) {
   name: '${deployment().name}-h2s-peer'
   scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
   params: {
@@ -263,11 +270,13 @@ output virtualNetworkResourceId string = spokeVnet.outputs.virtualNetworkResourc
 @description('Names of the subnets created in the AVD spoke virtual network.')
 output virtualNetworkSubnetNames array = spokeVnet.outputs.virtualNetworkSubnetNames
 
-@description('Name of the subnet used by AVD session hosts.')
-output sessionHostSubnetName string = sessionHostSubnetName
+@description('Names of the session host subnets.')
+output sessionHostSubnetNames array = [
+  for sessionHostSubnet in sessionHostSubnetDefinitions: sessionHostSubnet.name
+]
 
-@description('Resource ID of the subnet used by AVD session hosts.')
-output sessionHostSubnetResourceId string = spokeVnet.outputs.sessionHostSubnetResourceId
+@description('Resource IDs of the session host subnets.')
+output sessionHostSubnetResourceIds array = spokeVnet.outputs.sessionHostSubnetResourceIds
 
 @description('Name of the network security group associated with the session host subnet.')
 output sessionHostNetworkSecurityGroupName string = sessionHostNetworkSecurityGroupName
@@ -276,7 +285,7 @@ output sessionHostNetworkSecurityGroupName string = sessionHostNetworkSecurityGr
 output sessionHostNetworkSecurityGroupResourceId string = spokeVnet.outputs.sessionHostNetworkSecurityGroupResourceId
 
 @description('Name of the subnet used by private endpoints.')
-output privateEndpointSubnetName string = privateEndpointSubnetName
+output privateEndpointSubnetName string = privateEndpointSubnetDefinition.name
 
 @description('Resource ID of the subnet used by private endpoints.')
 output privateEndpointSubnetResourceId string = spokeVnet.outputs.privateEndpointSubnetResourceId
@@ -288,19 +297,19 @@ output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSe
 output privateEndpointNetworkSecurityGroupResourceId string = spokeVnet.outputs.privateEndpointNetworkSecurityGroupResourceId
 
 @description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? hubToSpokePeering!.outputs.peeringResourceName : ''
+output spokeToHubPeeringResourceName string = deploySpokeToHubPeering ? spokeToHubPeering!.outputs.peeringResourceName : ''
 
 @description('Resource ID of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceId string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeering.outputs.peeringResourceId : ''
+output spokeToHubPeeringResourceId string = deploySpokeToHubPeering ? spokeToHubPeering!.outputs.peeringResourceId : ''
 
 @description('Name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringName string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeeringName : ''
+output spokeToHubPeeringName string = deploySpokeToHubPeering ? spokeToHubPeeringName : ''
 
-@description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringResourceName string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeering!.outputs.peeringResourceName : ''
+@description('Resource name of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringResourceName string = deployHubToSpokePeering ? hubToSpokePeering!.outputs.peeringResourceName : ''
 
-@description('Resource ID of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringResourceId string = !empty(hubVirtualNetworkResourceId) ? spokeToHubPeering!.outputs.peeringResourceId : ''
+@description('Resource ID of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringResourceId string = deployHubToSpokePeering ? hubToSpokePeering!.outputs.peeringResourceId : ''
 
-@description('Name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringName string = !empty(hubVirtualNetworkResourceId) ? hubToSpokePeeringName : ''
+@description('Name of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
+output hubToSpokePeeringName string = deployHubToSpokePeering ? hubToSpokePeeringName : ''

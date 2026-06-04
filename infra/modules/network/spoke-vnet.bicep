@@ -69,11 +69,21 @@ param dnsServers array = []
 
 // Variables
 
+var sessionHostNetworkSecurityGroupResourceId = resourceId(
+  'Microsoft.Network/networkSecurityGroups',
+  sessionHostNetworkSecurityGroupName
+)
+
+var privateEndpointNetworkSecurityGroupResourceId = resourceId(
+  'Microsoft.Network/networkSecurityGroups',
+  privateEndpointNetworkSecurityGroupName
+)
+
 var sessionHostSubnetResources = [
   for sessionHostSubnet in sessionHostSubnets: {
     addressPrefix: sessionHostSubnet.addressPrefix
     name: sessionHostSubnet.name
-    networkSecurityGroupResourceId: sessionHostNetworkSecurityGroup.outputs.resourceId
+    networkSecurityGroupResourceId: sessionHostNetworkSecurityGroupResourceId
     privateEndpointNetworkPolicies: 'Enabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
@@ -82,7 +92,7 @@ var sessionHostSubnetResources = [
 var privateEndpointSubnetResource = {
   addressPrefix: privateEndpointSubnet.addressPrefix
   name: privateEndpointSubnet.name
-  networkSecurityGroupResourceId: privateEndpointNetworkSecurityGroup.outputs.resourceId
+  networkSecurityGroupResourceId: privateEndpointNetworkSecurityGroupResourceId
   privateEndpointNetworkPolicies: 'Disabled'
   privateLinkServiceNetworkPolicies: 'Enabled'
 }
@@ -129,6 +139,10 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
     }
     subnets: virtualNetworkSubnets
   }
+  dependsOn: [
+    sessionHostNetworkSecurityGroup
+    privateEndpointNetworkSecurityGroup
+  ]
 }
 
 // Outputs

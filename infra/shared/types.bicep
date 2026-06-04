@@ -440,7 +440,7 @@ type ResourceAbbreviationMap = {
 @description('Supported resource group purpose keys for standard naming.')
 @export()
 type ResourceGroupPurposeName =
-  | 'serviceObjects'
+  | 'service-objects'
   | 'storage'
   | 'network'
   | 'compute'
@@ -471,7 +471,7 @@ type ResourceGroupPurposeSegmentMap = {
 @description('Supported general resource purpose keys for standard naming.')
 @export()
 type PurposeName =
-  | 'serviceObjects'
+  | 'service-objects'
   | 'storage'
   | 'network'
   | 'compute'

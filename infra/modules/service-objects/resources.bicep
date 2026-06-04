@@ -60,10 +60,10 @@ param hostPools HostPoolConfig[]
 
 // Variables
 
-@description('Shared environment configuration for the selected deployment environment.')
+// Environment-specific naming values.
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Shared location configuration for the selected Azure region.')
+// Shared location configuration for the selected Azure region.
 var locationConfig = locationConfigMap[location]
 
 @description('Azure resource names generated for each configured AVD host pool.')

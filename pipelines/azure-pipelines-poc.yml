@@ -69,7 +69,6 @@ stages:
     parameters:
       deploymentUnitName: network
       validationDependsOn:
-        - Deploy_bootstrap
       deployDependsOn:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
@@ -87,7 +86,6 @@ stages:
     parameters:
       deploymentUnitName: storage
       validationDependsOn:
-        - Deploy_bootstrap
       deployDependsOn:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
@@ -127,7 +125,7 @@ stages:
     parameters:
       deploymentUnitName: compute
       validationDependsOn:
-        - Deploy_storageauth
+        - Deploy_storage
       deployDependsOn:
         - Deploy_storageauth
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)

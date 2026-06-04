@@ -31,6 +31,11 @@ type EnvironmentConfig = {
 
   @description('Optional support email address for this environment.')
   supportEmail: string?
+
+  @description('Optional single-character environment code used in Windows computer names where short names are required.')
+  @minLength(1)
+  @maxLength(1)
+  singleCharEnvironmentCode: string
 }
 
 @description('Map of supported deployment environments to standard settings.')
@@ -400,7 +405,9 @@ type SessionHostGroupConfig = {
   purpose: 'opsPooled' | 'devPersonal' | 'devPooled'
 
   @description('Windows computer name prefix. Keep this short enough for the final name to stay within the 15-character NetBIOS limit.')
-  vmNamePrefix: string
+  @minLength(2)
+  @maxLength(4)
+  sessionHostRoleCode: string
 
   @minValue(0)
   @description('Number of session hosts to plan for this workload.')

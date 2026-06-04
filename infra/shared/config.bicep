@@ -16,27 +16,32 @@ var environmentConfigMap EnvironmentConfigMap = {
     shortName: 'dev'
     tagEnvironment: 'Development'
     logRetentionDays: 30
+    singleCharEnvironmentCode: 'd'
   }
   test: {
     shortName: 'test'
     tagEnvironment: 'Stage'
     logRetentionDays: 30
+    singleCharEnvironmentCode: 't'
   }
   prod: {
     shortName: 'prod'
     tagEnvironment: 'Production'
     logRetentionDays: 90
     supportEmail: 'operations@doitbest.com'
+    singleCharEnvironmentCode: 'p'
   }
   e2e: {
     shortName: 'e2e'
     tagEnvironment: 'End to End'
     logRetentionDays: 30
+    singleCharEnvironmentCode: 'e'
   }
   poc: {
     shortName: 'poc'
     tagEnvironment: 'Proof of Concept'
     logRetentionDays: 30
+    singleCharEnvironmentCode: 'x'
   }
 }
 

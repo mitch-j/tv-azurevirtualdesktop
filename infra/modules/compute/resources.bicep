@@ -39,8 +39,8 @@ type PlannedSessionHostGroup = {
   @description('Existing session host subnet name.')
   subnetName: string
 
-  @description('Windows computer name prefix.')
-  vmNamePrefix: string
+  @description('Session Host name prefix.')
+  sessionHostNamePrefix: string
 
   @minValue(0)
   @description('Number of session hosts to plan for this workload.')
@@ -78,9 +78,9 @@ param sessionHostGroup PlannedSessionHostGroup
 
 var plannedSessionHosts = [
   for sessionHostNumber in range(1, sessionHostGroup.vmCount): {
-    name: toLower('${sessionHostGroup.vmNamePrefix}${padLeft(string(sessionHostNumber), 2, '0')}')
+    sessionHostName: toLower('${sessionHostGroup.sessionHostNamePrefix}${padLeft(string(sessionHostNumber), 2, '0')}')
     purpose: sessionHostGroup.purpose
-    nicName: toLower('${sessionHostGroup.vmNamePrefix}${padLeft(string(sessionHostNumber), 2, '0')}-nic')
+    nicName: toLower('${sessionHostGroup.sessionHostNamePrefix}${padLeft(string(sessionHostNumber), 2, '0')}-nic')
     location: location
     resourceGroupName: resourceGroup().name
     hostPoolName: sessionHostGroup.hostPoolName

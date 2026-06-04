@@ -101,7 +101,10 @@ var plannedSessionHostGroups = [
       sessionHostGroup.purpose,
       environmentConfig.shortName
     )
-    vmNamePrefix: sessionHostGroup.vmNamePrefix
+
+    // Keep the generated session host name under the 15-character Windows computer name limit.
+    // Pattern: namePrefix + workloadName + singleCharEnvironmentCode + sessionHostRoleCode + 2-digit sequence.
+    sessionHostNamePrefix: toLower('${commonConfig.namePrefix}${commonConfig.workloadName}${environmentConfig.singleCharEnvironmentCode}${sessionHostGroup.sessionHostRoleCode}')
     vmCount: sessionHostGroup.vmCount
     vmSize: sessionHostGroup.vmSize
     osDisk: sessionHostGroup.osDisk

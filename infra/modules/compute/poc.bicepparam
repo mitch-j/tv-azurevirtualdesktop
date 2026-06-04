@@ -22,7 +22,7 @@ param deployNetworkInterfaces = true
 param sessionHostGroups = [
   {
     purpose: 'opsPooled'
-    vmNamePrefix: 'tvavdops'
+    sessionHostRoleCode: 'ops'
     vmCount: 1
     vmSize: 'Standard_E16as_v5'
     osDisk: {
@@ -32,7 +32,7 @@ param sessionHostGroups = [
   }
   {
     purpose: 'devPersonal'
-    vmNamePrefix: 'tvavddp'
+    sessionHostRoleCode: 'dvp'
     vmCount: 1
     vmSize: 'Standard_D8als_v6'
     osDisk: {
@@ -42,7 +42,7 @@ param sessionHostGroups = [
   }
   {
     purpose: 'devPooled'
-    vmNamePrefix: 'tvavddv'
+    sessionHostRoleCode: 'dvs'
     vmCount: 1
     vmSize: 'Standard_D8as_v5'
     osDisk: {

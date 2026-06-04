@@ -107,7 +107,7 @@ var virtualNetworkSubnets = concat(
 // Modules
 
 module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
-  name: '${deployment().name}-sh-nsg'
+  name: '${deployment().name}-vdsh-nsg'
   params: {
     name: sessionHostNetworkSecurityGroupName
     location: location

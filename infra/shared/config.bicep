@@ -248,7 +248,7 @@ var resourceAbbreviationMap ResourceAbbreviationMap = {
 @description('Standard resource group purpose keys used for naming.')
 @export()
 var resourceGroupPurpose ResourceGroupPurposeConfigMap = {
-  serviceObjects: 'service-objects'
+  serviceObjects: 'serviceObjects'
   storage: 'storage'
   network: 'network'
   compute: 'compute'
@@ -268,7 +268,7 @@ var resourceGroupPurposeMap ResourceGroupPurposeSegmentMap = {
 @description('Standard resource purpose keys used for naming.')
 @export()
 var resourcePurpose ResourcePurposeConfigMap = {
-  serviceObjects: 'service-objects'
+  serviceObjects: 'serviceObjects'
   storage: 'storage'
   network: 'network'
   compute: 'compute'

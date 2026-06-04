@@ -18,7 +18,7 @@ Notes:
 // Environment
 param environment = 'poc'
 
-// FSLogix file share
+
 param fslogixShareName = 'profiles'
 param fslogixShareQuotaGiB = 1024
 

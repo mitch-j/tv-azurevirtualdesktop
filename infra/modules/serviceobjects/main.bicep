@@ -52,10 +52,10 @@ param hostPools HostPoolConfig[]
 
 // Variables
 
-@description('Shared environment configuration for the selected deployment environment.')
+// Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Standard tags applied to resources deployed by this module.')
+// Tags to add to resources deployed by this module.
 var tags = union(StandardTags, {
   Environment: environmentConfig.tagEnvironment
 })

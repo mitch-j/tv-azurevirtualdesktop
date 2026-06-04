@@ -109,7 +109,7 @@ var virtualNetworkName = resourceNameWithPurpose(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.virtualNetwork,
-  resourcePurpose.network,
+  resourcePurpose.primary,
   environmentConfig.shortName
 )
 

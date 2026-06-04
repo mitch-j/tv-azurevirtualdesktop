@@ -116,9 +116,10 @@ func storageAccountName(
 func virtualNetworkPeeringName(
   namePrefix string,
   workloadName string,
+  peeringAbbreviation string,
   sourceName string,
   targetName string
-) string => '${toLower(namePrefix)}-${toLower(workloadName)}-${resourceAbbreviationMap.virtualNetworkPeering}-${toLower(sourceName)}-to-${toLower(targetName)}'
+) string => '${toLower(namePrefix)}-${toLower(workloadName)}-${toLower(peeringAbbreviation)}-${toLower(sourceName)}-to-${toLower(targetName)}'
 
 // This is a helper for FSLogix naming.
 @description('Builds a deterministic name for the FSLogix storage account')

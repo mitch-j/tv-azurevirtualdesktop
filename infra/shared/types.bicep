@@ -396,23 +396,8 @@ type HostPoolConfig = {
 @description('Azure Virtual Desktop Session Hosts Group Configuration.')
 @export()
 type SessionHostGroupConfig = {
-  @description('Stable workload key for this session host group.')
-  name: 'opsPooled' | 'devPersonal' | 'devPooled'
-
-  @description('Purpose key used to calculate the session host resource group name.')
-  resourceGroupPurpose: PurposeName
-
-  @description('Purpose key used to calculate the existing AVD host pool name.')
-  hostPoolPurpose: PurposeName
-
-  @description('Purpose key used to calculate the existing virtual network resource group name.')
-  networkResourceGroupPurpose: PurposeName
-
-  @description('Purpose key used to calculate the existing virtual network name.')
-  virtualNetworkPurpose: PurposeName
-
-  @description('Purpose key used to calculate the existing session host subnet name.')
-  subnetPurpose: PurposeName
+  @description('Purpose key used to identify the session host workload. This is used to derive the host pool, subnet, and session host resource group names.')
+  purpose: 'opsPooled' | 'devPersonal' | 'devPooled'
 
   @description('Windows computer name prefix. Keep this short enough for the final name to stay within the 15-character NetBIOS limit.')
   vmNamePrefix: string

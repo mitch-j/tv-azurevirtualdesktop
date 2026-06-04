@@ -158,6 +158,7 @@ var resourcePurpose = {
   sessionHosts: 'sessionHosts'
   privateEndpoints: 'privateEndpoints'
   opsPooled: 'opsPooled'
+  opsePersonal: 'opsPersonal'
   devPooled: 'devPooled'
   devPersonal: 'devPersonal'
   opsPooledDesktop: 'opsPooledDesktop'

@@ -9,12 +9,13 @@ Scope:
 Deploys:
 - Session host resource groups
 - Resource group scoped compute workload deployments
+- Network interfaces for planned session hosts when enabled
 
 Does not deploy:
 - Virtual networks or subnets
 - AVD host pools, workspaces, or application groups
 - FSLogix storage accounts or file shares
-- Session host virtual machines in the first pipeline pass
+- Session host virtual machines
 */
 
 // Imports
@@ -28,13 +29,13 @@ import {
   StandardTags
   commonConfig
   environmentConfigMap
-
+  resourcePurpose
+  resourceType
 } from '../../shared/config.bicep'
 
 import {
   resourceGroupName
   resourceNameWithPurpose
-
 } from '../../shared/naming.bicep'
 
 // Parameters
@@ -42,8 +43,8 @@ import {
 @description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
 
-@description('When false, this module creates compute resource groups and validates planned session host configuration without creating VMs.')
-param deploySessionHosts bool = false
+@description('When true, this module creates network interfaces for planned session hosts.')
+param deployNetworkInterfaces bool = false
 
 @description('Session host workload configuration.')
 param sessionHostGroups SessionHostGroupConfig[]
@@ -58,62 +59,63 @@ var tags = union(StandardTags, {
   Environment: environmentConfig.tagEnvironment
 })
 
-/*
-var storageResourceGroupName = resourceNameWithPurpose(
+// Existing network resources used by all session host groups.
+var networkResourceGroupName = resourceGroupName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourceType.resourceGroup,
-  resourcePurpose.storage,
+  resourcePurpose.network,
   environmentConfig.shortName
 )
 
-var storageResourceGroupId = subscriptionResourceId(
-  'Microsoft.Resources/resourceGroups',
-  storageResourceGroupName
-)
-
-var fslogixAccountName = fslogixStorageAccountName(
+var virtualNetworkName = resourceNameWithPurpose(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  environmentConfig.shortName,
-  storageResourceGroupId
+  resourceType.virtualNetwork,
+  resourcePurpose.primary,
+  environmentConfig.shortName
 )
 
-
-var fslogixShareName = fslogixConfig.shareName
-var fslogixProfilePath = '\\\\${fslogixAccountName}.file.core.windows.net\\${fslogixShareName}'
-*/
-
+// Enriched session host group model passed to the resource-group-scoped child module.
 var plannedSessionHostGroups = [
   for sessionHostGroup in sessionHostGroups: {
-  name: sessionHostGroup.name
-  resourceGroupName: resourceGroupName(
-    commonConfig.namePrefix,
-    commonConfig.workloadName,
-    sessionHostGroup.resourceGroupPurpose,
-    environmentConfig.shortName
-  )
-  hostPoolName: resourceNameWithPurpose(
-    commonConfig.namePrefix,
-    commonConfig.workloadName,
-    'hostPool',
-    sessionHostGroup.hostPoolPurpose,
-    environmentConfig.shortName
-  )
-  vmNamePrefix: sessionHostGroup.vmNamePrefix
-  vmCount: sessionHostGroup.vmCount
-  vmSize: sessionHostGroup.vmSize
-  osDisk: sessionHostGroup.osDisk
-}]
+    purpose: sessionHostGroup.purpose
+    resourceGroupName: resourceGroupName(
+      commonConfig.namePrefix,
+      commonConfig.workloadName,
+      sessionHostGroup.purpose,
+      environmentConfig.shortName
+    )
+    hostPoolName: resourceNameWithPurpose(
+      commonConfig.namePrefix,
+      commonConfig.workloadName,
+      resourceType.hostPool,
+      sessionHostGroup.purpose,
+      environmentConfig.shortName
+    )
+    networkResourceGroupName: networkResourceGroupName
+    virtualNetworkName: virtualNetworkName
+    subnetName: resourceNameWithPurpose(
+      commonConfig.namePrefix,
+      commonConfig.workloadName,
+      resourceType.subnet,
+      sessionHostGroup.purpose,
+      environmentConfig.shortName
+    )
+    vmNamePrefix: sessionHostGroup.vmNamePrefix
+    vmCount: sessionHostGroup.vmCount
+    vmSize: sessionHostGroup.vmSize
+    osDisk: sessionHostGroup.osDisk
+  }
+]
 
 // Resources
 
-@description('Create Resource Groups for each Session Host Type')
+@description('Create resource groups for each session host workload.')
 module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
-  for (rg, i) in plannedSessionHostGroups: {
-    name: 'rg-${i}-${environment}'
+  for (sessionHostGroup, index) in plannedSessionHostGroups: {
+    name: 'rg-${index}-${environment}'
     params: {
-      name: rg.resourceGroupName
+      name: sessionHostGroup.resourceGroupName
       location: commonConfig.location
       tags: tags
       lock: {
@@ -127,33 +129,39 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
 
 module sessionHostWorkload './resources.bicep' = [
   for (sessionHostGroup, index) in plannedSessionHostGroups: {
-  name: '${deployment().name}-compute-rg'
-  scope: resourceGroup(plannedSessionHostGroups[index].resourceGroupName)
-  params: {
-    location: commonConfig.location
-    tags: tags
-    deploySessionHosts: deploySessionHosts
-    sessionHostGroup: sessionHostGroup
+    name: '${deployment().name}-compute-${toLower(sessionHostGroup.purpose)}'
+    scope: resourceGroup(sessionHostGroup.resourceGroupName)
+    params: {
+      location: commonConfig.location
+      tags: tags
+      deployNetworkInterfaces: deployNetworkInterfaces
+      sessionHostGroup: sessionHostGroup
+    }
+    dependsOn: [
+      avdResourceGroups
+    ]
   }
-  dependsOn: [
-    avdResourceGroups
-  ]
-}]
+]
 
 // Outputs
 
 @description('Session host resource groups created or updated by this deployment.')
-output sessionHostResourceGroups array = [for sessionHostGroup in plannedSessionHostGroups: {
-  name: sessionHostGroup.resourceGroupName
-  resourceId: subscriptionResourceId('Microsoft.Resources/resourceGroups', sessionHostGroup.resourceGroupName)
-}]
+output sessionHostResourceGroups array = [
+  for sessionHostGroup in plannedSessionHostGroups: {
+    purpose: sessionHostGroup.purpose
+    name: sessionHostGroup.resourceGroupName
+    resourceId: subscriptionResourceId('Microsoft.Resources/resourceGroups', sessionHostGroup.resourceGroupName)
+  }
+]
 
 @description('Session host groups planned by this deployment.')
 output plannedSessionHostGroups array = plannedSessionHostGroups
 
 @description('Planned session hosts returned by each resource group scoped deployment.')
-output plannedSessionHosts array = [for (sessionHostGroup, index) in plannedSessionHostGroups: {
-  groupName: sessionHostGroup.name
-  resourceGroupName: sessionHostGroup.resourceGroupName
-  sessionHosts: sessionHostWorkload[index].outputs.plannedSessionHosts
-}]
+output plannedSessionHosts array = [
+  for (sessionHostGroup, index) in plannedSessionHostGroups: {
+    purpose: sessionHostGroup.purpose
+    resourceGroupName: sessionHostGroup.resourceGroupName
+    sessionHosts: sessionHostWorkload[index].outputs.plannedSessionHosts
+  }
+]

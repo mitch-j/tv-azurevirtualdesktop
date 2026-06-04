@@ -50,13 +50,19 @@ This repository is an infrastructure repository, not an application repository.
 │   │   │    ├── resources.bicep
 │   │   │    └── poc.bicepparam
 │   │   ├── network/
-│   │   │    └── peering.bicep
+│   │   │    ├── main.bicep
+│   │   │    └── vnet-peering.bicep
 │   │   │    └── spoke-vnet.bicep
-│   │   ├── serviceobjects/
+│   │   │    └── poc.bicepparam
+│   │   ├── service-objects/
 │   │   │    ├── main.bicep
 │   │   │    ├── resources.bicep
 │   │   │    └── poc.bicepparam
 │   │   └──  storage/
+│   │   │    ├── main.bicep
+│   │   │    ├── resources.bicep
+│   │   │    └── poc.bicepparam
+│   │   └──  storage-auth/
 │   │        ├── main.bicep
 │   │        ├── resources.bicep
 │   │        └── poc.bicepparam

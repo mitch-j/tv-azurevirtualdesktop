@@ -7,40 +7,46 @@ Scope:
 - Subscription
 
 Deploys:
-- Resource group for storage resources
+- Location-aware resource group for storage resources
 - Premium Azure Files storage account
 - SMB file share for FSLogix profile containers
 
 Does not deploy:
+- Storage account RBAC
 - AVD Service Objects
   - Hostpools
   - Desktop Application Groups
   - Workspaces
 - Session host virtual machines
-
+- Virtual networks or subnets
 */
 
 // Imports
 
 import {
   EnvironmentName
+  LocationName
 } from '../../shared/types.bicep'
 
 import {
+  baseTags
   commonConfig
   environmentConfigMap
-  StandardTags
-  resourcePurpose
+  locationConfigMap
+  resourceGroupPurpose
 } from '../../shared/config.bicep'
 
 import {
-  resourceGroupName
+  resourceGroupNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
-@description('Environment to deploy.')
+@description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
+
+@description('Azure region for service object resources.')
+param location LocationName
 
 @description('Name of the FSLogix profile file share.')
 param fslogixShareName string = 'profiles'
@@ -63,39 +69,47 @@ param filePrivateDnsZoneResourceId string = ''
 @description('Shared environment configuration for the selected deployment environment.')
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Standard tags applied to resources deployed by this module.')
-var tags = union(StandardTags, {
-  Environment: environmentConfig.tagEnvironment
+@description('Shared location configuration for the selected Azure region.')
+var locationConfig = locationConfigMap[location]
+
+@description('Tags to add to resources deployed by this module.')
+var tags = union(baseTags, {
+  Environment: environmentConfig.tagName
 })
 
-@description('Name of the resource Group that will contain storage resources.')
-var storageRGName = resourceGroupName(
+@description('Name of the resource group that contains AVD storage resources.')
+var storageResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.storage,
+  resourceGroupPurpose.storage,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
 // Modules
 
 module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: '${deployment().name}-stor-rg'
+  name: '${deployment().name}-service-objects-rg'
   params: {
-    name: storageRGName
-    location: commonConfig.location
+    name: storageResourceGroupName
+    location: location
     tags: tags
+    lock: {
+      kind: commonConfig.lockKind
+    }
   }
 }
 
 module storageResources './resources.bicep' = {
   name: '${deployment().name}-stor-res'
-  scope: resourceGroup(storageRGName)
+  scope: resourceGroup(storageResourceGroupName)
   dependsOn: [
     storageResourceGroup
   ]
   params: {
     environment: environment
     tags: tags
+    location: location
     fslogixShareName: fslogixShareName
     fslogixShareQuotaGiB: fslogixShareQuotaGiB
     enablePublicNetworkAccess: enablePublicNetworkAccess
@@ -107,7 +121,7 @@ module storageResources './resources.bicep' = {
 // Outputs
 
 @description('Name of the resource group containing the storage resources.')
-output storageResourceGroupName string = storageRGName
+output storageResourceGroupName string = storageResourceGroupName
 
 @description('Name of the deployed FSLogix storage account.')
 output storageAccountName string = storageResources.outputs.storageAccountName

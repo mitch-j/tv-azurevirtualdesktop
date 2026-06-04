@@ -23,25 +23,30 @@ Does not deploy:
 
 import {
   EnvironmentName
+  LocationName
 } from '../../shared/types.bicep'
 
 import {
   commonConfig
   environmentConfigMap
+  locationConfigMap
   resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
-  storageAccountName
+  storageAccountNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
-@description('Environment to deploy to')
+@description('Tags applied to deployed AVD storage resources.')
+param tags object
+
+@description('Deployment environment key used to select storage configuration.')
 param environment EnvironmentName
 
-@description('Tags applied to deployed resources.')
-param tags object
+@description('Azure region for service object resources.')
+param location LocationName
 
 @description('Name of the FSLogix profile file share.')
 param fslogixShareName string = 'profiles'
@@ -61,32 +66,25 @@ param filePrivateDnsZoneResourceId string = ''
 
 // Variables
 
+// Environment-specific naming values.
+var environmentConfig = environmentConfigMap[environment]
+
+// Shared location configuration for the selected Azure region.
+var locationConfig = locationConfigMap[location]
+
 // Storage endpoint suffix for the current Azure cloud.
 var storageSuffix = az.environment().suffixes.storage
 
 // Azure Files endpoint suffix used to build UNC paths.
 var fileEndpointSuffix = 'file.${storageSuffix}'
 
-// Environment-specific naming values.
-var environmentConfig = environmentConfigMap[environment]
-
-// Generate a deterministic suffix from stable inputs to help keep the storage account name globally unique.
-var storageUniqueSuffix = uniqueString(
-  subscription().id,
-  resourceGroup().id,
+var fslogixStorageAccountName = storageAccountNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourcePurpose.fslogix,
-  environmentConfig.shortName
-)
-
-// Build the storage account name using the shared naming helper.
-var fslogixStorageAccountName = storageAccountName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourcePurpose.fslogix,
+  locationConfig.shortCode,
   environmentConfig.shortName,
-  storageUniqueSuffix
+  resourceGroup().id
 )
 
 // Enables private endpoint deployment when a subnet resource ID is provided.
@@ -98,7 +96,7 @@ module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
   name: '${deployment().name}-${fslogixStorageAccountName}'
   params: {
     name: fslogixStorageAccountName
-    location: commonConfig.location
+    location: location
     tags: tags
 
     kind: 'FileStorage'
@@ -157,6 +155,10 @@ module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
 }
 
 // Outputs
+
+
+@description('Azure region used for the deployed storage account.')
+output storageAccountLocation string = location
 
 @description('Name of the deployed FSLogix storage account.')
 output storageAccountName string = fslogixStorage.outputs.name

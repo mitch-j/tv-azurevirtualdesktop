@@ -24,25 +24,30 @@ Does not deploy:
 
 import {
   EnvironmentName
+  LocationName
   WorkspaceConfig
   HostPoolConfig
 } from '../../shared/types.bicep'
 
 import {
+  baseTags
   commonConfig
   environmentConfigMap
-  StandardTags
-  resourcePurpose
+  locationConfigMap
+  resourceGroupPurpose
 } from '../../shared/config.bicep'
 
 import {
-  resourceGroupName
+  resourceGroupNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
 @description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
+
+@description('Azure region for service object resources.')
+param location LocationName
 
 @description('Workspace configurations to deploy for the selected environment.')
 param workspaces WorkspaceConfig[]
@@ -52,29 +57,33 @@ param hostPools HostPoolConfig[]
 
 // Variables
 
-// Environment-specific naming and tagging values.
+@description('Shared environment configuration for the selected deployment environment.')
 var environmentConfig = environmentConfigMap[environment]
 
-// Tags to add to resources deployed by this module.
-var tags = union(StandardTags, {
-  Environment: environmentConfig.tagEnvironment
+@description('Shared location configuration for the selected Azure region.')
+var locationConfig = locationConfigMap[location]
+
+@description('Tags to add to resources deployed by this module.')
+var tags = union(baseTags, {
+  Environment: environmentConfig.tagName
 })
 
 @description('Name of the resource group that contains AVD service object resources.')
-var serviceObjectsRGName = resourceGroupName(
+var serviceObjectsResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.serviceObjects,
+  resourceGroupPurpose.serviceObjects,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
 // Modules
 
 module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: '${deployment().name}-serviceObjects-rg'
+  name: '${deployment().name}-service-objects-rg'
   params: {
-    name: serviceObjectsRGName
-    location: commonConfig.location
+    name: serviceObjectsResourceGroupName
+    location: location
     tags: tags
     lock: {
       kind: commonConfig.lockKind
@@ -83,13 +92,14 @@ module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0
 }
 
 module serviceObjectsResources './resources.bicep' = {
-  name: '${deployment().name}-serviceObjects-res'
-  scope: resourceGroup(serviceObjectsRGName)
+  name: '${deployment().name}-service-objects-res'
+  scope: resourceGroup(serviceObjectsResourceGroupName)
   dependsOn: [
     serviceObjectsResourceGroup
   ]
   params: {
     environment: environment
+    location: location
     tags: tags
     hostPools: hostPools
     workspaces: workspaces
@@ -99,7 +109,7 @@ module serviceObjectsResources './resources.bicep' = {
 // Outputs
 
 @description('Name of the Service Objects resource group.')
-output serviceObjectsResourceGroupName string = serviceObjectsRGName
+output serviceObjectsResourceGroupName string = serviceObjectsResourceGroupName
 
 @description('Names of the deployed AVD workspaces.')
 output workspaceNames array = serviceObjectsResources.outputs.workspaceNames

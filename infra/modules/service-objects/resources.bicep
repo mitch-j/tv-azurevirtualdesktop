@@ -24,6 +24,7 @@ Does not deploy:
 
 import {
   EnvironmentName
+  LocationName
   WorkspaceConfig
   HostPoolConfig
 } from '../../shared/types.bicep'
@@ -31,11 +32,13 @@ import {
 import {
   commonConfig
   environmentConfigMap
+  locationConfigMap
+  resourceDefaults
   resourceType
 } from '../../shared/config.bicep'
 
 import {
-  resourceNameWithPurpose
+  resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
@@ -45,6 +48,9 @@ param tags object
 
 @description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
+
+@description('Azure region for service object resources.')
+param location LocationName
 
 @description('Workspace configurations to deploy in the target resource group.')
 param workspaces WorkspaceConfig[]
@@ -57,13 +63,17 @@ param hostPools HostPoolConfig[]
 @description('Shared environment configuration for the selected deployment environment.')
 var environmentConfig = environmentConfigMap[environment]
 
+@description('Shared location configuration for the selected Azure region.')
+var locationConfig = locationConfigMap[location]
+
 @description('Azure resource names generated for each configured AVD host pool.')
 var hostPoolNames = [
-  for hostPoolItem in hostPools: resourceNameWithPurpose(
+  for hostPoolItem in hostPools: resourceNameWithPurposeAndLocation(
     commonConfig.namePrefix,
     commonConfig.workloadName,
     resourceType.hostPool,
     hostPoolItem.name,
+    locationConfig.shortCode,
     environmentConfig.shortName
   )
 ]
@@ -71,29 +81,32 @@ var hostPoolNames = [
 @description('Desktop application group deployment objects derived from each host pool configuration.')
 var desktopApplicationGroups = [
   for (hostPoolItem, i) in hostPools: {
-    name: resourceNameWithPurpose(
+    name: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.desktopApplicationGroup,
       hostPoolItem.desktopApplicationGroup.name,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
     id: resourceId(
       'Microsoft.DesktopVirtualization/applicationGroups',
-      resourceNameWithPurpose(
+      resourceNameWithPurposeAndLocation(
         commonConfig.namePrefix,
         commonConfig.workloadName,
         resourceType.desktopApplicationGroup,
         hostPoolItem.desktopApplicationGroup.name,
+        locationConfig.shortCode,
         environmentConfig.shortName
       )
     )
     hostPoolName: hostPoolNames[i]
-    workspaceName: resourceNameWithPurpose(
+    workspaceName: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.workspace,
       hostPoolItem.desktopApplicationGroup.workspaceName,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
     workspaceConfigName: hostPoolItem.desktopApplicationGroup.workspaceName
@@ -106,17 +119,18 @@ var desktopApplicationGroups = [
 @description('Workspace deployment objects derived from the workspace parameter configuration.')
 var workspaceDeployments = [
   for workspaceItem in workspaces: {
-    name: resourceNameWithPurpose(
+    name: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.workspace,
       workspaceItem.name,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
     configName: workspaceItem.name
     friendlyName: workspaceItem.?friendlyName
     description: workspaceItem.?description
-    publicNetworkAccess: workspaceItem.?publicNetworkAccess
+    publicNetworkAccess: workspaceItem.?publicNetworkAccess ?? resourceDefaults.publicNetworkAccess
   }
 ]
 
@@ -124,10 +138,10 @@ var workspaceDeployments = [
 
 module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
   for (hostPoolItem, i) in hostPools: {
-    name: 'hp-${i}-${environment}'
+    name: 'hostpool-${i}-${environment}-${location}'
     params: {
       name: hostPoolNames[i]
-      location: commonConfig.location
+      location: location
       tags: tags
 
       friendlyName: hostPoolItem.?friendlyName ?? hostPoolNames[i]
@@ -139,7 +153,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
       validationEnvironment: hostPoolItem.?validationEnvironment ?? false
       startVMOnConnect: hostPoolItem.?startVMOnConnect ?? false
       customRdpProperty: hostPoolItem.?customRdpProperty ?? ''
-      publicNetworkAccess: hostPoolItem.?publicNetworkAccess ?? 'Disabled'
+      publicNetworkAccess: hostPoolItem.?publicNetworkAccess ?? resourceDefaults.publicNetworkAccess
 
       lock: {
         kind: commonConfig.lockKind
@@ -152,13 +166,13 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
 
 module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/application-group:0.4.2' = [
   for (appGroup, i) in desktopApplicationGroups: {
-    name: 'dag-${i}-${environment}'
+    name: 'dag-${i}-${environment}-${location}'
     dependsOn: [
       hostPool
     ]
     params: {
       name: appGroup.name
-      location: commonConfig.location
+      location: location
       tags: tags
 
       applicationGroupType: 'Desktop'
@@ -187,18 +201,18 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
 
 module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
   for (workspaceDeployment, i) in workspaceDeployments: {
-    name: 'vdws-${i}-${environment}'
+    name: 'workspace-${i}-${environment}-${location}'
     dependsOn: [
       desktopApplicationGroup
     ]
     params: {
       name: workspaceDeployment.name
-      location: commonConfig.location
+      location: location
       tags: tags
 
       friendlyName: workspaceDeployment.?friendlyName ?? workspaceDeployment.name
       description: workspaceDeployment.?description ?? ''
-      publicNetworkAccess: workspaceDeployment.?publicNetworkAccess ?? 'Disabled'
+      publicNetworkAccess: workspaceDeployment.publicNetworkAccess
 
       applicationGroupReferences: map(
         filter(

@@ -7,7 +7,7 @@ Environment:
 - poc
 
 Used by:
-- infra/modules/serviceobjects/main.bicep
+- infra/modules/service-objects/main.bicep
 
 Notes:
 - Host pool, desktop application group, and workspace names are logical configuration names.
@@ -17,9 +17,11 @@ Notes:
 */
 
 // Imports
+
 import {
-  avdDefaults
-  avdRoleDefinitionIds
+  avdRdpPropertyPresets
+  resourceDefaults
+  roleDefinitionIds
 } from '../../shared/config.bicep'
 
 // Parameters
@@ -27,13 +29,16 @@ import {
 // Deployment environment key used to select shared environment configuration.
 param environment = 'poc'
 
+// Azure region for service object resources.
+param location = 'eastus'
+
 // Workspace configurations deployed for the POC Service Objects module.
 param workspaces = [
   {
     name: 'primary'
     friendlyName: 'True Value AVD POC'
     description: 'Primary Azure Virtual Desktop workspace for the POC environment.'
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: resourceDefaults.publicNetworkAccess
   }
 ]
 
@@ -49,8 +54,8 @@ param hostPools = [
     maxSessionLimit: 10
     validationEnvironment: false
     startVMOnConnect: true
-    customRdpProperty: avdDefaults.customRdpProperty
-    publicNetworkAccess: 'Disabled'
+    customRdpProperty: avdRdpPropertyPresets.defaultSecure
+    publicNetworkAccess: resourceDefaults.publicNetworkAccess
     desktopApplicationGroup: {
       name: 'opsPooledDesktop'
       friendlyName: 'True Value AVD POC Ops Desktop'
@@ -62,7 +67,7 @@ param hostPools = [
           // Principal: AVD Operations Pooled Users security group.
           principalId: 'aa09d144-a544-4cc9-b0bc-ff053061445c'
           principalType: 'Group'
-          roleDefinitionId: avdRoleDefinitionIds.desktopVirtualizationUser
+          roleDefinitionId: roleDefinitionIds.avd.desktopVirtualizationUser
         }
       ]
     }
@@ -77,8 +82,8 @@ param hostPools = [
     maxSessionLimit: 10
     validationEnvironment: false
     startVMOnConnect: false
-    customRdpProperty: avdDefaults.customRdpProperty
-    publicNetworkAccess: 'Disabled'
+    customRdpProperty: avdRdpPropertyPresets.defaultSecure
+    publicNetworkAccess: resourceDefaults.publicNetworkAccess
     desktopApplicationGroup: {
       name: 'devPooledDesktop'
       friendlyName: 'True Value AVD POC Dev Pooled Desktop'
@@ -88,7 +93,7 @@ param hostPools = [
         {
           principalId: 'aa09d144-a544-4cc9-b0bc-ff053061445c'
           principalType: 'Group'
-          roleDefinitionId: avdRoleDefinitionIds.desktopVirtualizationUser
+          roleDefinitionId: roleDefinitionIds.avd.desktopVirtualizationUser
         }
       ]
     }
@@ -103,8 +108,8 @@ param hostPools = [
     maxSessionLimit: 1
     validationEnvironment: false
     startVMOnConnect: false
-    customRdpProperty: avdDefaults.customRdpProperty
-    publicNetworkAccess: 'Disabled'
+    customRdpProperty: avdRdpPropertyPresets.defaultSecure
+    publicNetworkAccess: resourceDefaults.publicNetworkAccess
     desktopApplicationGroup: {
       name: 'devPersonalDesktop'
       friendlyName: 'True Value AVD POC Dev Personal Desktop'
@@ -114,7 +119,7 @@ param hostPools = [
         {
           principalId: 'ebdf4719-7e5e-4b65-89a5-2a7d24627f75'
           principalType: 'Group'
-          roleDefinitionId: avdRoleDefinitionIds.desktopVirtualizationUser
+          roleDefinitionId: roleDefinitionIds.avd.desktopVirtualizationUser
         }
       ]
     }

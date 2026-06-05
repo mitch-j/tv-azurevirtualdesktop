@@ -46,7 +46,7 @@ stages:
       deploymentUnitName: bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdDeployServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-bootstrap
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -63,7 +63,7 @@ stages:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       avdDeployServiceConnection: $(avdDeployServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -80,7 +80,7 @@ stages:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdDeployServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-network
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -98,7 +98,7 @@ stages:
         - Deploy_network
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdNetworkPeeringServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-networkpeering
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -116,7 +116,7 @@ stages:
         - Deploy_network
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdDeployServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-storage
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -136,7 +136,7 @@ stages:
         - Deploy_sharedresources
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdDeployServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-compute
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -153,7 +153,7 @@ stages:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdSharedDevOpsEnvironment)
       azureServiceConnection: $(avdSharedResourcesServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: poc
       workloadName: $(workloadName)-sharedresources
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)

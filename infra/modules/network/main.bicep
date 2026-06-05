@@ -227,7 +227,7 @@ var deploySpokeToHubPeering = !empty(hubVirtualNetworkResourceId)
 // Deploy hub-to-spoke peering only when all hub-side scope values can be resolved.
 var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVnetName)
 
-var filePrivateDnsZoneName = 'privatelink.file.core.windows.net'
+var filePrivateDnsZoneName = 'privatelink.file.${az.environment().suffixes.storage}'
 
 var filePrivateDnsZoneVirtualNetworkLinkName = toLower('${virtualNetworkName}-file-dns-link')
 

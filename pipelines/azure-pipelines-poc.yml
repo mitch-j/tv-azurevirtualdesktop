@@ -28,7 +28,7 @@ variables:
   workloadName: avd
   environmentName: poc
   avdDevOpsEnvironment: poc-avd
-  avdSharedDevOpsEnvironment: poc-avd-shared
+  avdSharedDevOpsEnvironment: shared-avd
   # Service connection for normal AVD POC workload resources.
   azureServiceConnection: tv-avd-poc-deploy-sc
   # Service connection for shared image/gallery/platform resources.
@@ -134,7 +134,7 @@ stages:
       deployDependsOn:
         - Deploy_storage
         - Deploy_sharedresources
-      azureDevOpsEnvironment: $(azureServiceConnection)
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-compute

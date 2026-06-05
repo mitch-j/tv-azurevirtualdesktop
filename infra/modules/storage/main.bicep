@@ -36,11 +36,13 @@ import {
   resourceDefaults
   resourceGroupPurpose
   resourcePurpose
+  resourceType
 } from '../../shared/config.bicep'
 
 import {
   storageAccountNameWithLocation
   resourceGroupNameWithLocation
+  resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
@@ -69,6 +71,12 @@ param avdUserGroupObjectIds array = []
 @description('Microsoft Entra group object IDs that receive elevated FSLogix profile share access.')
 param avdAdminGroupObjectIds array = []
 
+@description('Resource ID of the subnet used for storage private endpoints.')
+param privateEndpointSubnetResourceId string
+
+@description('Resource ID of the Azure Files private DNS zone.')
+param filePrivateDnsZoneResourceId string
+
 // Variables
 
 var effectiveFslogixShareName = empty(fslogixShareName) ? fslogixConfig.shareName : fslogixShareName
@@ -78,6 +86,15 @@ var locationConfig = locationConfigMap[location]
 var tags = union(baseTags, {
   Environment: environmentConfig.tagName
 })
+
+var storageFilePrivateEndpointName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.privateEndpoint,
+  resourcePurpose.fslogix,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
 
 // Resource Names
 
@@ -145,6 +162,20 @@ module fslogixStorageAuth './storage-auth.bicep' = if (deployStorageAuth) {
     avdAdminGroupObjectIds: avdAdminGroupObjectIds
   }
 }
+
+module storageFilePrivateEndpoint './private-endpoint.bicep' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-storage-file-pe'
+  scope: resourceGroup(storageResourceGroupName)
+  params: {
+    location: location
+    tags: tags
+    privateEndpointName: storageFilePrivateEndpointName
+    privateEndpointSubnetResourceId: privateEndpointSubnetResourceId
+    filePrivateDnsZoneResourceId: filePrivateDnsZoneResourceId
+    storageAccountName: fslogixStorage.outputs.storageAccountName
+  }
+}
+
 
 // Outputs
 

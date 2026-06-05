@@ -62,7 +62,7 @@ stages:
       deployDependsOn:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      avdDeployServiceConnection: $(azureServiceConnection)
+      azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription

@@ -127,26 +127,6 @@ stages:
 
   - template: templates/bicep-deployment-template.yml
     parameters:
-      deploymentUnitName: compute
-      validationDependsOn:
-        - Deploy_storage
-        - Deploy_shareresources
-      deployDependsOn:
-        - Deploy_storage
-        - Deploy_sharedresources
-      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
-      workloadName: $(workloadName)-compute
-      deploymentScope: Subscription
-      deploymentLocation: $(azureLocation)
-      templateFile: "$(Build.SourcesDirectory)/infra/modules/compute/main.bicep"
-      parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
-      validationLevel: Provider
-      whatIfResultFormat: FullResourcePayloads
-
-  - template: templates/bicep-deployment-template.yml
-    parameters:
       deploymentUnitName: sharedresources
       validationDependsOn:
       deployDependsOn:
@@ -161,3 +141,25 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: compute
+      validationDependsOn:
+        - Deploy_storage
+        - Deploy_sharedresources
+      deployDependsOn:
+        - Deploy_storage
+        - Deploy_sharedresources
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: poc
+      workloadName: $(workloadName)-compute
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/compute/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+

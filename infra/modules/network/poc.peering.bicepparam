@@ -20,6 +20,7 @@ param environment = 'poc'
 param location = 'eastus'
 
 param hubVirtualNetworkResourceId = '/subscriptions/3cea8964-57d2-44c4-9c10-0c10866165c8/resourceGroups/networkvpn-rg-prod/providers/Microsoft.Network/virtualNetworks/hub-vnet-prod'
+param spokeVirtualNetworkResourceId ='/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/virtualNetworks/tv-avd-vnet-pri-eus-poc'
 
 param hubPeeringAlias = 'hub-prod'
 

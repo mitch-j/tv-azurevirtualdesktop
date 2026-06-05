@@ -45,7 +45,6 @@ import {
 import {
   resourceGroupNameWithLocation
   resourceNameWithPurposeAndLocation
-  virtualNetworkPeeringName
 } from '../../shared/naming.bicep'
 
 // Types

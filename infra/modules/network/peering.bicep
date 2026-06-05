@@ -66,6 +66,18 @@ param hubVirtualNetworkName string = ''
 @description('Short alias used for the hub side of directional peering names.')
 param hubPeeringAlias string = 'hub-prod'
 
+@description('Resource ID of the spoke virtual network.')
+param spokeVirtualNetworkResourceId string = ''
+
+@description('Subscription ID containing the spoke virtual network. Leave empty to use the current deployment subscription unless spokeVirtualNetworkResourceId is provided.')
+param spokeSubscriptionId string = ''
+
+@description('Resource group containing the spoke virtual network. Leave empty to derive it from naming rules unless spokeVirtualNetworkResourceId is provided.')
+param spokeResourceGroupName string = ''
+
+@description('Name of the spoke virtual network. Leave empty to derive it from naming rules unless spokeVirtualNetworkResourceId is provided.')
+param spokeVirtualNetworkName string = ''
+
 @description('Whether virtual network access is allowed from the spoke VNet to the hub VNet.')
 param spokeToHubAllowVirtualNetworkAccess bool = true
 
@@ -103,7 +115,7 @@ var networkResourceGroupName = resourceGroupNameWithLocation(
   environmentConfig.shortName
 )
 
-var spokeVirtualNetworkName = resourceNameWithPurposeAndLocation(
+var generatedVirtualNetworkName = resourceNameWithPurposeAndLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.virtualNetwork,
@@ -111,8 +123,6 @@ var spokeVirtualNetworkName = resourceNameWithPurposeAndLocation(
   locationConfig.shortCode,
   environmentConfig.shortName
 )
-
-var spokeVirtualNetworkResourceId = spokeVirtualNetwork.id
 
 var hubVnetIdSegments = split(hubVirtualNetworkResourceId, '/')
 
@@ -123,6 +133,31 @@ var parsedHubVnetName = hubVnetIdSegments[lastIndexOf(hubVnetIdSegments, 'virtua
 var effectiveHubSubscriptionId = empty(hubSubscriptionId) ? parsedHubSubscriptionId : hubSubscriptionId
 var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? parsedHubResourceGroupName : hubResourceGroupName
 var effectiveHubVnetName = empty(hubVirtualNetworkName) ? parsedHubVnetName : hubVirtualNetworkName
+
+var spokeVnetIdProvided = !empty(spokeVirtualNetworkResourceId)
+var spokeVnetIdSegments = split(spokeVirtualNetworkResourceId, '/')
+
+var parsedSpokeSubscriptionId = spokeVnetIdProvided ? spokeVnetIdSegments[2] : ''
+var parsedSpokeResourceGroupName = spokeVnetIdProvided ? spokeVnetIdSegments[4] : ''
+var parsedSpokeVnetName = spokeVnetIdProvided ? spokeVnetIdSegments[lastIndexOf(spokeVnetIdSegments, 'virtualNetworks') + 1] : ''
+
+var effectiveSpokeSubscriptionId = !empty(spokeSubscriptionId)
+  ? spokeSubscriptionId
+  : spokeVnetIdProvided
+    ? parsedSpokeSubscriptionId
+    : subscription().subscriptionId
+
+var effectiveSpokeResourceGroupName = !empty(spokeResourceGroupName)
+  ? spokeResourceGroupName
+  : spokeVnetIdProvided
+    ? parsedSpokeResourceGroupName
+    : networkResourceGroupName
+
+var effectiveSpokeVnetName = !empty(spokeVirtualNetworkName)
+  ? spokeVirtualNetworkName
+  : spokeVnetIdProvided
+    ? parsedSpokeVnetName
+    : generatedVirtualNetworkName
 
 var spokePeeringAlias = '${commonConfig.workloadName}-${locationConfig.shortCode}-${environmentConfig.shortName}'
 
@@ -142,18 +177,17 @@ var hubToSpokePeeringName = virtualNetworkPeeringName(
 
 // Existing Resources
 
-resource spokeVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
-  name: spokeVirtualNetworkName
-  scope: resourceGroup(networkResourceGroupName)
+resource spokeVirtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' existing = {
+  name: effectiveSpokeVnetName
+  scope: resourceGroup(effectiveSpokeSubscriptionId, effectiveSpokeResourceGroupName)
 }
-
 // Modules
 
 module spokeToHubPeering './vnet-peering.bicep' = {
   name: '${deployment().name}-${locationConfig.shortCode}-s2h-peer'
-  scope: resourceGroup(networkResourceGroupName)
+  scope: resourceGroup(effectiveSpokeSubscriptionId, effectiveSpokeResourceGroupName)
   params: {
-    localVirtualNetworkName: spokeVirtualNetworkName
+    localVirtualNetworkName: effectiveSpokeVnetName
     remoteVirtualNetworkResourceId: hubVirtualNetworkResourceId
     peeringName: spokeToHubPeeringName
     allowVirtualNetworkAccess: spokeToHubAllowVirtualNetworkAccess
@@ -168,7 +202,7 @@ module hubToSpokePeering './vnet-peering.bicep' = {
   scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
   params: {
     localVirtualNetworkName: effectiveHubVnetName
-    remoteVirtualNetworkResourceId: spokeVirtualNetworkResourceId
+    remoteVirtualNetworkResourceId: spokeVirtualNetwork.id
     peeringName: hubToSpokePeeringName
     allowVirtualNetworkAccess: hubToSpokeAllowVirtualNetworkAccess
     allowForwardedTraffic: hubToSpokeAllowForwardedTraffic
@@ -179,14 +213,17 @@ module hubToSpokePeering './vnet-peering.bicep' = {
 
 // Outputs
 
+@description('Subscription ID containing the AVD spoke virtual network.')
+output spokeSubscriptionId string = effectiveSpokeSubscriptionId
+
 @description('Name of the AVD spoke network resource group.')
-output networkResourceGroupName string = networkResourceGroupName
+output networkResourceGroupName string = effectiveSpokeResourceGroupName
 
 @description('Name of the AVD spoke virtual network.')
-output spokeVirtualNetworkName string = spokeVirtualNetworkName
+output spokeVirtualNetworkName string = effectiveSpokeVnetName
 
 @description('Resource ID of the AVD spoke virtual network.')
-output spokeVirtualNetworkResourceId string = spokeVirtualNetworkResourceId
+output spokeVirtualNetworkResourceId string = spokeVirtualNetwork.id
 
 @description('Name of the hub virtual network.')
 output hubVirtualNetworkName string = effectiveHubVnetName

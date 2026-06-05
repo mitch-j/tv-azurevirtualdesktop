@@ -17,33 +17,37 @@ Does not deploy:
   - Workspaces
 - Storage accounts or FSLogix shares
 - Session host virtual machines
-
 */
 
 // Imports
 
-
 import {
   EnvironmentName
+  LocationName
 } from '../../shared/types.bicep'
 
 import {
   commonConfig
   environmentConfigMap
+  locationConfigMap
+  resourceGroupPurpose
   resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
-  resourceGroupName
-  storageAccountName
+  resourceGroupNameWithLocation
+  storageAccountNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
-@description('Deployment environment.')
+@description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
 
-@description('FSLogix file share name.')
+@description('Azure region for service object resources.')
+param location LocationName
+
+@description('Name of the FSLogix profile file share.')
 param fslogixShareName string = 'profiles'
 
 @description('Microsoft Entra group object IDs that receive standard FSLogix profile share access.')
@@ -60,50 +64,35 @@ var environmentConfig = environmentConfigMap[environment]
 // Location configuration for the selected Azure region.
 var locationConfig = locationConfigMap[location]
 
-// Tags to add to resources deployed by this module.
-var tags = union(baseTags, {
-  Environment: environmentConfig.tagName
-})
-
 // Resource Names
 
-// Name of the resource group containing the FSLogix storage account.
-var storageRGName = resourceGroupName(
+// Storage-auth must use the same location-aware names as the storage module so RBAC targets the existing FSLogix account.
+var storageResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.fslogix,
+  resourceGroupPurpose.storage,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-// Resource ID of the storage resource group used as a stable naming input.
 var storageResourceGroupId = subscriptionResourceId(
   'Microsoft.Resources/resourceGroups',
-  storageRGName
+  storageResourceGroupName
 )
 
-// Deterministic suffix used to derive the FSLogix storage account name.
-var storageUniqueSuffix = uniqueString(
-  subscription().id,
-  storageResourceGroupId,
+var fslogixAccountName = storageAccountNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourcePurpose.fslogix,
-  environmentConfig.shortName
-)
-
-// Name of the FSLogix storage account that receives share-level RBAC assignments.
-var fslogixAccountName = storageAccountName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourcePurpose.fslogix,
+  locationConfig.shortCode,
   environmentConfig.shortName,
-  storageUniqueSuffix
+  resourceGroup().id
 )
 
 // Modules
 
 module storageAuthResources './resources.bicep' = {
-  name: '${deployment().name}-stor-auth'
+  name: '${deployment().name}-${locationConfig.shortCode}-stor-auth'
   scope: resourceGroup(storageRGName)
   params: {
     storageAccountName: fslogixAccountName

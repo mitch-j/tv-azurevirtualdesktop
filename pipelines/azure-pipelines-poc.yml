@@ -101,33 +101,11 @@ stages:
 
   - template: templates/bicep-deployment-template.yml
     parameters:
-      deploymentUnitName: storageauth
-      validationDependsOn:
-        - Deploy_serviceobjects
-        - Deploy_network
-        - Deploy_storage
-      deployDependsOn:
-        - Deploy_serviceobjects
-        - Deploy_network
-        - Deploy_storage
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
-      workloadName: $(workloadName)-storageauth
-      deploymentScope: Subscription
-      deploymentLocation: $(azureLocation)
-      templateFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/main.bicep"
-      parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage-auth/poc.bicepparam"
-      validationLevel: Provider
-      whatIfResultFormat: FullResourcePayloads
-
-  - template: templates/bicep-deployment-template.yml
-    parameters:
       deploymentUnitName: compute
       validationDependsOn:
         - Deploy_storage
       deployDependsOn:
-        - Deploy_storageauth
+        - Deploy_storage
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc

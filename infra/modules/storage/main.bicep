@@ -7,18 +7,16 @@ Scope:
 - Subscription
 
 Deploys:
-- Location-aware resource group for storage resources
-- Premium Azure Files storage account
-- SMB file share for FSLogix profile containers
+- Storage resource group
+- FSLogix storage account
+- FSLogix profile file share
+- FSLogix profile share RBAC assignments
 
 Does not deploy:
-- Storage account RBAC
-- AVD Service Objects
-  - Hostpools
-  - Desktop Application Groups
-  - Workspaces
+- AVD host pools, desktop application groups, or workspaces
 - Session host virtual machines
-- Virtual networks or subnets
+- Network resources
+- Private endpoints
 */
 
 // Imports
@@ -26,60 +24,63 @@ Does not deploy:
 import {
   EnvironmentName
   LocationName
+  StorageAccountSkuName
 } from '../../shared/types.bicep'
 
 import {
   baseTags
   commonConfig
   environmentConfigMap
+  fslogixConfig
   locationConfigMap
+  resourceDefaults
   resourceGroupPurpose
+  resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
+  storageAccountNameWithLocation
   resourceGroupNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
-@description('Deployment environment key used to select shared environment configuration.')
+@description('Deployment environment.')
 param environment EnvironmentName
 
-@description('Azure region for service object resources.')
+@description('Azure region where storage resources are deployed.')
 param location LocationName
 
-@description('Name of the FSLogix profile file share.')
-param fslogixShareName string = 'profiles'
+@description('FSLogix profile file share name. Leave blank to use the shared FSLogix configuration default.')
+param fslogixShareName string = ''
 
-@description('Provisioned size of the FSLogix profile share in GiB.')
-@minValue(100)
+@description('Provisioned size of the FSLogix profile file share in GiB.')
 param fslogixShareQuotaGiB int = 1024
 
-@description('Enable public network access. Use false when private endpoints are configured.')
-param enablePublicNetworkAccess bool = false
+@description('SKU for the FSLogix storage account.')
+param storageAccountSkuName StorageAccountSkuName = 'Premium_LRS'
 
-@description('Optional subnet resource ID for the Azure Files private endpoint.')
-param privateEndpointSubnetResourceId string = ''
+@description('Deploy FSLogix storage RBAC assignments.')
+param deployStorageAuth bool = true
 
-@description('Optional private DNS zone resource ID for privatelink.file.core.windows.net.')
-param filePrivateDnsZoneResourceId string = ''
+@description('Microsoft Entra group object IDs that receive standard FSLogix profile share access.')
+param avdUserGroupObjectIds array = []
+
+@description('Microsoft Entra group object IDs that receive elevated FSLogix profile share access.')
+param avdAdminGroupObjectIds array = []
 
 // Variables
 
-// Environment-specific naming and tagging values.
+var effectiveFslogixShareName = empty(fslogixShareName) ? fslogixConfig.shareName : fslogixShareName
 var environmentConfig = environmentConfigMap[environment]
-
-// Location configuration for the selected Azure region.
 var locationConfig = locationConfigMap[location]
 
-// Tags to add to resources deployed by this module.
 var tags = union(baseTags, {
   Environment: environmentConfig.tagName
 })
 
 // Resource Names
 
-// Name of the resource group that contains AVD storage resources.
 var storageResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
@@ -88,10 +89,25 @@ var storageResourceGroupName = resourceGroupNameWithLocation(
   environmentConfig.shortName
 )
 
+var storageResourceGroupResourceId = subscriptionResourceId(
+  'Microsoft.Resources/resourceGroups',
+  storageResourceGroupName
+)
+
+// Location is included in the storage account hash input so regional deployments produce distinct deterministic names.
+var fslogixStorageAccountName = storageAccountNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourcePurpose.fslogix,
+  locationConfig.shortCode,
+  environmentConfig.shortName,
+  storageResourceGroupResourceId
+)
+
 // Modules
 
 module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: '${deployment().name}-service-objects-rg'
+  name: '${deployment().name}-${locationConfig.shortCode}-storage-rg'
   params: {
     name: storageResourceGroupName
     location: location
@@ -102,40 +118,56 @@ module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' =
   }
 }
 
-module storageResources './resources.bicep' = {
-  name: '${deployment().name}-stor-res'
+module fslogixStorage './storage-account.bicep' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-fslogix-storage'
   scope: resourceGroup(storageResourceGroupName)
+  params: {
+    location: location
+    tags: tags
+    storageAccountName: fslogixStorageAccountName
+    storageAccountSkuName: storageAccountSkuName
+    publicNetworkAccess: resourceDefaults.publicNetworkAccess
+    fslogixShareName: effectiveFslogixShareName
+    fslogixShareQuotaGiB: fslogixShareQuotaGiB
+  }
   dependsOn: [
     storageResourceGroup
   ]
+}
+
+module fslogixStorageAuth './storage-auth.bicep' = if (deployStorageAuth) {
+  name: '${deployment().name}-${locationConfig.shortCode}-fslogix-auth'
+  scope: resourceGroup(storageResourceGroupName)
   params: {
-    environment: environment
-    tags: tags
-    location: location
-    fslogixShareName: fslogixShareName
-    fslogixShareQuotaGiB: fslogixShareQuotaGiB
-    enablePublicNetworkAccess: enablePublicNetworkAccess
-    privateEndpointSubnetResourceId: privateEndpointSubnetResourceId
-    filePrivateDnsZoneResourceId: filePrivateDnsZoneResourceId
+    storageAccountName: fslogixStorage.outputs.storageAccountName
+    fslogixShareName: fslogixStorage.outputs.fslogixShareName
+    avdUserGroupObjectIds: avdUserGroupObjectIds
+    avdAdminGroupObjectIds: avdAdminGroupObjectIds
   }
 }
 
 // Outputs
 
-@description('Name of the resource group containing the storage resources.')
+@description('Name of the resource group containing the FSLogix storage account.')
 output storageResourceGroupName string = storageResourceGroupName
 
-@description('Name of the deployed FSLogix storage account.')
-output storageAccountName string = storageResources.outputs.storageAccountName
+@description('Resource ID of the resource group containing the FSLogix storage account.')
+output storageResourceGroupResourceId string = storageResourceGroupResourceId
 
-@description('Resource ID of the deployed FSLogix storage account.')
-output storageAccountResourceId string = storageResources.outputs.storageAccountResourceId
+@description('Name of the FSLogix storage account.')
+output fslogixStorageAccountName string = fslogixStorage.outputs.storageAccountName
 
-@description('Names of the deployed Azure Files shares.')
-output fileShareNames array = storageResources.outputs.fileShareNames
+@description('Resource ID of the FSLogix storage account.')
+output fslogixStorageAccountResourceId string = fslogixStorage.outputs.storageAccountResourceId
 
-@description('UNC paths for the deployed Azure Files shares.')
-output fileSharePaths array = storageResources.outputs.fileSharePaths
+@description('Name of the FSLogix profile file share.')
+output fslogixShareName string = fslogixStorage.outputs.fslogixShareName
 
-@description('UNC path used for FSLogix profile containers.')
-output fslogixProfilePath string = storageResources.outputs.fslogixProfilePath
+@description('Resource ID of the FSLogix profile file share.')
+output fslogixShareResourceId string = fslogixStorage.outputs.fslogixShareResourceId
+
+@description('Resource IDs of the Storage File Data SMB Share Contributor role assignments created for AVD user groups.')
+output avdUsersShareContributorRoleAssignmentIds array = deployStorageAuth ? fslogixStorageAuth!.outputs.avdUsersShareContributorRoleAssignmentIds : []
+
+@description('Resource IDs of the Storage File Data SMB Share Elevated Contributor role assignments created for AVD admin groups.')
+output avdAdminsShareElevatedContributorRoleAssignmentIds array = deployStorageAuth ? fslogixStorageAuth!.outputs.avdAdminsShareElevatedContributorRoleAssignmentIds : []

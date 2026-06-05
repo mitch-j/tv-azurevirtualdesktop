@@ -54,14 +54,24 @@ param avdAdminGroupObjectIds array
 
 // Variables
 
-// Environment-specific naming and tagging configuration.
+// Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
+
+// Location configuration for the selected Azure region.
+var locationConfig = locationConfigMap[location]
+
+// Tags to add to resources deployed by this module.
+var tags = union(baseTags, {
+  Environment: environmentConfig.tagName
+})
+
+// Resource Names
 
 // Name of the resource group containing the FSLogix storage account.
 var storageRGName = resourceGroupName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.storage,
+  resourcePurpose.fslogix,
   environmentConfig.shortName
 )
 

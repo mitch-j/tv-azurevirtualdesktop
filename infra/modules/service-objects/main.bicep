@@ -82,7 +82,7 @@ var serviceObjectsResourceGroupName = resourceGroupNameWithLocation(
 // Modules
 
 module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
-  name: '${deployment().name}-service-objects-rg'
+  name: '${deployment().name}-so-rg'
   params: {
     name: serviceObjectsResourceGroupName
     location: location
@@ -94,7 +94,7 @@ module serviceObjectsResourceGroup 'br/public:avm/res/resources/resource-group:0
 }
 
 module serviceObjectsResources './resources.bicep' = {
-  name: '${deployment().name}-service-objects-res'
+  name: '${deployment().name}-so-res'
   scope: resourceGroup(serviceObjectsResourceGroupName)
   dependsOn: [
     serviceObjectsResourceGroup

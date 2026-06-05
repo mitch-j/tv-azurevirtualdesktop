@@ -138,7 +138,7 @@ var workspaceDeployments = [
 
 module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
   for (hostPoolItem, i) in hostPools: {
-    name: '${deployment().name}-vdpool-${i}'
+    name: '${environmentConfig.shortName}-${locationConfig.shortCode}-vdpool-${i}'
     params: {
       name: hostPoolNames[i]
       location: location
@@ -166,7 +166,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
 
 module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/application-group:0.4.2' = [
   for (appGroup, i) in desktopApplicationGroups: {
-    name: '${deployment().name}-vdag-${i}'
+    name: '${environmentConfig.shortName}-${locationConfig.shortCode}-vdag-${i}'
     dependsOn: [
       hostPool
     ]
@@ -201,7 +201,7 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
 
 module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
   for (workspaceDeployment, i) in workspaceDeployments: {
-    name: '${deployment().name}-vdws-${i}'
+    name: '${environmentConfig.shortName}-${locationConfig.shortCode}-vdws-${i}'
     dependsOn: [
       desktopApplicationGroup
     ]

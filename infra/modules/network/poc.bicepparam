@@ -66,15 +66,3 @@ param dnsServers = [
   '10.113.20.4'
   '172.16.28.10'
 ]
-
-// Hub Peering
-
-param hubVirtualNetworkResourceId = '/subscriptions/3cea8964-57d2-44c4-9c10-0c10866165c8/resourceGroups/networkvpn-rg-prod/providers/Microsoft.Network/virtualNetworks/hub-vnet-prod'
-
-/*
-Main Bicep is deriving these values, but I'm leaving them here because I'm paranoid at this point.
-
-param hubSubscriptionId = '3cea8964-57d2-44c4-9c10-0c10866165c8'
-param hubResourceGroupName = 'networkvpn-rg-prod'
-param hubVirtualNetworkName = 'hub-vnet-prod'
-*/

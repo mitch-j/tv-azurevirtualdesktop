@@ -79,21 +79,6 @@ param privateEndpointSubnet SubnetConfig
 @description('Optional custom DNS servers for the virtual network. Leave empty to use Azure-provided DNS.')
 param dnsServers array = []
 
-@description('Optional remote hub VNet resource ID. Leave empty to skip peering.')
-param hubVirtualNetworkResourceId string = ''
-
-@description('Subscription ID containing the hub virtual network.')
-param hubSubscriptionId string = ''
-
-@description('Resource group containing the hub virtual network.')
-param hubResourceGroupName string = ''
-
-@description('Name of the hub virtual network.')
-param hubVirtualNetworkName string = ''
-
-@description('Short alias used for the hub side of directional peering names.')
-param hubPeeringAlias string = 'hub-prod'
-
 /*
 @description('Optional management subnet definition.')
 param managementSubnet SubnetConfig?
@@ -177,56 +162,6 @@ var sessionHostNetworkSecurityGroupName = resourceNameWithPurposeAndLocation(
   locationConfig.shortCode,
   environmentConfig.shortName
 )
-
-var spokePeeringAlias = '${commonConfig.workloadName}-${locationConfig.shortCode}-${environmentConfig.shortName}'
-
-var spokeToHubPeeringName = virtualNetworkPeeringName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  spokePeeringAlias,
-  hubPeeringAlias
-)
-
-var hubToSpokePeeringName = virtualNetworkPeeringName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  hubPeeringAlias,
-  spokePeeringAlias
-)
-
-// Hub VNet ID parsing
-
-// Break the hub VNet resource ID into path segments so subscription, resource group, and VNet name can be derived when explicit override parameters are not provided.
-var hubVnetIdSegments = split(hubVirtualNetworkResourceId, '/')
-
-// Subscription ID parsed from the hub VNet resource ID.
-var parsedHubSubscriptionId = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[2]
-
-// Resource group name parsed from the hub VNet resource ID.
-var parsedHubResourceGroupName = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[4]
-
-// VNet name parsed from the hub VNet resource ID.
-var parsedHubVnetName = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[lastIndexOf(hubVnetIdSegments, 'virtualNetworks') + 1]
-
-// Hub VNet effective values
-
-// Hub subscription ID used for deployment. Explicit parameter value wins over the parsed resource ID value.
-var effectiveHubSubscriptionId = empty(hubSubscriptionId) ? parsedHubSubscriptionId : hubSubscriptionId
-
-// Hub resource group name used for deployment. Explicit parameter value wins over the parsed resource ID value.
-var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? parsedHubResourceGroupName : hubResourceGroupName
-
-// Hub VNet name used for deployment. Explicit parameter value wins over the parsed resource ID value.
-var effectiveHubVnetName = empty(hubVirtualNetworkName) ? parsedHubVnetName : hubVirtualNetworkName
-
-// Peering deployment controls
-
-// Deploy spoke-to-hub peering when a hub VNet resource ID is provided.
-var deploySpokeToHubPeering = !empty(hubVirtualNetworkResourceId)
-
-// Deploy hub-to-spoke peering only when all hub-side scope values can be resolved.
-var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVnetName)
-
 var filePrivateDnsZoneName = 'privatelink.file.${az.environment().suffixes.storage}'
 
 var filePrivateDnsZoneVirtualNetworkLinkName = toLower('${virtualNetworkName}-file-dns-link')
@@ -262,37 +197,6 @@ module spokeVnet './spoke-vnet.bicep' = {
   dependsOn: [
     networkResourceGroup
   ]
-}
-
-module spokeToHubPeering './vnet-peering.bicep' = if (deploySpokeToHubPeering) {
-  name: '${deployment().name}-${locationConfig.shortCode}-s2h-peer'
-  scope: resourceGroup(networkResourceGroupName)
-  params: {
-    localVirtualNetworkName: virtualNetworkName
-    remoteVirtualNetworkResourceId: hubVirtualNetworkResourceId
-    peeringName: spokeToHubPeeringName
-    allowVirtualNetworkAccess: true
-    allowForwardedTraffic: true
-    allowGatewayTransit: false
-    useRemoteGateways: false
-  }
-  dependsOn: [
-    spokeVnet
-  ]
-}
-
-module hubToSpokePeering './vnet-peering.bicep' = if (deployHubToSpokePeering) {
-  name: '${deployment().name}-${locationConfig.shortCode}-h2s-peer'
-  scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
-  params: {
-    localVirtualNetworkName: effectiveHubVnetName
-    remoteVirtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
-    peeringName: hubToSpokePeeringName
-    allowVirtualNetworkAccess: true
-    allowForwardedTraffic: true
-    allowGatewayTransit: false
-    useRemoteGateways: false
-  }
 }
 
 // Network owns the Azure Files private DNS zone because storage private endpoints depend on spoke VNet DNS resolution.
@@ -346,24 +250,6 @@ output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSe
 
 @description('Resource ID of the network security group associated with the private endpoint subnet.')
 output privateEndpointNetworkSecurityGroupResourceId string = spokeVnet.outputs.privateEndpointNetworkSecurityGroupResourceId
-
-@description('Resource name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceName string = deploySpokeToHubPeering ? spokeToHubPeering!.outputs.peeringResourceName : ''
-
-@description('Resource ID of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringResourceId string = deploySpokeToHubPeering ? spokeToHubPeering!.outputs.peeringResourceId : ''
-
-@description('Name of the spoke-to-hub virtual network peering, or empty when peering is not deployed.')
-output spokeToHubPeeringName string = deploySpokeToHubPeering ? spokeToHubPeeringName : ''
-
-@description('Resource name of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringResourceName string = deployHubToSpokePeering ? hubToSpokePeering!.outputs.peeringResourceName : ''
-
-@description('Resource ID of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringResourceId string = deployHubToSpokePeering ? hubToSpokePeering!.outputs.peeringResourceId : ''
-
-@description('Name of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
-output hubToSpokePeeringName string = deployHubToSpokePeering ? hubToSpokePeeringName : ''
 
 @description('Resource ID of the Azure Files private DNS zone.')
 output filePrivateDnsZoneResourceId string = filePrivateDnsZone.outputs.privateDnsZoneResourceId

@@ -27,8 +27,14 @@ pr:
 variables:
   workloadName: avd
   environmentName: poc
-  azureDevOpsEnvironment: poc-avd
-  azureServiceConnection: tv-avd-poc-deploy-sc
+  avdDevOpsEnvironment: poc-avd
+  avdSharedDevOpsEnvironment: poc-avd-shared
+  # Service connection for normal AVD POC workload resources.
+  avdDeployServiceConnection: tv-avd-poc-deploy-sc
+  # Service connection for shared image/gallery/platform resources.
+  avdSharedResourcesServiceConnection: tv-avd-shared-deploy-sc
+  # Service connection for hub/spoke peering work.
+  avdNetworkPeeringServiceConnection: tv-avd-network-peering-sc
   azureLocation: eastus
 
 pool:
@@ -38,9 +44,9 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: bootstrap
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdDeployServiceConnection)
+      environmentName: $(environmentName)
       workloadName: $(workloadName)-bootstrap
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -52,11 +58,12 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: serviceobjects
+      validationDependsOn:
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      avdDeployServiceConnection: $(avdDeployServiceConnection)
+      environmentName: $(environmentName)
       workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -71,9 +78,9 @@ stages:
       validationDependsOn:
       deployDependsOn:
         - Deploy_bootstrap
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdDeployServiceConnection)
+      environmentName: $(environmentName)
       workloadName: $(workloadName)-network
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -84,14 +91,32 @@ stages:
 
   - template: templates/bicep-deployment-template.yml
     parameters:
+      deploymentUnitName: networkpeering
+      validationDependsOn:
+        - Deploy_network
+      deployDependsOn:
+        - Deploy_network
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdNetworkPeeringServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(workloadName)-networkpeering
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/network/peering.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/network/poc.peering.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
       deploymentUnitName: storage
       validationDependsOn:
         - Deploy_network
       deployDependsOn:
         - Deploy_network
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdDeployServiceConnection)
+      environmentName: $(environmentName)
       workloadName: $(workloadName)-storage
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
@@ -105,15 +130,34 @@ stages:
       deploymentUnitName: compute
       validationDependsOn:
         - Deploy_storage
+        - Deploy_shareresources
       deployDependsOn:
         - Deploy_storage
-      azureDevOpsEnvironment: $(azureDevOpsEnvironment)
-      azureServiceConnection: $(azureServiceConnection)
-      environmentName: poc
+        - Deploy_sharedresources
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdDeployServiceConnection)
+      environmentName: $(environmentName)
       workloadName: $(workloadName)-compute
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)
       templateFile: "$(Build.SourcesDirectory)/infra/modules/compute/main.bicep"
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: sharedresources
+      validationDependsOn:
+      deployDependsOn:
+        - Deploy_bootstrap
+      azureDevOpsEnvironment: $(avdSharedDevOpsEnvironment)
+      azureServiceConnection: $(avdSharedResourcesServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(workloadName)-sharedresources
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads

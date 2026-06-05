@@ -60,10 +60,10 @@ type SubnetConfig = {
 
 // Parameters
 
-@description('Deployment environment key used to select shared environment configuration.')
+@description('Deployment environment.')
 param environment EnvironmentName
 
-@description('Azure region for network resources.')
+@description('Azure region where storage resources are deployed.')
 param location LocationName
 
 @description('Virtual network address prefixes.')

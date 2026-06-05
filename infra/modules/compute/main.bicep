@@ -22,27 +22,32 @@ Does not deploy:
 
 import {
   EnvironmentName
+  LocationName
   SessionHostGroupConfig
 } from '../../shared/types.bicep'
 
 import {
-  StandardTags
+  baseTags
   commonConfig
   environmentConfigMap
   locationConfigMap
+  resourceGroupPurpose
   resourcePurpose
   resourceType
 } from '../../shared/config.bicep'
 
 import {
-  resourceGroupName
-  resourceNameWithPurpose
+  resourceGroupNameWithLocation
+  resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
 
-@description('Deployment environment key used to select shared environment configuration.')
+@description('Deployment environment.')
 param environment EnvironmentName
+
+@description('Azure region where storage resources are deployed.')
+param location LocationName
 
 @description('When true, this module creates network interfaces for planned session hosts.')
 param deployNetworkInterfaces bool = false
@@ -54,25 +59,29 @@ param sessionHostGroups SessionHostGroupConfig[]
 
 // Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
+var locationConfig = locationConfigMap[location]
+
 
 // Tags to add to resources deployed by this module.
-var tags = union(StandardTags, {
-  Environment: environmentConfig.tagEnvironment
+var tags = union(baseTags, {
+  Environment: environmentConfig.tagName
 })
 
 // Existing network resources used by all session host groups.
-var networkResourceGroupName = resourceGroupName(
+var networkResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.network,
+  resourceGroupPurpose.network,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-var virtualNetworkName = resourceNameWithPurpose(
+var virtualNetworkName = resourceNameWithPurposeAndLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.virtualNetwork,
   resourcePurpose.primary,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
@@ -80,26 +89,23 @@ var virtualNetworkName = resourceNameWithPurpose(
 var plannedSessionHostGroups = [
   for sessionHostGroup in sessionHostGroups: {
     purpose: sessionHostGroup.purpose
-    resourceGroupName: resourceGroupName(
-      commonConfig.namePrefix,
-      commonConfig.workloadName,
-      sessionHostGroup.purpose,
-      environmentConfig.shortName
-    )
-    hostPoolName: resourceNameWithPurpose(
+    resourceGroupName: toLower('${commonConfig.namePrefix}-${commonConfig.workloadName}-rg-${sessionHostGroup.purpose}-${locationConfig.shortCode}-${environmentConfig.shortName}')
+    hostPoolName: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.hostPool,
       sessionHostGroup.purpose,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
     networkResourceGroupName: networkResourceGroupName
     virtualNetworkName: virtualNetworkName
-    subnetName: resourceNameWithPurpose(
+    subnetName: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.subnet,
       sessionHostGroup.purpose,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
 
@@ -133,7 +139,7 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
 
 module sessionHostWorkload './resources.bicep' = [
   for (sessionHostGroup, index) in plannedSessionHostGroups: {
-    name: '${deployment().name}-compute-${toLower(sessionHostGroup.purpose)}'
+    name: '${environmentConfig.shortName}-cmp-${index}'
     scope: resourceGroup(sessionHostGroup.resourceGroupName)
     params: {
       location: commonConfig.location

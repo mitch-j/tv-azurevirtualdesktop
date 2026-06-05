@@ -56,7 +56,7 @@ type PlannedSessionHostGroup = {
   @description('OS disk settings for this workload.')
   osDisk: {
     @description('Managed disk storage type.')
-    storageAccountType: 'Premium_LRS' | 'StandardSSD_LRS' | 'Standard_LRS'
+    storageAccountType: 'Premium_LRS' | 'Premium_ZRS' | 'StandardSSD_LRS' | 'Standard_LRS'
 
     @minValue(64)
     @description('Managed OS disk size in GB.')

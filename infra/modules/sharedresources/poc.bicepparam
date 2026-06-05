@@ -74,7 +74,7 @@ param imageDefinitions = [
   securityType: 'TrustedLaunchSupported'
   isAcceleratedNetworkSupported: true
   isHibernateSupported: false
-  diskControllerType: 'NVMe'
+  diskControllerType: 'NVMe, SCSI'
   architecture: 'x64'
   eula: null
   privacyStatementUri: null

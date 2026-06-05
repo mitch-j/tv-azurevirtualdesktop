@@ -30,7 +30,7 @@ variables:
   avdDevOpsEnvironment: poc-avd
   avdSharedDevOpsEnvironment: poc-avd-shared
   # Service connection for normal AVD POC workload resources.
-  avdDeployServiceConnection: tv-avd-poc-deploy-sc
+  azureServiceConnection: tv-avd-poc-deploy-sc
   # Service connection for shared image/gallery/platform resources.
   avdSharedResourcesServiceConnection: tv-avd-shared-deploy-sc
   # Service connection for hub/spoke peering work.
@@ -45,7 +45,7 @@ stages:
     parameters:
       deploymentUnitName: bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(avdDeployServiceConnection)
+      azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-bootstrap
       deploymentScope: Subscription
@@ -62,7 +62,7 @@ stages:
       deployDependsOn:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      avdDeployServiceConnection: $(avdDeployServiceConnection)
+      avdDeployServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-serviceobjects
       deploymentScope: Subscription
@@ -79,7 +79,7 @@ stages:
       deployDependsOn:
         - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(avdDeployServiceConnection)
+      azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-network
       deploymentScope: Subscription
@@ -115,7 +115,7 @@ stages:
       deployDependsOn:
         - Deploy_network
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(avdDeployServiceConnection)
+      azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-storage
       deploymentScope: Subscription
@@ -134,8 +134,8 @@ stages:
       deployDependsOn:
         - Deploy_storage
         - Deploy_sharedresources
-      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(avdDeployServiceConnection)
+      azureDevOpsEnvironment: $(azureServiceConnection)
+      azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-compute
       deploymentScope: Subscription

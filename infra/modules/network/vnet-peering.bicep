@@ -43,7 +43,7 @@ param useRemoteGateways bool = false
 // Modules
 
 module localToRemotePeering 'br/public:avm/res/network/virtual-network/virtual-network-peering:0.2.0' = {
-  name: '${deployment().name}-peer-res'
+  name: '${deployment().name}-peer'
   params: {
     name: peeringName
     localVnetName: localVirtualNetworkName

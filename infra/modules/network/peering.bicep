@@ -112,11 +112,7 @@ var spokeVirtualNetworkName = resourceNameWithPurposeAndLocation(
   environmentConfig.shortName
 )
 
-var spokeVirtualNetworkResourceId = resourceId(
-  networkResourceGroupName,
-  'Microsoft.Network/virtualNetworks',
-  spokeVirtualNetworkName
-)
+var spokeVirtualNetworkResourceId = spokeVirtualNetwork.id
 
 var hubVnetIdSegments = split(hubVirtualNetworkResourceId, '/')
 
@@ -143,6 +139,13 @@ var hubToSpokePeeringName = virtualNetworkPeeringName(
   hubPeeringAlias,
   spokePeeringAlias
 )
+
+// Existing Resources
+
+resource spokeVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+  name: spokeVirtualNetworkName
+  scope: resourceGroup(networkResourceGroupName)
+}
 
 // Modules
 

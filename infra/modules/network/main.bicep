@@ -14,6 +14,8 @@ Deploys:
 - Session host network security group
 - Optional spoke-to-hub virtual network peering
 - Hub-to-spoke peering
+- Azure Files private DNS zone
+- Private DNS zone VNet link to the AVD spoke virtual network
 
 Does not deploy:
 - AVD host pools, desktop application groups, or workspaces
@@ -91,6 +93,11 @@ param hubVirtualNetworkName string = ''
 
 @description('Short alias used for the hub side of directional peering names.')
 param hubPeeringAlias string = 'hub-prod'
+
+/*
+@description('Optional management subnet definition.')
+param managementSubnet SubnetConfig?
+*/
 
 // Variables
 
@@ -220,6 +227,10 @@ var deploySpokeToHubPeering = !empty(hubVirtualNetworkResourceId)
 // Deploy hub-to-spoke peering only when all hub-side scope values can be resolved.
 var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVnetName)
 
+var filePrivateDnsZoneName = 'privatelink.file.core.windows.net'
+
+var filePrivateDnsZoneVirtualNetworkLinkName = toLower('${virtualNetworkName}-file-dns-link')
+
 // Modules
 
 module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
@@ -283,6 +294,19 @@ module hubToSpokePeering './vnet-peering.bicep' = if (deployHubToSpokePeering) {
     useRemoteGateways: false
   }
 }
+
+// Network owns the Azure Files private DNS zone because storage private endpoints depend on spoke VNet DNS resolution.
+module filePrivateDnsZone './private-dns-zone.bicep' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-file-dns'
+  scope: resourceGroup(networkResourceGroupName)
+  params: {
+    tags: tags
+    privateDnsZoneName: filePrivateDnsZoneName
+    virtualNetworkLinkName: filePrivateDnsZoneVirtualNetworkLinkName
+    virtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
+  }
+}
+
 // Outputs
 
 @description('Resource Name of the deployed AVD spoke virtual network.')
@@ -340,3 +364,12 @@ output hubToSpokePeeringResourceId string = deployHubToSpokePeering ? hubToSpoke
 
 @description('Name of the hub-to-spoke virtual network peering, or empty when peering is not deployed.')
 output hubToSpokePeeringName string = deployHubToSpokePeering ? hubToSpokePeeringName : ''
+
+@description('Resource ID of the Azure Files private DNS zone.')
+output filePrivateDnsZoneResourceId string = filePrivateDnsZone.outputs.privateDnsZoneResourceId
+
+@description('Name of the Azure Files private DNS zone.')
+output filePrivateDnsZoneName string = filePrivateDnsZoneName
+
+@description('DNS servers configured on the AVD spoke virtual network.')
+output dnsServers array = dnsServers

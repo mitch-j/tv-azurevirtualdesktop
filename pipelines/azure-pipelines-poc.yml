@@ -86,8 +86,9 @@ stages:
     parameters:
       deploymentUnitName: storage
       validationDependsOn:
+        - Deploy_network
       deployDependsOn:
-        - Deploy_bootstrap
+        - Deploy_network
       azureDevOpsEnvironment: $(azureDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc

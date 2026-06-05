@@ -24,6 +24,10 @@ Does not deploy:
 // Imports
 
 import {
+  LocationName
+} from '../../shared/types.bicep'
+
+import {
   commonConfig
 } from '../../shared/config.bicep'
 
@@ -40,11 +44,11 @@ type SubnetDefinition = {
 
 // Parameters
 
-@description('Azure region for network resources.')
-param location string
-
-@description('Tags applied to deployed resources.')
+@description('Tags applied to deployed AVD resources.')
 param tags object
+
+@description('Azure region for deployed resources.')
+param location LocationName
 
 @description('Name of the AVD spoke virtual network.')
 param virtualNetworkName string

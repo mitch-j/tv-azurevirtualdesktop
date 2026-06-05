@@ -27,19 +27,22 @@ Does not deploy:
 import {
   EnvironmentName
   PurposeName
+  LocationName
 } from '../../shared/types.bicep'
 
 import {
+  baseTags
   commonConfig
   environmentConfigMap
-  StandardTags
+  locationConfigMap
+  resourceGroupPurpose
   resourcePurpose
   resourceType
 } from '../../shared/config.bicep'
 
 import {
-  resourceGroupName
-  resourceNameWithPurpose
+  resourceGroupNameWithLocation
+  resourceNameWithPurposeAndLocation
   virtualNetworkPeeringName
 } from '../../shared/naming.bicep'
 
@@ -60,7 +63,7 @@ type SubnetConfig = {
 param environment EnvironmentName
 
 @description('Azure region for network resources.')
-param location string = deployment().location
+param location LocationName
 
 @description('Virtual network address prefixes.')
 param virtualNetworkAddressPrefixes array
@@ -86,84 +89,94 @@ param hubResourceGroupName string = ''
 @description('Name of the hub virtual network.')
 param hubVirtualNetworkName string = ''
 
+@description('Short alias used for the hub side of directional peering names.')
+param hubPeeringAlias string = 'hub-prod'
+
 // Variables
 
 // Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
 
+// Location configuration for the selected Azure region.
+var locationConfig = locationConfigMap[location]
+
 // Tags to add to resources deployed by this module.
-var tags = union(StandardTags, {
-  Environment: environmentConfig.tagEnvironment
+var tags = union(baseTags, {
+  Environment: environmentConfig.tagName
 })
 
-// Name of the resource group that contains Network module resources.
-var networkResourceGroupName = resourceGroupName(
+// Resource Names
+
+// Location is included so the same environment can support regional network deployments without name collisions.
+var networkResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  resourcePurpose.network,
+  resourceGroupPurpose.network,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-// Name of the AVD spoke virtual network.
-var virtualNetworkName = resourceNameWithPurpose(
+var virtualNetworkName = resourceNameWithPurposeAndLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.virtualNetwork,
   resourcePurpose.primary,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-// Session host subnet names and address prefixes.
 var sessionHostSubnetDefinitions = [
   for sessionHostSubnet in sessionHostSubnets: {
-    name: resourceNameWithPurpose(
+    name: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       resourceType.subnet,
       sessionHostSubnet.purpose,
+      locationConfig.shortCode,
       environmentConfig.shortName
     )
     addressPrefix: sessionHostSubnet.addressPrefix
   }
 ]
 
-// Private endpoint subnet name and address prefix.
 var privateEndpointSubnetDefinition = {
-  name: resourceNameWithPurpose(
+  name: resourceNameWithPurposeAndLocation(
     commonConfig.namePrefix,
     commonConfig.workloadName,
     resourceType.subnet,
     privateEndpointSubnet.purpose,
+    locationConfig.shortCode,
     environmentConfig.shortName
   )
   addressPrefix: privateEndpointSubnet.addressPrefix
 }
 
-// Name of the network security group associated with the private endpoint subnet.
-var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(
+// Private endpoint subnet uses its own NSG so PE rules stay isolated from session host traffic.
+var privateEndpointNetworkSecurityGroupName = resourceNameWithPurposeAndLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.networkSecurityGroup,
   resourcePurpose.privateEndpoints,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-// Name of the network security group associated with the session host subnet.
-var sessionHostNetworkSecurityGroupName = resourceNameWithPurpose(
+// Session host subnets share an NSG because the host pool network rules should be managed consistently.
+var sessionHostNetworkSecurityGroupName = resourceNameWithPurposeAndLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceType.networkSecurityGroup,
   resourcePurpose.sessionHosts,
+  locationConfig.shortCode,
   environmentConfig.shortName
 )
 
-var avdSpokePeeringAlias = '${commonConfig.workloadName}-${environmentConfig.shortName}'
-var hubPeeringAlias = 'hub-prod'
+var spokePeeringAlias = '${commonConfig.workloadName}-${locationConfig.shortCode}-${environmentConfig.shortName}'
 
 var spokeToHubPeeringName = virtualNetworkPeeringName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
-  avdSpokePeeringAlias,
+  spokePeeringAlias,
   hubPeeringAlias
 )
 
@@ -171,31 +184,46 @@ var hubToSpokePeeringName = virtualNetworkPeeringName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   hubPeeringAlias,
-  avdSpokePeeringAlias
+  spokePeeringAlias
 )
 
-var hubVirtualNetworkResourceIdSegments = split(hubVirtualNetworkResourceId, '/')
+// Hub VNet ID parsing
 
-var hubVirtualNetworkSubscriptionIdFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[2]
+// Break the hub VNet resource ID into path segments so subscription, resource group, and VNet name can be derived when explicit override parameters are not provided.
+var hubVnetIdSegments = split(hubVirtualNetworkResourceId, '/')
 
-var hubVirtualNetworkResourceGroupNameFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[4]
+// Subscription ID parsed from the hub VNet resource ID.
+var parsedHubSubscriptionId = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[2]
 
-var hubVirtualNetworkNameFromId = empty(hubVirtualNetworkResourceId) ? '' : hubVirtualNetworkResourceIdSegments[lastIndexOf(hubVirtualNetworkResourceIdSegments, 'virtualNetworks') + 1]
+// Resource group name parsed from the hub VNet resource ID.
+var parsedHubResourceGroupName = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[4]
 
-var effectiveHubSubscriptionId = empty(hubSubscriptionId) ? hubVirtualNetworkSubscriptionIdFromId : hubSubscriptionId
+// VNet name parsed from the hub VNet resource ID.
+var parsedHubVnetName = empty(hubVirtualNetworkResourceId) ? '' : hubVnetIdSegments[lastIndexOf(hubVnetIdSegments, 'virtualNetworks') + 1]
 
-var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? hubVirtualNetworkResourceGroupNameFromId : hubResourceGroupName
+// Hub VNet effective values
 
-var effectiveHubVirtualNetworkName = empty(hubVirtualNetworkName) ? hubVirtualNetworkNameFromId : hubVirtualNetworkName
+// Hub subscription ID used for deployment. Explicit parameter value wins over the parsed resource ID value.
+var effectiveHubSubscriptionId = empty(hubSubscriptionId) ? parsedHubSubscriptionId : hubSubscriptionId
 
+// Hub resource group name used for deployment. Explicit parameter value wins over the parsed resource ID value.
+var effectiveHubResourceGroupName = empty(hubResourceGroupName) ? parsedHubResourceGroupName : hubResourceGroupName
+
+// Hub VNet name used for deployment. Explicit parameter value wins over the parsed resource ID value.
+var effectiveHubVnetName = empty(hubVirtualNetworkName) ? parsedHubVnetName : hubVirtualNetworkName
+
+// Peering deployment controls
+
+// Deploy spoke-to-hub peering when a hub VNet resource ID is provided.
 var deploySpokeToHubPeering = !empty(hubVirtualNetworkResourceId)
 
-var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVirtualNetworkName)
+// Deploy hub-to-spoke peering only when all hub-side scope values can be resolved.
+var deployHubToSpokePeering = !empty(hubVirtualNetworkResourceId) && !empty(effectiveHubSubscriptionId) && !empty(effectiveHubResourceGroupName) && !empty(effectiveHubVnetName)
 
 // Modules
 
-module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' ={
-  name: '${deployment().name}-network-rg'
+module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-network-rg'
   params: {
     name: networkResourceGroupName
     location: location
@@ -207,7 +235,7 @@ module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' =
 }
 
 module spokeVnet './spoke-vnet.bicep' = {
-  name: '${deployment().name}-spoke-vnet'
+  name: '${deployment().name}-${locationConfig.shortCode}-spoke-vnet'
   scope: resourceGroup(networkResourceGroupName)
   params: {
     location: location
@@ -226,7 +254,7 @@ module spokeVnet './spoke-vnet.bicep' = {
 }
 
 module spokeToHubPeering './vnet-peering.bicep' = if (deploySpokeToHubPeering) {
-  name: '${deployment().name}-s2h-peer'
+  name: '${deployment().name}-${locationConfig.shortCode}-s2h-peer'
   scope: resourceGroup(networkResourceGroupName)
   params: {
     localVirtualNetworkName: virtualNetworkName
@@ -243,10 +271,10 @@ module spokeToHubPeering './vnet-peering.bicep' = if (deploySpokeToHubPeering) {
 }
 
 module hubToSpokePeering './vnet-peering.bicep' = if (deployHubToSpokePeering) {
-  name: '${deployment().name}-h2s-peer'
+  name: '${deployment().name}-${locationConfig.shortCode}-h2s-peer'
   scope: resourceGroup(effectiveHubSubscriptionId, effectiveHubResourceGroupName)
   params: {
-    localVirtualNetworkName: effectiveHubVirtualNetworkName
+    localVirtualNetworkName: effectiveHubVnetName
     remoteVirtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
     peeringName: hubToSpokePeeringName
     allowVirtualNetworkAccess: true
@@ -255,7 +283,6 @@ module hubToSpokePeering './vnet-peering.bicep' = if (deployHubToSpokePeering) {
     useRemoteGateways: false
   }
 }
-
 // Outputs
 
 @description('Resource Name of the deployed AVD spoke virtual network.')

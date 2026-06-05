@@ -66,18 +66,20 @@ param filePrivateDnsZoneResourceId string = ''
 
 // Variables
 
-@description('Shared environment configuration for the selected deployment environment.')
+// Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]
 
-@description('Shared location configuration for the selected Azure region.')
+// Location configuration for the selected Azure region.
 var locationConfig = locationConfigMap[location]
 
-@description('Tags to add to resources deployed by this module.')
+// Tags to add to resources deployed by this module.
 var tags = union(baseTags, {
   Environment: environmentConfig.tagName
 })
 
-@description('Name of the resource group that contains AVD storage resources.')
+// Resource Names
+
+// Name of the resource group that contains AVD storage resources.
 var storageResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,

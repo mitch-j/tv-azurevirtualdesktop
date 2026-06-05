@@ -164,6 +164,79 @@ var environmentConfig = environmentConfigMap[environment]
 module resourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
 ```
 
+## Comment Intent
+
+Comments should explain **why** the code exists, **why** it is shaped a certain way, or **what boundary it protects**.
+
+Do not use comments to narrate what the next line of code already says. Bicep is readable enough when names are clear, and repeating the obvious just gives future reviewers more beige hallway to walk through.
+
+Good comments explain:
+
+- Design intent
+- Ownership boundaries
+- Scope boundaries
+- Dependency/order requirements
+- Security or compliance decisions
+- Naming or configuration exceptions
+- External coordination requirements
+
+Good:
+
+```bicep
+// Private endpoint subnet uses its own NSG so PE rules stay isolated from session host traffic.
+var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(...)
+```
+
+```bicep
+// RBAC is handled in storage-auth so storage can be deployed before identity assignments exist.
+module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
+```
+
+```bicep
+// Location is included in the storage account hash input so regional deployments produce distinct deterministic names.
+var storageAccountName = storageAccountNameWithLocation(...)
+```
+
+```bicep
+// Location is included in the storage account hash input so regional deployments produce distinct deterministic names.
+var storageAccountName = storageAccountNameWithLocation(...)
+```
+
+Avoid:
+
+```bicep
+// Name of the private endpoint network security group.
+var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(...)
+```
+
+```bicep
+// Deploy the storage account.
+module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
+```
+
+```bicep
+// Set the environment config.
+var environmentConfig = environmentConfigMap[environment]
+```
+
+If the symbol name or declaration already answers “what is this?”, do not comment it. Add a comment only when the reader needs context they cannot get from the code itself.
+
+### Variable Comments
+
+Do not use `@description()` on ordinary variables.
+
+Use `@description()` for parameters, outputs, exported functions, and exported types where the description becomes part of the module interface.
+
+For variables, prefer no comment when the variable name is self-explanatory.
+
+Use a short `//` comment only when the variable encodes a design decision, ownership boundary, naming exception, or non-obvious transformation.
+
+Good:
+
+````bicep
+// Private endpoint subnet uses its own NSG so PE rules stay isolated from session host traffic.
+var privateEndpointNetworkSecurityGroupName = resourceNameWithPurpose(...)
+
 ## Module Responsibility
 
 Each module must make its ownership clear, especially when working with shared infrastructure.
@@ -196,7 +269,7 @@ Deploys:
 - FSLogix storage account
 - Profile container file share
 */
-```
+````
 
 Avoid:
 
@@ -205,6 +278,18 @@ Avoid:
 ```
 
 The module declaration already shows the AVM call. The comment should explain what the deployment owns and why it exists.
+
+### Module Comments
+
+Do not use `@description()` on module declarations.
+
+Use clear module symbol names first. Add a short `//` comment only when the module call needs to explain ownership, scope, deployment ordering, or a non-obvious design decision.
+
+Good:
+
+````bicep
+// FSLogix profiles require Premium Azure Files. RBAC is handled by storage-auth.
+module fslogixStorage 'br/public:avm/res/storage/storage-account:0.32.1' = {
 
 ## Naming and Readability
 
@@ -216,7 +301,7 @@ Prefer:
 module storageResourceGroup ...
 var storageResourceGroupName ...
 output storageAccountResourceId string ...
-```
+````
 
 Avoid:
 

@@ -39,13 +39,13 @@ import {
 
 // Parameters
 
-@description('Tags applied to deployed AVD storage resources.')
+@description('Tags applied to deployed AVD resources.')
 param tags object
 
-@description('Deployment environment key used to select storage configuration.')
+@description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
 
-@description('Azure region for service object resources.')
+@description('Azure region for deployed resources.')
 param location LocationName
 
 @description('Name of the FSLogix profile file share.')

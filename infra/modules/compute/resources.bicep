@@ -17,6 +17,10 @@ Does not deploy:
 - Session host virtual machines
 */
 
+import {
+  LocationName
+} from '../../shared/types.bicep'
+
 // Types
 
 @sealed()
@@ -62,11 +66,11 @@ type PlannedSessionHostGroup = {
 
 // Parameters
 
-@description('Azure region for session host resources.')
-param location string
-
-@description('Standard tags applied to session host resources.')
+@description('Tags applied to deployed AVD resources.')
 param tags object
+
+@description('Azure region for deployed resources.')
+param location LocationName
 
 @description('When true, this module creates network interfaces for planned session hosts.')
 param deployNetworkInterfaces bool = false

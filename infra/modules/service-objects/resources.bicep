@@ -43,13 +43,13 @@ import {
 
 // Parameters
 
-@description('Tags applied to deployed AVD service object resources.')
+@description('Tags applied to deployed AVD resources.')
 param tags object
 
 @description('Deployment environment key used to select shared environment configuration.')
 param environment EnvironmentName
 
-@description('Azure region for service object resources.')
+@description('Azure region for deployed resources.')
 param location LocationName
 
 @description('Workspace configurations to deploy in the target resource group.')

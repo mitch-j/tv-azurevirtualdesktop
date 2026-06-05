@@ -317,8 +317,8 @@ var resourcePurposeMap ResourcePurposeSegmentMap = {
   images: 'img'
   logs: 'log'
   fslogix: 'fslogix'
-  avdToHub: 'avd-to-hub'
-  hubToAvd: 'hub-to-avd'
+  avdToHub: 'avd2hub'
+  hubToAvd: 'hub2avd'
 }
 
 // Role Definition IDs

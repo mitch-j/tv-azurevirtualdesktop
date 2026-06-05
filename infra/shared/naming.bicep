@@ -202,15 +202,14 @@ func storageAccountNameWithLocation(
 
 // Network Resource Names
 
-@description('Builds a directional virtual network peering name using the pattern: prefix-workload-peer-purpose-source-to-target.')
+@description('Builds a directional virtual network peering name using the pattern: prefix-workload-peer-source-to-target.')
 @export()
 func virtualNetworkPeeringName(
   namePrefix NamePrefix,
   workloadName WorkloadName,
-  purpose PurposeName,
   sourceName string,
   targetName string
-) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.virtualNetworkPeering}-${resourcePurposeMap[purpose]}-${sourceName}-to-${targetName}')
+) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.virtualNetworkPeering}-${sourceName}-to-${targetName}')
 
 // Service-Specific Resource Names
 

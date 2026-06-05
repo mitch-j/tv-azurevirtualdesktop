@@ -44,3 +44,10 @@ param avdUserGroupObjectIds = [
 param avdAdminGroupObjectIds = [
   '53422f94-8888-496a-b3b8-18e062da591c'
 ]
+
+
+// Temporary for testing of POC deployments individual modules:
+
+param privateEndpointSubnetResourceId = '/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/virtualNetworks/<your-spoke-vnet-name>/subnets/<your-private-endpoint-subnet-name>'
+
+param filePrivateDnsZoneResourceId = '/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net'

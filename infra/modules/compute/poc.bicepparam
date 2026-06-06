@@ -16,6 +16,7 @@ Notes:
 */
 
 param environment = 'poc'
+param location = 'eastus'
 
 param deployNetworkInterfaces = true
 

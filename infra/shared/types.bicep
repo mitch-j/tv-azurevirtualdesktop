@@ -811,10 +811,9 @@ type PreferredAppGroupType =
 @export()
 type SessionHostRoleCode =
   | 'ops'
-  | 'dev'
-  | 'op'
-  | 'dp'
-  | 'dv'
+  | 'opp'
+  | 'dvp'
+  | 'dvs'
 
 // Azure Virtual Desktop Types
 

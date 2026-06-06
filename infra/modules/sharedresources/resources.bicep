@@ -176,16 +176,16 @@ param imageReplicationRegions string[] = [
 @description('Azure Compute Gallery image definitions to create.')
 param imageDefinitions array = [
   {
-    name: 'win11-24h2-avd'
-    description: 'Windows 11 Enterprise multi-session image definition for Azure Virtual Desktop.'
-    tags: tags
+    name: 'win11-25h2-avd-m365'
+    description: 'Windows 11 Enterprise multi-session image for Azure Virtual Desktop with Microsoft 365 Apps.'
+    tags: {}
     allowUpdateImage: true
     osType: 'Windows'
     osState: 'Generalized'
     identifier: {
       publisher: 'TrueValue'
-      offer: 'AzureVirtualDesktop'
-      sku: 'win11-24h2-avd'
+      offer: 'AVD'
+      sku: 'win11-25h2-avd-m365'
     }
     vCPUs: {
       min: 2

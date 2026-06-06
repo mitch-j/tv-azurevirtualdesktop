@@ -51,36 +51,36 @@ param imageTemplateCustomizers = [
 
 param imageDefinitions = [
   {
-  name: 'win11-25h2-avd-m365'
-  description: 'Windows 11 Enterprise multi-session image for Azure Virtual Desktop with Microsoft 365 Apps.'
-  tags: {}
-  allowUpdateImage: true
-  osType: 'Windows'
-  osState: 'Generalized'
-  identifier: {
-    publisher: 'TrueValue'
-    offer: 'AVD'
-    sku: 'win11-25h2-avd-m365'
-  }
-  vCPUs: {
-    min: 2
-    max: 64
-  }
-  memory: {
-    min: 4
-    max: 512
-  }
-  hyperVGeneration: 'V2'
-  securityType: 'TrustedLaunchSupported'
-  isAcceleratedNetworkSupported: true
-  isHibernateSupported: false
-  diskControllerType: 'NVMe, SCSI'
-  architecture: 'x64'
-  eula: null
-  privacyStatementUri: null
-  releaseNoteUri: null
-  purchasePlan: null
-  endOfLife: null
-  excludedDiskTypes: null
+    name: 'win11-25h2-avd-m365'
+    description: 'Windows 11 Enterprise multi-session image for Azure Virtual Desktop with Microsoft 365 Apps.'
+    tags: {}
+    allowUpdateImage: true
+    osType: 'Windows'
+    osState: 'Generalized'
+    identifier: {
+      publisher: 'TrueValue'
+      offer: 'AVD'
+      sku: 'win11-25h2-avd-m365'
+    }
+    vCPUs: {
+      min: 2
+      max: 64
+    }
+    memory: {
+      min: 4
+      max: 512
+    }
+    hyperVGeneration: 'V2'
+    securityType: 'TrustedLaunchSupported'
+    isAcceleratedNetworkSupported: true
+    isHibernateSupported: false
+    diskControllerType: 'SCSI'
+    architecture: 'x64'
+    eula: null
+    privacyStatementUri: null
+    releaseNoteUri: null
+    purchasePlan: null
+    endOfLife: null
+    excludedDiskTypes: null
   }
 ]

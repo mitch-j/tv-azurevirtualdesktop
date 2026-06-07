@@ -437,6 +437,7 @@ type ResourceAbbreviationMap = {
   virtualNetworkPeering: string
   vmImageDefinition: string
   workspace: string
+  actionGroup: string
 }
 
 @description('Supported resource group purpose keys for standard naming.')

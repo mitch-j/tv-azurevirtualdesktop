@@ -242,6 +242,7 @@ var resourceAbbreviationMap ResourceAbbreviationMap = {
   virtualNetworkPeering: 'peer'
   vmImageDefinition: 'imgdef'
   workspace: 'vdws'
+  actionGroup: 'ag'
 }
 
 // Resource Purpose Naming

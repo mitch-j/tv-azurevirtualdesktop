@@ -284,7 +284,7 @@ param galleryImageDefinitionTargetVersion string
 param imageTemplateBaseTime string = 'manual'
 
 @description('Resource ID of the resource group Azure VM Image Builder uses for staging resources.')
-param imageBuilderStagingResourceGroupResourceId object
+param imageBuilderStagingResourceGroupResourceId string
 
 // Variables
 
@@ -661,7 +661,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
   properties: {
     buildTimeoutInMinutes: imageBuildTimeoutInMinutes
 
-    stagingResourceGroup: imageBuilderStagingResourceGroupResourceId.iden
+    stagingResourceGroup: imageBuilderStagingResourceGroupResourceId
 
     source: imageTemplateSource
 

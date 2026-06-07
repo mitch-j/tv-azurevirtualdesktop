@@ -103,19 +103,8 @@ var tags = union(baseTags, {
   Environment: sharedResourcesNameSuffix
 })
 
-var sharedResourcesResourceGroupName = resourceGroupName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourceGroupPurpose.sharedResources,
-  sharedResourcesNameSuffix
-)
-
-var imageBuilderResourceGroupName = resourceGroupName(
-  commonConfig.namePrefix,
-  commonConfig.workloadName,
-  resourceGroupPurpose.images,
-  sharedResourcesNameSuffix
-)
+var sharedResourcesResourceGroupName = 'tv-avd-rg-shared'
+var imageBuilderResourceGroupName = 'tv-avd-rg-img-shared'
 
 // Modules
 
@@ -131,10 +120,10 @@ module sharedResourcesResourceGroup 'br/public:avm/res/resources/resource-group:
   }
 }
 
-module imageBuilderResourceGroup  'br/public:avm/res/resources/resource-group:0.4.3' = {
+module imageBuilderResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
   name: 'deploy-${imageBuilderResourceGroupName}'
   params: {
-    name: sharedResourcesResourceGroupName
+    name: imageBuilderResourceGroupName
     location: location
     tags: tags
     lock: {
@@ -160,7 +149,10 @@ module sharedResources './resources.bicep' = {
     automationAccountSkuName: automationAccountSkuName
     automationAccountPublicNetworkAccess: automationAccountPublicNetworkAccess
 
-    imageBuilderStagingResourceGroupResourceId: imageBuilderResourceGroup
+    imageBuilderStagingResourceGroupResourceId: subscriptionResourceId(
+      'Microsoft.Resources/resourceGroups',
+      imageBuilderResourceGroupName
+    )
 
     imageBuilderVmSize: imageBuilderVmSize
     imageBuilderOsDiskSizeGB: imageBuilderOsDiskSizeGB

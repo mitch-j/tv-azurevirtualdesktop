@@ -543,36 +543,102 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
   }
 }
 
-module galleryImageDefinitions 'br/public:avm/res/compute/gallery/image:0.1.0' = [
-  for (imageDefinition, index) in imageDefinitions: {
-    name: '${deployment().name}-gal-img-${index}'
-    params: {
-      name: imageDefinition.name
-      location: location
-      galleryName: computeGallery.outputs.name
-      description: imageDefinition.?description
-      allowUpdateImage: imageDefinition.?allowUpdateImage
-      osType: imageDefinition.osType
-      osState: imageDefinition.osState
-      identifier: imageDefinition.identifier
-      vCPUs: imageDefinition.?vCPUs
-      memory: imageDefinition.?memory
-      hyperVGeneration: imageDefinition.?hyperVGeneration
-      securityType: imageDefinition.?securityType
-      isAcceleratedNetworkSupported: imageDefinition.?isAcceleratedNetworkSupported
-      isHibernateSupported: imageDefinition.?isHibernateSupported
-      diskControllerType: imageDefinition.?diskControllerType
-      architecture: imageDefinition.?architecture
-      eula: imageDefinition.?eula
-      privacyStatementUri: imageDefinition.?privacyStatementUri
-      releaseNoteUri: imageDefinition.?releaseNoteUri
-      purchasePlan: imageDefinition.?purchasePlan
-      endOfLifeDate: imageDefinition.?endOfLife
-      disallowed: {
-        diskTypes: imageDefinition.?excludedDiskTypes ?? []
-      }
-      tags: imageDefinition.?tags ?? tags
-    }
+resource gallery 'Microsoft.Compute/galleries@2025-03-03' existing = {
+  name: galleryName
+}
+
+resource galleryImageDefinitions 'Microsoft.Compute/galleries/images@2025-03-03' = [
+  for imageDefinition in imageDefinitions: {
+    name: imageDefinition.name
+    parent: gallery
+    location: location
+    tags: imageDefinition.?tags ?? tags
+
+    properties: union(
+      {
+        allowUpdateImage: imageDefinition.?allowUpdateImage
+        architecture: imageDefinition.?architecture
+        description: imageDefinition.?description
+        endOfLifeDate: imageDefinition.?endOfLife
+        eula: imageDefinition.?eula
+
+        features: union(
+          imageDefinition.?isAcceleratedNetworkSupported != null
+            ? [
+                {
+                  name: 'IsAcceleratedNetworkSupported'
+                  value: '${imageDefinition.isAcceleratedNetworkSupported}'
+                }
+              ]
+            : [],
+          imageDefinition.?securityType != null && imageDefinition.securityType != 'Standard'
+            ? [
+                {
+                  name: 'SecurityType'
+                  value: imageDefinition.securityType
+                }
+              ]
+            : [],
+          imageDefinition.?isHibernateSupported != null
+            ? [
+                {
+                  name: 'IsHibernateSupported'
+                  value: '${imageDefinition.isHibernateSupported}'
+                }
+              ]
+            : [],
+          imageDefinition.?diskControllerType != null
+            ? [
+                {
+                  name: 'DiskControllerTypes'
+                  value: imageDefinition.diskControllerType
+                }
+              ]
+            : []
+        )
+
+        hyperVGeneration: imageDefinition.?hyperVGeneration ?? (!empty(imageDefinition.?securityType ?? '') ? 'V2' : 'V1')
+
+        identifier: {
+          publisher: imageDefinition.identifier.publisher
+          offer: imageDefinition.identifier.offer
+          sku: imageDefinition.identifier.sku
+        }
+
+        osState: imageDefinition.osState
+        osType: imageDefinition.osType
+        privacyStatementUri: imageDefinition.?privacyStatementUri
+
+        recommended: {
+          vCPUs: imageDefinition.?vCPUs ?? {
+            min: 1
+            max: 4
+          }
+          memory: imageDefinition.?memory ?? {
+            min: 4
+            max: 16
+          }
+        }
+
+        releaseNoteUri: imageDefinition.?releaseNoteUri
+      },
+      !empty(imageDefinition.?purchasePlan ?? null)
+        ? {
+            purchasePlan: imageDefinition.purchasePlan
+          }
+        : {},
+      !empty(imageDefinition.?excludedDiskTypes ?? [])
+        ? {
+            disallowed: {
+              diskTypes: imageDefinition.excludedDiskTypes
+            }
+          }
+        : {}
+    )
+
+    dependsOn: [
+      computeGallery
+    ]
   }
 ]
 
@@ -593,7 +659,7 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
     distributions: [
       {
         type: 'SharedImage'
-        sharedImageGalleryImageDefinitionResourceId: galleryImageDefinitions[0].outputs.resourceId
+        sharedImageGalleryImageDefinitionResourceId: galleryImageDefinitions[0].id
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
         replicationRegions: imageReplicationRegions
         storageAccountType: imageVersionStorageAccountType
@@ -641,14 +707,14 @@ output computeGalleryResourceId string = computeGallery.outputs.resourceId
 
 @description('Resource IDs of the Azure Compute Gallery image definitions.')
 output galleryImageDefinitionResourceIds string[] = [
-  for index in range(0, length(imageDefinitions)): galleryImageDefinitions[index].outputs.resourceId
+  for index in range(0, length(imageDefinitions)): galleryImageDefinitions[index].id
 ]
 
 @description('Name of the primary VM image definition.')
 output primaryImageDefinitionName string = imageDefinitions[0].name
 
 @description('Resource ID of the primary VM image definition.')
-output primaryImageDefinitionResourceId string = galleryImageDefinitions[0].outputs.resourceId
+output primaryImageDefinitionResourceId string = galleryImageDefinitions[0].id
 
 @description('Name of the Azure VM Image Builder managed identity.')
 output imageBuilderIdentityName string = imageBuilderIdentity.outputs.name

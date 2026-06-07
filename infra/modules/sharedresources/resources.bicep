@@ -283,6 +283,9 @@ param galleryImageDefinitionTargetVersion string
 @description('Deterministic suffix used for Azure VM Image Builder template names. Pass this from the pipeline when creating a new image template build definition.')
 param imageTemplateBaseTime string = 'manual'
 
+@description('Resource ID of the resource group Azure VM Image Builder uses for staging resources.')
+param imageBuilderStagingResourceGroupResourceId object
+
 // Variables
 
 var galleryName = computeGalleryName(
@@ -388,6 +391,15 @@ var imageTemplateDeploymentName = '${imageTemplateName}-${imageTemplateBaseTime}
 
 // Modules
 
+module resourceRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
+  name: '${deployment().name}-rbac'
+  params: {
+      principalId: imageBuilderIdentity.outputs.principalId
+      resourceId: '<resourceId>'
+      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
+      principalType: 'ServicePrincipal'
+  }
+}
 module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.5.1' = {
   name: '${deployment().name}-id-img'
   params: {
@@ -634,7 +646,7 @@ resource galleryImages 'Microsoft.Compute/galleries/images@2025-03-03' = [
   }
 ]
 
-resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01' = {
   name: imageTemplateDeploymentName
   location: location
   tags: tags
@@ -648,6 +660,8 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
 
   properties: {
     buildTimeoutInMinutes: imageBuildTimeoutInMinutes
+
+    stagingResourceGroup: imageBuilderStagingResourceGroupResourceId.iden
 
     source: imageTemplateSource
 

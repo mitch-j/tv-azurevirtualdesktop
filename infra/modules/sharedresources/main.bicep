@@ -110,6 +110,13 @@ var sharedResourcesResourceGroupName = resourceGroupName(
   sharedResourcesNameSuffix
 )
 
+var imageBuilderResourceGroupName = resourceGroupName(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.images,
+  sharedResourcesNameSuffix
+)
+
 // Modules
 
 module sharedResourcesResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
@@ -124,6 +131,17 @@ module sharedResourcesResourceGroup 'br/public:avm/res/resources/resource-group:
   }
 }
 
+module imageBuilderResourceGroup  'br/public:avm/res/resources/resource-group:0.4.3' = {
+  name: 'deploy-${imageBuilderResourceGroupName}'
+  params: {
+    name: sharedResourcesResourceGroupName
+    location: location
+    tags: tags
+    lock: {
+      kind: commonConfig.lockKind
+    }
+  }
+}
 module sharedResources './resources.bicep' = {
   name: 'deploy-${sharedResourcesResourceGroupName}-resources'
   scope: resourceGroup(sharedResourcesResourceGroupName)
@@ -141,6 +159,8 @@ module sharedResources './resources.bicep' = {
 
     automationAccountSkuName: automationAccountSkuName
     automationAccountPublicNetworkAccess: automationAccountPublicNetworkAccess
+
+    imageBuilderStagingResourceGroupResourceId: imageBuilderResourceGroup
 
     imageBuilderVmSize: imageBuilderVmSize
     imageBuilderOsDiskSizeGB: imageBuilderOsDiskSizeGB

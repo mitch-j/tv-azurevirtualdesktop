@@ -448,6 +448,7 @@ type ResourceGroupPurposeName =
   | 'network'
   | 'compute'
   | 'sharedResources'
+  | 'images'
 
 @description('Standard resource group purpose keys used for naming.')
 @sealed()
@@ -458,6 +459,7 @@ type ResourceGroupPurposeConfigMap = {
   network: ResourceGroupPurposeName
   compute: ResourceGroupPurposeName
   sharedResources: ResourceGroupPurposeName
+  images: ResourceGroupPurposeName
 }
 
 @description('Resource group purpose name segment map used by naming functions.')
@@ -469,6 +471,7 @@ type ResourceGroupPurposeSegmentMap = {
   network: string
   compute: string
   sharedResources: string
+  images: string
 }
 
 @description('Supported general resource purpose keys for standard naming.')

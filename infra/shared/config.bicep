@@ -255,6 +255,7 @@ var resourceGroupPurpose ResourceGroupPurposeConfigMap = {
   network: 'network'
   compute: 'compute'
   sharedResources: 'sharedResources'
+  images: 'images'
 }
 
 @description('Standard resource group purpose name segments used in resource group names.')
@@ -265,6 +266,7 @@ var resourceGroupPurposeMap ResourceGroupPurposeSegmentMap = {
   network: 'network'
   compute: 'compute'
   sharedResources: 'shared'
+  images: 'images'
 }
 
 @description('Standard resource purpose keys used for naming.')

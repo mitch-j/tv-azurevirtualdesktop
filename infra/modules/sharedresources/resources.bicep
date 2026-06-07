@@ -531,7 +531,6 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     location: location
     tags: tags
     description: galleryDescription
-    images: imageDefinitions
 
     // Image Builder needs permission to publish image versions into the gallery.
     roleAssignments: [
@@ -543,6 +542,39 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     ]
   }
 }
+
+module galleryImageDefinitions 'br/public:avm/res/compute/gallery/image:0.1.0' = [
+  for (imageDefinition, index) in imageDefinitions: {
+    name: '${deployment().name}-gal-img-${index}'
+    params: {
+      name: imageDefinition.name
+      location: location
+      galleryName: computeGallery.outputs.name
+      description: imageDefinition.?description
+      allowUpdateImage: imageDefinition.?allowUpdateImage
+      osType: imageDefinition.osType
+      osState: imageDefinition.osState
+      identifier: imageDefinition.identifier
+      vCPUs: imageDefinition.?vCPUs
+      memory: imageDefinition.?memory
+      hyperVGeneration: imageDefinition.?hyperVGeneration
+      securityType: imageDefinition.?securityType
+      isAcceleratedNetworkSupported: imageDefinition.?isAcceleratedNetworkSupported
+      isHibernateSupported: imageDefinition.?isHibernateSupported
+      diskControllerType: imageDefinition.?diskControllerType
+      architecture: imageDefinition.?architecture
+      eula: imageDefinition.?eula
+      privacyStatementUri: imageDefinition.?privacyStatementUri
+      releaseNoteUri: imageDefinition.?releaseNoteUri
+      purchasePlan: imageDefinition.?purchasePlan
+      endOfLifeDate: imageDefinition.?endOfLife
+      disallowed: {
+        diskTypes: imageDefinition.?excludedDiskTypes ?? []
+      }
+      tags: imageDefinition.?tags ?? tags
+    }
+  }
+]
 
 module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.6.1' = {
   name: '${deployment().name}-it'
@@ -561,7 +593,7 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
     distributions: [
       {
         type: 'SharedImage'
-        sharedImageGalleryImageDefinitionResourceId: computeGallery.outputs.imageResourceIds[0]
+        sharedImageGalleryImageDefinitionResourceId: galleryImageDefinitions[0].outputs.resourceId
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
         replicationRegions: imageReplicationRegions
         storageAccountType: imageVersionStorageAccountType
@@ -608,13 +640,15 @@ output computeGalleryName string = computeGallery.outputs.name
 output computeGalleryResourceId string = computeGallery.outputs.resourceId
 
 @description('Resource IDs of the Azure Compute Gallery image definitions.')
-output galleryImageDefinitionResourceIds string[] = computeGallery.outputs.imageResourceIds
+output galleryImageDefinitionResourceIds string[] = [
+  for index in range(0, length(imageDefinitions)): galleryImageDefinitions[index].outputs.resourceId
+]
 
 @description('Name of the primary VM image definition.')
 output primaryImageDefinitionName string = imageDefinitions[0].name
 
 @description('Resource ID of the primary VM image definition.')
-output primaryImageDefinitionResourceId string = computeGallery.outputs.imageResourceIds[0]
+output primaryImageDefinitionResourceId string = galleryImageDefinitions[0].outputs.resourceId
 
 @description('Name of the Azure VM Image Builder managed identity.')
 output imageBuilderIdentityName string = imageBuilderIdentity.outputs.name

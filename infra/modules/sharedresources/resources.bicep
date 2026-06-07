@@ -597,24 +597,28 @@ resource galleryImages 'Microsoft.Compute/galleries/images@2025-03-03' = [
             {
               name: 'IsAcceleratedNetworkSupported'
               value: '${imageDefinition.isAcceleratedNetworkSupported}'
+              startsAtVersion: galleryImageDefinitionTargetVersion
             }
           ] : [],
           imageDefinition.?securityType != null && imageDefinition.securityType != 'Standard' ? [
             {
               name: 'SecurityType'
               value: '${imageDefinition.securityType}'
+              startsAtVersion: galleryImageDefinitionTargetVersion
             }
           ] : [],
           imageDefinition.?isHibernateSupported != null ? [
             {
               name: 'IsHibernateSupported'
               value: '${imageDefinition.isHibernateSupported}'
+              startsAtVersion: galleryImageDefinitionTargetVersion
             }
           ] : [],
           imageDefinition.?diskControllerType != null ? [
             {
               name: 'DiskControllerTypes'
               value: '${imageDefinition.diskControllerType}'
+              startsAtVersion: galleryImageDefinitionTargetVersion
             }
           ] : []
         )

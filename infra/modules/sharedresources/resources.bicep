@@ -630,7 +630,7 @@ resource galleryImages 'Microsoft.Compute/galleries/images@2025-03-03' = [
   }
 ]
 
-resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
   name: imageTemplateDeploymentName
   location: location
   tags: tags

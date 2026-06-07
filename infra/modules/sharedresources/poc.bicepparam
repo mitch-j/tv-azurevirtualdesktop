@@ -18,7 +18,7 @@ Notes:
 
 
 param location = 'eastus'
-param environment = 'poc'
+param sharedResourcesNameSuffix = 'shared'
 
 param galleryDescription = 'Azure Compute Gallery for Azure Virtual Desktop custom images.'
 
@@ -99,5 +99,5 @@ param imageBuildScheduleTimeZone = 'America/Chicago'
 param imageBuilderSubnetResourceId = ''
 param imageVersionStorageAccountType = 'Standard_LRS'
 
-param galleryImageDefinitionTargetVersion = '0.0.3'
+param galleryImageDefinitionTargetVersion = '0.0.1'
 param imageTemplateBaseTime = 'poc001'

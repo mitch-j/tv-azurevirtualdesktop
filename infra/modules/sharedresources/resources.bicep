@@ -136,8 +136,8 @@ param namePrefix string
 @description('Technical workload name used in resource names.')
 param workloadName string
 
-@description('Short environment name used in resource names.')
-param environmentShortName string
+@description('Name suffix used for shared resources that are environment-neutral and consumed across PoC, test, and production.')
+param sharedResourcesNameSuffix string = 'shared'
 
 @description('Azure Compute Gallery description.')
 param galleryDescription string = 'Azure Compute Gallery for Azure Virtual Desktop custom images.'
@@ -296,7 +296,7 @@ var imageBuilderIdentityName = resourceNameWithPurpose(
   workloadName,
   resourceType.managedIdentity,
   resourcePurpose.images,
-  environmentShortName
+  sharedResourcesNameSuffix
 )
 
 var imageTemplateName = resourceNameWithPurpose(
@@ -304,7 +304,7 @@ var imageTemplateName = resourceNameWithPurpose(
   workloadName,
   resourceType.imageTemplate,
   resourcePurpose.images,
-  environmentShortName
+  sharedResourcesNameSuffix
 )
 
 var automationAccountName = resourceNameWithPurpose(
@@ -312,7 +312,7 @@ var automationAccountName = resourceNameWithPurpose(
   workloadName,
   resourceType.automationAccount,
   resourcePurpose.sharedResources,
-  environmentShortName
+  sharedResourcesNameSuffix
 )
 
 var logAnalyticsWorkspaceName = resourceNameWithPurpose(
@@ -320,7 +320,7 @@ var logAnalyticsWorkspaceName = resourceNameWithPurpose(
   workloadName,
   resourceType.logAnalyticsWorkspace,
   resourcePurpose.logs,
-  environmentShortName
+  sharedResourcesNameSuffix
 )
 
 var imageBuildActionGroupName = resourceNameWithPurpose(
@@ -328,7 +328,7 @@ var imageBuildActionGroupName = resourceNameWithPurpose(
   workloadName,
   resourceType.actionGroup,
   resourcePurpose.images,
-  environmentShortName
+  sharedResourcesNameSuffix
 )
 
 var imageBuildRunbookName = 'aib-build-automation'
@@ -656,7 +656,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
   distribute: [
     {
       type: 'SharedImage'
-      runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
+      runOutputName: '${imageDefinitions[0].name}-${sharedResourcesNameSuffix}'
       galleryImageId: '${galleryImages[0].id}/versions/${galleryImageDefinitionTargetVersion}'
       replicationRegions: imageReplicationRegions
       storageAccountType: imageVersionStorageAccountType

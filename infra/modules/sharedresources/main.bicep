@@ -21,14 +21,12 @@ Does not deploy:
 // Imports
 
 import {
-  EnvironmentName
   LocationName
 } from '../../shared/types.bicep'
 
 import {
   baseTags
   commonConfig
-  environmentConfigMap
   resourceGroupPurpose
 } from '../../shared/config.bicep'
 
@@ -38,8 +36,8 @@ import {
 
 // Parameters
 
-@description('Deployment environment key used to select shared environment configuration.')
-param environment EnvironmentName
+@description('Name suffix used for shared resources that are environment-neutral and consumed across PoC, test, and production.')
+param sharedResourcesNameSuffix string = 'shared'
 
 @description('Azure region for network resources.')
 param location LocationName
@@ -100,19 +98,16 @@ param imageTemplateBaseTime string
 
 // Variables
 
-// Environment-specific naming and tagging values.
-var environmentConfig = environmentConfigMap[environment]
-
 // Tags to add to resources deployed by this module.
 var tags = union(baseTags, {
-  Environment: environmentConfig.tagName
+  Environment: sharedResourcesNameSuffix
 })
 
 var sharedResourcesResourceGroupName = resourceGroupName(
   commonConfig.namePrefix,
   commonConfig.workloadName,
   resourceGroupPurpose.sharedResources,
-  environmentConfig.shortName
+  sharedResourcesNameSuffix
 )
 
 // Modules
@@ -140,7 +135,7 @@ module sharedResources './resources.bicep' = {
     tags: tags
     namePrefix: commonConfig.namePrefix
     workloadName: commonConfig.workloadName
-    environmentShortName: environmentConfig.shortName
+    sharedResourcesNameSuffix: sharedResourcesNameSuffix
 
     galleryDescription: galleryDescription
 

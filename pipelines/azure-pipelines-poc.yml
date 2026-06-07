@@ -41,27 +41,26 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-
-#  - template: templates/bicep-deployment-template.yml
-#    parameters:
-#      deploymentUnitName: bootstrap
-#      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-#      azureServiceConnection: $(azureServiceConnection)
-#      environmentName: poc
-#      workloadName: $(workloadName)-bootstrap
-#      deploymentScope: Subscription
-#      deploymentLocation: $(azureLocation)
-#      templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
-#      parameterFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam"
-#     validationLevel: Provider
-#      whatIfResultFormat: FullResourcePayloads
+  #  - template: templates/bicep-deployment-template.yml
+  #    parameters:
+  #      deploymentUnitName: bootstrap
+  #      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+  #      azureServiceConnection: $(azureServiceConnection)
+  #      environmentName: poc
+  #      workloadName: $(workloadName)-bootstrap
+  #      deploymentScope: Subscription
+  #      deploymentLocation: $(azureLocation)
+  #      templateFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/main.bicep"
+  #      parameterFile: "$(Build.SourcesDirectory)/infra/modules/bootstrap/poc.bicepparam"
+  #     validationLevel: Provider
+  #      whatIfResultFormat: FullResourcePayloads
 
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: serviceobjects
-      validationDependsOn:
-      deployDependsOn:
-#        - Deploy_bootstrap
+      #      validationDependsOn:
+      #      deployDependsOn:
+      #        - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
@@ -76,9 +75,9 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: network
-      validationDependsOn:
-      deployDependsOn:
-#        - Deploy_bootstrap
+      #      validationDependsOn:
+      #      deployDependsOn:
+      #        - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
@@ -129,9 +128,9 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: sharedresources
-      validationDependsOn:
-      deployDependsOn:
-#        - Deploy_bootstrap
+      #      validationDependsOn:
+      #      deployDependsOn:
+      #        - Deploy_bootstrap
       azureDevOpsEnvironment: $(avdSharedDevOpsEnvironment)
       azureServiceConnection: $(avdSharedResourcesServiceConnection)
       environmentName: poc

@@ -100,3 +100,4 @@ param imageBuilderSubnetResourceId = ''
 param imageVersionStorageAccountType = 'Standard_LRS'
 
 param galleryImageDefinitionTargetVersion = '0.0.1'
+param imageTemplateBaseTime = 'poc001'

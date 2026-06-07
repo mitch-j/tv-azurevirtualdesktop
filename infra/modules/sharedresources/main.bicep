@@ -96,6 +96,8 @@ param imageVersionStorageAccountType string
 @description('Target Azure Compute Gallery image version produced by Azure VM Image Builder. Must use Major.Minor.Build format.')
 param galleryImageDefinitionTargetVersion string
 
+param imageTemplateBaseTime string
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -167,6 +169,7 @@ module sharedResources './resources.bicep' = {
     imageBuilderSubnetResourceId: imageBuilderSubnetResourceId
     imageVersionStorageAccountType: imageVersionStorageAccountType
     galleryImageDefinitionTargetVersion: galleryImageDefinitionTargetVersion
+    imageTemplateBaseTime: imageTemplateBaseTime
   }
 }
 

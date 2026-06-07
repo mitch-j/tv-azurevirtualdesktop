@@ -280,8 +280,8 @@ param imageBuildScheduleStartTime string = dateTimeAdd(utcNow(), 'PT15M')
 @description('Target Azure Compute Gallery image version produced by Azure VM Image Builder. Must use Major.Minor.Build format.')
 param galleryImageDefinitionTargetVersion string
 
-@description('Timestamp suffix used for Azure VM Image Builder template names. Image templates are commonly deployed as non-idempotent build definitions.')
-param imageTemplateBaseTime string = utcNow('yyyyMMdd-HHmmss')
+@description('Deterministic suffix used for Azure VM Image Builder template names. Pass this from the pipeline when creating a new image template build definition.')
+param imageTemplateBaseTime string = 'manual'
 
 // Variables
 
@@ -545,7 +545,6 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     location: location
     tags: tags
     description: galleryDescription
-    images: imageDefinitions
 
     // Image Builder needs permission to publish image versions into the gallery.
     roleAssignments: [
@@ -557,6 +556,79 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     ]
   }
 }
+
+resource galleryImages 'Microsoft.Compute/galleries/images@2025-03-03' = [
+  for imageDefinition in imageDefinitions: {
+    name: '${galleryName}/${imageDefinition.name}'
+    location: location
+    tags: imageDefinition.?tags ?? tags
+
+    properties: union(
+      {
+        osType: imageDefinition.osType
+        osState: imageDefinition.osState
+
+        identifier: {
+          publisher: imageDefinition.identifier.publisher
+          offer: imageDefinition.identifier.offer
+          sku: imageDefinition.identifier.sku
+        }
+
+        description: imageDefinition.?description
+        allowUpdateImage: imageDefinition.?allowUpdateImage
+        architecture: imageDefinition.?architecture
+        hyperVGeneration: imageDefinition.?hyperVGeneration
+        eula: imageDefinition.?eula
+        privacyStatementUri: imageDefinition.?privacyStatementUri
+        releaseNoteUri: imageDefinition.?releaseNoteUri
+        endOfLifeDate: imageDefinition.?endOfLife
+
+        recommended: {
+          vCPUs: imageDefinition.?vCPUs
+          memory: imageDefinition.?memory
+        }
+
+        disallowed: {
+          diskTypes: imageDefinition.?excludedDiskTypes ?? []
+        }
+
+        features: union(
+          imageDefinition.?isAcceleratedNetworkSupported != null ? [
+            {
+              name: 'IsAcceleratedNetworkSupported'
+              value: '${imageDefinition.isAcceleratedNetworkSupported}'
+            }
+          ] : [],
+          imageDefinition.?securityType != null && imageDefinition.securityType != 'Standard' ? [
+            {
+              name: 'SecurityType'
+              value: '${imageDefinition.securityType}'
+            }
+          ] : [],
+          imageDefinition.?isHibernateSupported != null ? [
+            {
+              name: 'IsHibernateSupported'
+              value: '${imageDefinition.isHibernateSupported}'
+            }
+          ] : [],
+          imageDefinition.?diskControllerType != null ? [
+            {
+              name: 'DiskControllerTypes'
+              value: '${imageDefinition.diskControllerType}'
+            }
+          ] : []
+        )
+      },
+      imageDefinition.?purchasePlan != null ? {
+        purchasePlan: imageDefinition.purchasePlan
+      } : {}
+    )
+
+    dependsOn: [
+      computeGallery
+    ]
+  }
+]
 
 resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01' = {
   name: imageTemplateDeploymentName
@@ -581,7 +653,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
       {
         type: 'SharedImage'
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
-        galleryImageId: '${computeGallery.outputs.imageResourceIds[0]}/versions/${galleryImageDefinitionTargetVersion}'
+        galleryImageId: '${galleryImages[0].id}/versions/${galleryImageDefinitionTargetVersion}'
         replicationRegions: imageReplicationRegions
         storageAccountType: imageVersionStorageAccountType
         artifactTags: tags
@@ -631,13 +703,15 @@ output computeGalleryName string = computeGallery.outputs.name
 output computeGalleryResourceId string = computeGallery.outputs.resourceId
 
 @description('Resource IDs of the Azure Compute Gallery image definitions.')
-output galleryImageDefinitionResourceIds string[] = computeGallery.outputs.imageResourceIds
+output galleryImageDefinitionResourceIds string[] = [
+  for (imageDefinition, index) in imageDefinitions: galleryImages[index].id
+]
 
 @description('Name of the primary VM image definition.')
 output primaryImageDefinitionName string = imageDefinitions[0].name
 
 @description('Resource ID of the primary VM image definition.')
-output primaryImageDefinitionResourceId string = computeGallery.outputs.imageResourceIds[0]
+output primaryImageDefinitionResourceId string = galleryImages[0].id
 
 @description('Name of the Azure VM Image Builder managed identity.')
 output imageBuilderIdentityName string = imageBuilderIdentity.outputs.name

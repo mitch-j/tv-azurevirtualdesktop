@@ -178,7 +178,6 @@ param imageDefinitions array = [
   {
     name: 'win11-25h2-avd-m365'
     description: 'Windows 11 Enterprise multi-session image for Azure Virtual Desktop with Microsoft 365 Apps.'
-    tags: {}
     allowUpdateImage: true
     osType: 'Windows'
     osState: 'Generalized'
@@ -199,13 +198,13 @@ param imageDefinitions array = [
     securityType: 'TrustedLaunchSupported'
     isAcceleratedNetworkSupported: true
     isHibernateSupported: false
-    diskControllerType: 'SCSI'
+    diskControllerType: 'NVMe, SCSI'
     architecture: 'x64'
     eula: null
     privacyStatementUri: null
     releaseNoteUri: null
     purchasePlan: null
-    endOfLife: null
+    endOfLife: '2033-01-01'
     excludedDiskTypes: null
   }
 ]

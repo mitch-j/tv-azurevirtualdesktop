@@ -83,3 +83,18 @@ param imageDefinitions = [
     excludedDiskTypes: null
   }
 ]
+
+param enableImageBuildMonitoring = true
+param existingLogAnalyticsWorkspaceResourceId = ''
+param logAnalyticsWorkspaceRetentionInDays = 30
+
+param enableImageBuildAlerts = false
+param imageBuildAlertsEmailAddress = ''
+
+param enableImageBuildSchedule = false
+param imageBuildScheduleFrequency = 'Day'
+param imageBuildScheduleInterval = 1
+param imageBuildScheduleTimeZone = 'America/Chicago'
+
+param imageBuilderSubnetResourceId = ''
+param imageVersionStorageAccountType = 'Standard_LRS'

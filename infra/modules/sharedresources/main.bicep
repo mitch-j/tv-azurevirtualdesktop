@@ -60,6 +60,40 @@ param imageTemplateAutoRunState string
 param imageTemplateSource object
 param imageDefinitions array
 
+@description('Whether to deploy image build monitoring resources.')
+param enableImageBuildMonitoring bool
+
+@description('Existing Log Analytics Workspace resource ID. Leave empty to deploy a workspace in the shared resources resource group.')
+param existingLogAnalyticsWorkspaceResourceId string
+
+@description('Log Analytics workspace retention in days.')
+param logAnalyticsWorkspaceRetentionInDays int
+
+@description('Email address used for image build alert notifications. Leave empty to skip email action group receiver.')
+param imageBuildAlertsEmailAddress string
+
+@description('Whether to deploy scheduled query alerts for Image Builder automation results.')
+param enableImageBuildAlerts bool
+
+@description('Whether to deploy an Automation schedule for Image Builder runs.')
+param enableImageBuildSchedule bool
+
+@description('Image build schedule frequency.')
+param imageBuildScheduleFrequency string
+
+@description('Image build schedule interval.')
+param imageBuildScheduleInterval int
+
+@description('Time zone used by the Image Builder automation schedule.')
+param imageBuildScheduleTimeZone string
+
+@description('Optional subnet resource ID used by Azure VM Image Builder build VMs.')
+param imageBuilderSubnetResourceId string
+
+@description('Storage account type used for image versions distributed by Image Builder.')
+param imageVersionStorageAccountType string
+
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -119,6 +153,17 @@ module sharedResources './resources.bicep' = {
     imageTemplateCustomizers: imageTemplateCustomizers
 
     imageDefinitions: imageDefinitions
+    enableImageBuildMonitoring: enableImageBuildMonitoring
+    existingLogAnalyticsWorkspaceResourceId: existingLogAnalyticsWorkspaceResourceId
+    logAnalyticsWorkspaceRetentionInDays: logAnalyticsWorkspaceRetentionInDays
+    imageBuildAlertsEmailAddress: imageBuildAlertsEmailAddress
+    enableImageBuildAlerts: enableImageBuildAlerts
+    enableImageBuildSchedule: enableImageBuildSchedule
+    imageBuildScheduleFrequency: imageBuildScheduleFrequency
+    imageBuildScheduleInterval: imageBuildScheduleInterval
+    imageBuildScheduleTimeZone: imageBuildScheduleTimeZone
+    imageBuilderSubnetResourceId: imageBuilderSubnetResourceId
+    imageVersionStorageAccountType: imageVersionStorageAccountType
   }
 }
 
@@ -153,3 +198,15 @@ output automationAccountName string = sharedResources.outputs.automationAccountN
 
 @description('Resource ID of the Automation Account.')
 output automationAccountResourceId string = sharedResources.outputs.automationAccountResourceId
+
+@description('Name of the Log Analytics workspace deployed by the shared resources module.')
+output logAnalyticsWorkspaceName string = sharedResources.outputs.logAnalyticsWorkspaceName
+
+@description('Resource ID of the Log Analytics workspace used by the shared resources module.')
+output logAnalyticsWorkspaceResourceId string = sharedResources.outputs.logAnalyticsWorkspaceResourceId
+
+@description('Name of the Image Builder alert action group.')
+output imageBuildActionGroupName string = sharedResources.outputs.imageBuildActionGroupName
+
+@description('Resource ID of the Image Builder alert action group.')
+output imageBuildActionGroupResourceId string = sharedResources.outputs.imageBuildActionGroupResourceId

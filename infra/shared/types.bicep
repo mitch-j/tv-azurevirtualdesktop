@@ -372,6 +372,7 @@ type ResourceTypeName =
   | 'virtualNetworkPeering'
   | 'vmImageDefinition'
   | 'workspace'
+  | 'actionGroup'
 
 @description('Standard resource type keys used for naming.')
 @sealed()
@@ -403,6 +404,7 @@ type ResourceTypeConfigMap = {
   virtualNetworkPeering: ResourceTypeName
   vmImageDefinition: ResourceTypeName
   workspace: ResourceTypeName
+  actionGroup: ResourceTypeName
 }
 
 @description('Resource type abbreviation map used by naming functions.')

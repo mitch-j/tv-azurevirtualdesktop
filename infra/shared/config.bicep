@@ -210,6 +210,7 @@ var resourceType ResourceTypeConfigMap = {
   virtualNetworkPeering: 'virtualNetworkPeering'
   vmImageDefinition: 'vmImageDefinition'
   workspace: 'workspace'
+  actionGroup: 'actionGroup'
 }
 
 @description('Standard Azure resource type abbreviations used for naming.')

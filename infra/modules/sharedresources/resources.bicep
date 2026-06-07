@@ -213,8 +213,8 @@ param imageDefinitions array = [
 param imageTemplateSource object = {
   type: 'PlatformImage'
   publisher: 'MicrosoftWindowsDesktop'
-  offer: 'Windows-11'
-  sku: 'win11-24h2-avd'
+  offer: 'office-365'
+  sku: 'win11-25h2-avd-m365'
   version: 'latest'
 }
 
@@ -228,6 +228,54 @@ param imageTemplateCustomizers array
 ])
 param imageTemplateAutoRunState string = 'Disabled'
 
+@description('Whether to deploy image build monitoring resources.')
+param enableImageBuildMonitoring bool = true
+
+@description('Existing Log Analytics Workspace resource ID. Leave empty to deploy a workspace in this resource group.')
+param existingLogAnalyticsWorkspaceResourceId string = ''
+
+@description('Log Analytics workspace retention in days.')
+@minValue(30)
+@maxValue(730)
+param logAnalyticsWorkspaceRetentionInDays int = 30
+
+@description('Email address used for image build alert notifications. Leave empty to skip email receiver and alert actions.')
+param imageBuildAlertsEmailAddress string = ''
+
+@description('Whether to deploy scheduled query alerts for Image Builder automation results.')
+param enableImageBuildAlerts bool = false
+
+@description('Whether to deploy an Automation schedule for Image Builder runs.')
+param enableImageBuildSchedule bool = false
+
+@description('Image build schedule frequency.')
+@allowed([
+  'OneTime'
+  'Day'
+  'Hour'
+  'Week'
+])
+param imageBuildScheduleFrequency string = 'Day'
+
+@description('Image build schedule interval.')
+@minValue(1)
+param imageBuildScheduleInterval int = 1
+
+@description('Time zone used by the Image Builder automation schedule.')
+param imageBuildScheduleTimeZone string = 'America/Chicago'
+
+@description('Optional subnet resource ID used by Azure VM Image Builder build VMs.')
+param imageBuilderSubnetResourceId string = ''
+
+@description('Storage account type used for image versions distributed by Image Builder.')
+@allowed([
+  'Standard_LRS'
+  'Standard_ZRS'
+])
+param imageVersionStorageAccountType string = 'Standard_LRS'
+
+@description('Image build schedule start time. Must be a future ISO 8601 datetime.')
+param imageBuildScheduleStartTime string = dateTimeAdd(utcNow(), 'PT15M')
 // Variables
 
 var galleryName = computeGalleryName(
@@ -260,11 +308,73 @@ var automationAccountName = resourceNameWithPurpose(
   environmentShortName
 )
 
+var logAnalyticsWorkspaceName = resourceNameWithPurpose(
+  namePrefix,
+  workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  environmentShortName
+)
+
+var imageBuildActionGroupName = resourceNameWithPurpose(
+  namePrefix,
+  workloadName,
+  resourceType.actionGroup,
+  resourcePurpose.images,
+  environmentShortName
+)
+
+var imageBuildRunbookName = 'aib-build-automation'
+var imageBuildScheduleName = '${imageTemplateName}-schedule'
+
+var deployLogAnalyticsWorkspace = enableImageBuildMonitoring && empty(existingLogAnalyticsWorkspaceResourceId)
+
+var effectiveLogAnalyticsWorkspaceResourceId = !empty(existingLogAnalyticsWorkspaceResourceId)
+  ? existingLogAnalyticsWorkspaceResourceId
+  : resourceId('Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspaceName)
+
+var useLogAnalyticsWorkspace = enableImageBuildMonitoring && (deployLogAnalyticsWorkspace || !empty(existingLogAnalyticsWorkspaceResourceId))
+
+var automationModules = [
+  {
+    name: 'Az.Accounts'
+    uri: 'https://www.powershellgallery.com/api/v2/package'
+    version: '4.0.2'
+  }
+  {
+    name: 'Az.ImageBuilder'
+    uri: 'https://www.powershellgallery.com/api/v2/package'
+    version: '0.4.1'
+  }
+]
+
+var imageBuildAlerts = [
+  {
+    name: 'Azure Image Builder - Build Failure'
+    description: 'Sends an alert when an Azure Image Builder template build fails.'
+    severity: 0
+    query: 'AzureDiagnostics\n| where ResourceProvider == "MICROSOFT.AUTOMATION"\n| where Category == "JobStreams"\n| where ResultDescription has "Image Template build failed"'
+  }
+  {
+    name: 'Azure Image Builder - Build Success'
+    description: 'Sends an informational alert when an Azure Image Builder template build succeeds.'
+    severity: 3
+    query: 'AzureDiagnostics\n| where ResourceProvider == "MICROSOFT.AUTOMATION"\n| where Category == "JobStreams"\n| where ResultDescription has "Image Template build succeeded"'
+  }
+]
+
+var deployImageBuildActionGroup = enableImageBuildAlerts && !empty(imageBuildAlertsEmailAddress)
+
+var imageBuildActionGroupResourceId = resourceId(
+  'Microsoft.Insights/actionGroups',
+  imageBuildActionGroupName
+)
+
 var contributorRoleDefinitionId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 
 // Modules
 
-module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
+module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.5.1' = {
   name: '${deployment().name}-id-img'
   params: {
     name: imageBuilderIdentityName
@@ -273,7 +383,7 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
   }
 }
 
-module automationAccount 'br/public:avm/res/automation/automation-account:0.12.0' = {
+module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1' = {
   name: '${deployment().name}-aa'
   params: {
     name: automationAccountName
@@ -282,9 +392,135 @@ module automationAccount 'br/public:avm/res/automation/automation-account:0.12.0
     skuName: automationAccountSkuName
     disableLocalAuth: true
     publicNetworkAccess: automationAccountPublicNetworkAccess
+
+    diagnosticSettings: enableImageBuildMonitoring && !empty(effectiveLogAnalyticsWorkspaceResourceId) ? [
+      {
+        name: 'send-to-log-analytics'
+        workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+      }
+    ] : []
+
     managedIdentities: {
-      systemAssigned: true
+      systemAssigned: false
+      userAssignedResourceIds: [
+        imageBuilderIdentity.outputs.resourceId
+      ]
     }
+
+    runbooks: [
+      {
+        name: imageBuildRunbookName
+        description: 'Checks the Azure VM Image Builder template and starts a build when the marketplace source image has changed.'
+        type: 'PowerShell'
+        uri: 'https://raw.githubusercontent.com/Azure/avdaccelerator/main/workload/scripts/New-AzureImageBuilderBuild.ps1'
+        version: '1.0.0.0'
+      }
+    ]
+
+    schedules: enableImageBuildSchedule ? [
+      {
+        name: imageBuildScheduleName
+        frequency: imageBuildScheduleFrequency
+        interval: imageBuildScheduleInterval
+        starttime: imageBuildScheduleStartTime
+        timeZone: imageBuildScheduleTimeZone
+        advancedSchedule: {}
+      }
+    ] : []
+
+    jobSchedules: enableImageBuildSchedule ? [
+      {
+        runbookName: imageBuildRunbookName
+        scheduleName: imageBuildScheduleName
+        parameters: {
+          ClientId: imageBuilderIdentity.outputs.clientId
+          EnvironmentName: environment().name
+          ImageOffer: imageTemplateSource.offer
+          ImagePublisher: imageTemplateSource.publisher
+          ImageSku: imageTemplateSource.sku
+          Location: location
+          SubscriptionId: subscription().subscriptionId
+          TemplateName: imageTemplateName
+          TemplateResourceGroupName: resourceGroup().name
+          TenantId: subscription().tenantId
+        }
+      }
+    ] : []
+  }
+}
+
+@batchSize(1)
+module automationAccountModules 'br/public:avm/res/automation/automation-account/module:0.1.0' = [
+  for automationModule in automationModules: {
+    name: '${deployment().name}-aa-module-${automationModule.name}'
+    params: {
+      name: automationModule.name
+      location: location
+      automationAccountName: automationAccount.outputs.name
+      uri: automationModule.uri
+      version: automationModule.version
+    }
+  }
+]
+
+module imageBuildScheduledQueryRules 'br/public:avm/res/insights/scheduled-query-rule:0.6.0' = [
+  for alert in imageBuildAlerts: if (enableImageBuildAlerts && useLogAnalyticsWorkspace) {
+    name: '${deployment().name}-sqr-${uniqueString(alert.name)}'
+    params: {
+      name: alert.name
+      location: location
+      tags: tags
+      kind: 'LogAlert'
+      enabled: true
+      alertDescription: alert.description
+      severity: alert.severity
+      evaluationFrequency: 'PT5M'
+      windowSize: 'PT5M'
+      scopes: [
+        effectiveLogAnalyticsWorkspaceResourceId
+      ]
+      actions: deployImageBuildActionGroup ? {
+        actionGroupResourceIds: [
+          imageBuildActionGroupResourceId
+        ]
+        actionProperties: null
+        customProperties: null
+      } : null
+      criterias: {
+        allOf: [
+          {
+            query: alert.query
+            timeAggregation: 'Count'
+            operator: 'GreaterThanOrEqual'
+            threshold: 1
+            failingPeriods: {
+              numberOfEvaluationPeriods: 1
+              minFailingPeriodsToAlert: 1
+            }
+          }
+        ]
+      }
+      autoMitigate: false
+      skipQueryValidation: false
+    }
+  }
+]
+
+module imageBuildActionGroup 'br/public:avm/res/insights/action-group:0.8.0' = if (deployImageBuildActionGroup) {
+  name: '${deployment().name}-ag-img'
+  params: {
+    name: imageBuildActionGroupName
+    location: 'global'
+    tags: tags
+    groupShortName: 'aib'
+    enabled: true
+    emailReceivers: [
+      {
+        name: 'ImageBuildAlerts'
+        emailAddress: imageBuildAlertsEmailAddress
+        useCommonAlertSchema: true
+      }
+    ]
   }
 }
 
@@ -315,6 +551,10 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
     location: location
     tags: tags
 
+    vnetConfig: !empty(imageBuilderSubnetResourceId) ? {
+      subnetId: imageBuilderSubnetResourceId
+    } : null
+
     imageSource: imageTemplateSource
     customizationSteps: imageTemplateCustomizers
 
@@ -324,6 +564,7 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
         sharedImageGalleryImageDefinitionResourceId: computeGallery.outputs.imageResourceIds[0]
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
         replicationRegions: imageReplicationRegions
+        storageAccountType: imageVersionStorageAccountType
         artifactTags: tags
       }
     ]
@@ -342,6 +583,19 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
     osDiskSizeGB: imageBuilderOsDiskSizeGB
     buildTimeoutInMinutes: imageBuildTimeoutInMinutes
     autoRunState: imageTemplateAutoRunState
+  }
+}
+
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.15.1' = if (deployLogAnalyticsWorkspace) {
+  name: '${deployment().name}-log'
+  params: {
+    name: logAnalyticsWorkspaceName
+    location: location
+    tags: tags
+    dataRetention: logAnalyticsWorkspaceRetentionInDays
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
   }
 }
 
@@ -391,3 +645,23 @@ output automationAccountResourceId string = automationAccount.outputs.resourceId
 
 @description('Principal ID of the Automation Account system-assigned managed identity.')
 output automationAccountPrincipalId string? = automationAccount.outputs.?systemAssignedMIPrincipalId
+
+@description('Name of the Log Analytics workspace used by the shared resources module.')
+output logAnalyticsWorkspaceName string = useLogAnalyticsWorkspace
+  ? (!empty(existingLogAnalyticsWorkspaceResourceId) ? last(split(existingLogAnalyticsWorkspaceResourceId, '/')) : logAnalyticsWorkspaceName)
+  : ''
+
+@description('Resource ID of the Log Analytics workspace used by the shared resources module.')
+output logAnalyticsWorkspaceResourceId string = useLogAnalyticsWorkspace
+  ? effectiveLogAnalyticsWorkspaceResourceId
+  : ''
+
+@description('Name of the Image Builder alert action group.')
+output imageBuildActionGroupName string = deployImageBuildActionGroup
+  ? imageBuildActionGroupName
+  : ''
+
+@description('Resource ID of the Image Builder alert action group.')
+output imageBuildActionGroupResourceId string = deployImageBuildActionGroup
+  ? imageBuildActionGroupResourceId
+  : ''

@@ -99,5 +99,5 @@ param imageBuildScheduleTimeZone = 'America/Chicago'
 param imageBuilderSubnetResourceId = ''
 param imageVersionStorageAccountType = 'Standard_LRS'
 
-param galleryImageDefinitionTargetVersion = '0.0.2'
+param galleryImageDefinitionTargetVersion = '0.0.3'
 param imageTemplateBaseTime = 'poc001'

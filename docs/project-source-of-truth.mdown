@@ -1,0 +1,2079 @@
+# True Value Azure Virtual Desktop Project Source of Truth
+
+> **Document status**
+>
+> * Maintained location: `docs/project-source-of-truth.md`
+> * ChatGPT Project source copy: `tv-avd-project-source-of-truth.md`
+> * Last reviewed: June 6, 2026
+> * Review basis: Uploaded project source file plus GPT-readable GitHub repository mirror
+> * Implementation source of truth: Azure DevOps `origin` remote
+> * GPT-readable implementation mirror: https://github.com/mitch-j/tv-azurevirtualdesktop
+> * Purpose: Stable project context, source authority rules, design intent, and implementation boundary summary
+> * Not intended to replace: Bicep modules, parameter files, pipeline YAML, deployment scripts, or current repository implementation
+
+## Document Purpose
+
+This document provides stable project context for the True Value Azure Virtual Desktop IaC project. It is intended to be used both as repository documentation and as a ChatGPT Project source file.
+
+Its purpose is to preserve the project goals, constraints, design decisions, known unknowns, environment context, and preferred assistant behavior. It is not the implementation source of truth for current code. The repository implementation remains the current source for Bicep, pipelines, module structure, naming, and deployment behavior.
+
+## Suggested File Placement
+
+This document is intended to be maintained in the repository and uploaded to the ChatGPT Project source files.
+
+Recommended repository location:
+
+* `docs/project-source-of-truth.md`
+
+Recommended ChatGPT Project source file name:
+
+* `tv-avd-project-source-of-truth.md`
+
+When the repository version changes, refresh the ChatGPT Project source copy so future chats use the latest stable project context.
+
+## Current Implementation and GPT-Readable Repository Sources
+
+The active implementation source for this project is the `origin` remote in Azure DevOps. Azure DevOps is where development work, commits, pull requests, and pipeline execution should be treated as authoritative.
+
+A GitHub repository is maintained as a GPT-readable mirror/copy of the project files:
+
+* GPT-readable repository: https://github.com/mitch-j/tv-azurevirtualdesktop
+* Default branch: `main`
+
+Use the GitHub repository as the current readable source when reviewing architecture, Bicep modules, pipelines, naming, documentation, and AVD Accelerator comparisons in ChatGPT.
+
+Do not treat the GitHub repository as the authoritative development remote unless explicitly stated. It exists so ChatGPT can review the project as a coherent repository instead of relying on individually uploaded files that may overlap in names, such as multiple `main.bicep` files.
+
+Assume uploaded files may be stale unless I explicitly say they are newer than the active implementation source.
+
+When current code matters, review the GPT-readable GitHub repository directly before making recommendations. If there is a conflict between this document, uploaded files, GitHub, and Azure DevOps, ask me to clarify which source is newer or authoritative for that specific question.
+
+### Repository Currency Note
+
+As of June 6, 2026, the GPT-readable GitHub repository is current with the active implementation state in Azure DevOps.
+
+After this date, future ChatGPT reviews should not assume the GitHub repository is current unless I explicitly confirm it or the repository contents clearly reflect the latest work.
+
+## Source Authority Order
+
+When sources conflict, use the following authority order unless I explicitly say otherwise:
+
+1. Azure DevOps `origin` remote
+
+   * Authoritative source for active development, commits, pull requests, and pipelines.
+2. GPT-readable GitHub repository mirror
+
+   * Best available source for ChatGPT repository-wide code review and implementation inspection.
+3. Bicep modules, parameter files, pipeline YAML, and deployment scripts within the repository
+
+   * Higher-authority implementation evidence than README examples or placeholder documentation.
+4. This document
+
+   * Stable project context, goals, assumptions, constraints, design decisions, and known unknowns.
+5. Uploaded files
+
+   * Point-in-time snapshots that may be stale unless I explicitly say they are current or newer than the repository.
+6. Prior chat history
+
+   * Useful for context, but lower authority than current project documentation or repository contents.
+
+If a recommendation depends on current implementation details and only stale or ambiguous sources are available, call out the uncertainty before recommending changes.
+
+## ChatGPT Project Source Staleness Warning
+
+The repository copy of this document should be treated as the maintained version.
+
+The ChatGPT Project source copy is a manually uploaded snapshot and may become stale after repository updates.
+
+When using this document inside ChatGPT:
+
+* Treat it as stable project context.
+* Do not assume it reflects the latest implementation details.
+* Check the GPT-readable GitHub repository mirror for current code and module behavior.
+* Ask for confirmation if the repository, uploaded Project source, and chat instructions appear to conflict.
+
+After updating this document in the repository, refresh the ChatGPT Project source copy so future chats have the latest stable context.
+
+## ChatGPT Project Usage Instructions
+
+When answering questions for this project:
+
+1. Treat this file as project context, not as implementation proof.
+2. Treat the repository implementation as the current implementation source.
+3. If code, Bicep, pipeline behavior, module structure, or deployment behavior matters, review the GitHub mirror before making recommendations.
+4. Do not assume uploaded files are current unless I explicitly say they are newer than the repository.
+5. Prefer practical implementation guidance over generic Azure architecture summaries.
+6. When explaining Bicep, assume I understand infrastructure but may still be learning Bicep syntax, module patterns, scopes, and Azure Verified Module conventions.
+7. Call out risks, unknowns, missing decisions, and Azure constraints directly.
+8. When recommending changes, explain:
+
+   * why the change is needed
+   * where it should be implemented
+   * what files/modules are likely affected
+   * what the risk is if we do not change it
+9. When comparing options, include a recommendation, not just a neutral list.
+
+## Documentation Update Rule
+
+When updating this document or creating related repository documentation, use the repository implementation as the source of truth for implementation-specific details.
+
+Before documenting details about any of the following, review the relevant repository files first:
+
+* Bicep module structure
+* Deployment entry points
+* Pipeline YAML
+* Deployment scripts
+* Parameter files
+* Shared configuration
+* Naming helpers
+* Tagging behavior
+* Host pool definitions
+* Session host image settings
+* VM sizes
+* Autoscale settings
+* Session timeout, disconnect, and logoff settings
+* FSLogix storage configuration
+* Private endpoint and private DNS configuration
+* Role assignments
+* Monitoring and diagnostic settings
+
+Do not add implementation details to this document based only on assumptions, planning notes, or generic Azure Virtual Desktop patterns.
+
+If the repository and this document conflict, treat the repository as more current for implementation details and update this document to match the repository unless I explicitly say the document reflects a newer intended design.
+
+## Implementation Detail Duplication Rule
+
+This document may summarize current implementation status, but it should not attempt to fully duplicate the repository implementation.
+
+Use this document to capture:
+
+* Stable project context
+* Design intent
+* Known constraints
+* Source-of-truth rules
+* Current high-level implementation boundaries
+* Important implementation caveats
+* Production readiness considerations
+
+Do not use this document to maintain a complete copy of:
+
+* Every Bicep parameter
+* Every resource name
+* Every role assignment
+* Every pipeline variable
+* Every module output
+* Every diagnostic setting
+* Every private endpoint setting
+* Every host pool property
+
+When exact implementation details matter, review the repository files directly.
+
+If a detail is likely to change frequently, document where to find it in the repository instead of copying the value into this file.
+
+## External Reference Rule
+
+Use the repository as the source of truth for this project’s implementation.
+
+Use current Microsoft documentation, Azure documentation, Azure Verified Modules documentation, and AVD Accelerator documentation when answering questions about:
+
+* Azure Virtual Desktop service limits or supported behavior
+* Azure Virtual Desktop Accelerator reference architecture or implementation changes
+* Azure Verified Module versions, inputs, outputs, or recommended usage
+* Bicep syntax or Azure resource provider API behavior
+* Azure Policy behavior
+* Microsoft Defender behavior
+* DDoS Network Protection behavior
+* Azure Files, Entra Kerberos, AD DS Kerberos, or FSLogix support details
+* Azure DevOps pipeline or service connection behavior
+* Current Azure pricing, SKU availability, or regional availability
+
+When Microsoft documentation and the repository conflict:
+
+* Treat the repository as the source of truth for current project implementation.
+* Treat Microsoft documentation as the source of truth for platform capabilities, supportability, limits, and current service behavior.
+* Call out the conflict and recommend whether the repository should be updated.
+
+## What Not to Ask ChatGPT to Assume
+
+Future ChatGPT chats should not assume the following unless confirmed by the repository or explicitly stated by me:
+
+* That the GPT-readable GitHub repository is newer than Azure DevOps.
+* That uploaded files are newer than the repository.
+* That repository documentation files are current if they appear to contain template placeholders.
+* That all planned modules are fully implemented.
+* That the presence of a module folder means the full intended functionality is complete.
+* That session host virtual machine deployment is implemented.
+* That domain join, AVD registration, VM extensions, image customization, or application installation are implemented.
+* That current PoC settings are final production settings.
+* That pooled desktops will work for all Development users.
+* That personal desktops are required for all Development users.
+* That nested virtualization is a hard requirement until validated.
+* That all traffic paths avoid the Chicago datacenter.
+* That DNS, private endpoint, and FSLogix behavior are correct until tested.
+* That production should reuse the disposable PoC environment.
+
+## Maintenance Rules for This Source File
+
+This source-of-truth document should be reviewed and updated when project assumptions, architecture, or implementation boundaries change.
+
+Update this document when:
+
+* The authoritative repository source changes.
+* The GPT-readable GitHub mirror is refreshed or becomes stale.
+* A new environment is added or removed.
+* A module is added, removed, renamed, or significantly changed.
+* Host pool strategy changes.
+* Session host VM deployment is implemented or significantly changed.
+* FSLogix storage design changes.
+* Network routing, DNS, private endpoint, or peering design changes.
+* Identity, domain join, OU, GPO, or security group decisions change.
+* Pipeline deployment flow, approvals, service connections, or branch controls change.
+* PoC success criteria or validation approach changes.
+* Production transition criteria change.
+* Documentation files are updated to match the current implementation.
+
+When updating this document, prefer summarizing stable context and linking or pointing to repository files for implementation details that may change frequently.
+
+## Review Checklist Before Publishing Updates
+
+Before publishing an updated version of this document:
+
+* Confirm approved changes from review have been incorporated.
+* Confirm implementation-specific details against the current repository.
+* Confirm date-sensitive statements include a review date.
+* Confirm placeholders are clearly marked and not presented as known facts.
+* Confirm spelling, capitalization, and terminology are consistent.
+* Confirm Azure region names use valid Azure location codes, such as `eastus` and `centralus`.
+* Confirm resource group names and resource names are not mislabeled.
+* Confirm the document does not duplicate frequently changing implementation details unnecessarily.
+* Confirm links and repository paths are accurate.
+* Confirm documentation debt items still apply.
+
+## Project Summary and Goals
+
+Build an Infrastructure as Code deployment pattern for Azure Virtual Desktop in the True Value Azure tenant.
+
+The immediate goal is to build a disposable Proof of Concept that validates whether Azure Virtual Desktop can meet the needs of the Hexaware contractor teams currently using VMware Horizon. If the PoC is successful, the Bicep modules, deployment patterns, design decisions, and lessons learned from this repository will inform a future production deployment in a separate production subscription.
+
+The primary user groups are:
+
+* Hexaware Operations users
+* Hexaware Development users
+
+## Ownership and Support
+
+| Role                      | Owner               |
+| ------------------------- | ------------------- |
+| Owning Team               | Systems Engineering |
+| Technical Owner           | Mitch Jurisch       |
+| Operational Support Owner | Operations/SA       |
+| SME(s)                    | Mitch Jurisch       |
+
+For future production planning, this ownership model should be reviewed and updated if operational responsibility changes after the PoC.
+
+## Current Business Driver
+
+The business driver for this project is the planned exit from the True Value Chicago datacenter while preserving contractor desktop access for the Hexaware teams.
+
+The PoC should help determine whether Azure Virtual Desktop is a viable replacement for the current VMware Horizon environment and whether the expected Azure operating cost is acceptable compared to the existing model and other migration options.
+
+## Baseline
+
+There is currently a VMware Horizon deployment hosted on premises in the True Value Chicago datacenter. It is primarily used by Hexaware consultants, with occasional use by a small number of other users.
+
+The directive is to shut down the Chicago datacenter. As part of that effort, we are evaluating whether the existing VMware Horizon use case can be migrated to Azure Virtual Desktop.
+
+## Proof of Concept Scope
+
+As part of the Chicago datacenter exit, this project will build a disposable Proof of Concept for Azure Virtual Desktop.
+
+The PoC is intended to determine whether Azure Virtual Desktop can meet the needs of the Hexaware contractor teams and to estimate the cost of running, managing, and maintaining the environment for budgetary planning.
+
+The PoC should produce reusable Bicep modules, deployment patterns, documentation, and lessons learned that can inform a future production deployment. The PoC environment itself should not be treated as production.
+
+## Technical Requirements and Constraints
+
+### Disposable PoC
+
+* The PoC environment is disposable.
+* If the project moves forward to production, a new production environment will be deployed in a separate production subscription in the True Value Azure tenant.
+* The PoC should still produce reusable Bicep modules, deployment patterns, documentation, and lessons learned for a future production deployment.
+
+### Azure Landing Zone
+
+* The Azure Landing Zone architecture has been deployed to True Value Azure using ALZ Accelerator code, with minor customization for the Do It Best / True Value naming scheme.
+* The design is otherwise close to the Microsoft ALZ Accelerator example architecture.
+* The AVD deployment will live in the Corp Landing Zone.
+* The deployment will inherit the policies assigned to the basic example landing zone, with specific exceptions.
+* DDoS protection and Microsoft Defender enforcement are not planned for the PoC unless that decision changes.
+
+### Infrastructure as Code
+
+* The environment should be deployed through Bicep and Azure DevOps pipelines.
+* The PoC should support a smooth transition to a future production design by keeping infrastructure patterns reusable and understandable.
+* Assume I am comfortable with infrastructure concepts but still building fluency with Bicep syntax, module design, deployment scopes, parameterization, and Azure Verified Module conventions.
+
+### Azure Verified Modules
+
+* Use Azure Verified Modules where practical.
+* Do not force AVM usage where it makes the deployment harder to understand, harder to troubleshoot, or less appropriate for the PoC.
+
+### FSLogix
+
+* FSLogix will be used for user profile containers.
+* Profiles will be stored in Azure Files storage.
+
+### Active Directory Domain Services Join
+
+* AVD session hosts will be joined to the `TV.local` Active Directory Domain Services domain.
+
+## Non-Goals / Things Not to Optimize For
+
+* Do not design this PoC as a permanent production environment.
+* Do not prioritize manual portal configuration unless needed for testing or discovery.
+* Do not assume personal desktops are required for all users.
+* Do not assume pooled desktops will work for development users without validation.
+* Do not recommend major architecture changes that conflict with the existing ALZ deployment unless there is a strong reason.
+* Do not optimize only for lowest Azure cost if it compromises PoC validity.
+* Do not assume the Chicago datacenter will remain available long-term.
+
+## Environment Context
+
+True Value has resources spread across several locations and cloud providers.
+
+### Google Cloud Platform (GCP)
+
+* Hosts the primary footprint of the True Value cloud infrastructure.
+* Currently acts as the network hub for True Value cloud and site connectivity.
+* Traffic from Azure to other True Value locations generally routes first to GCP, then to the appropriate datacenter, cloud provider, or other destination.
+
+### Oracle Cloud
+
+* Hosts some resources for the True Value Oracle Fusion deployment.
+
+### AWS
+
+* Hosts some True Value resources.
+* The exact workloads and dependencies in AWS are currently unknown.
+
+### Azure
+
+* Since Do It Best acquired True Value, new cloud development has centered around Azure.
+* True Value does not currently have a large footprint in its Azure tenant.
+* True Value currently uses Microsoft 365 with Entra AD Connect configured.
+* True Value Microsoft 365 is connected to Do It Best Microsoft 365 through MTO.
+* Azure Lighthouse is not currently configured for the True Value Azure tenant.
+* Most Do It Best Systems Engineering team members have been granted Global Administrator access in the True Value tenant so they can switch directories and manage the tenant.
+* Subscriptions hosted in True Value Azure are billed through billing accounts and profiles that reside in the Do It Best directory and tenant.
+* There is a dedicated True Value billing account with separate billing profiles and invoice sections for resources hosted in True Value Azure.
+
+### Chicago Datacenter
+
+* The Chicago datacenter is the primary True Value HQ datacenter.
+* It hosts domain controllers, file shares, AIX, and other resources.
+* As part of the Chicago datacenter exit, workloads are being evaluated for migration to cloud platforms, colocation facilities, or the Do It Best datacenter in Fort Wayne, Indiana.
+* The True Value SD-WAN primarily treats the Chicago datacenter as the network communication hub for warehouses and cloud resources.
+* True Value network redesign work is underway to reduce dependency on the Chicago datacenter.
+
+### Cary, Illinois
+
+* True Value owns a paint manufacturer in Cary, Illinois.
+* This location hosts a large portion of the True Value disaster recovery environment.
+* Do It Best has announced that this location is being sold to Sherwin-Williams.
+
+## Azure Environment Details
+
+| Item                              | Value                                                            |
+| --------------------------------- | ---------------------------------------------------------------- |
+| Tenant                            | True Value Azure tenant                                          |
+| Tenant ID                         | `a0318e75-f99c-43e6-9916-3e732546ffd9`                           |
+| Primary domain                    | `truevalue.onmicrosoft.com`                                      |
+| PoC subscription                  | `avd-sub-poc` / `b908e3b2-448e-4a3f-9d79-996703913a99`           |
+| Future production subscription    | `avd-sub-prod` / `6fba2548-a8a2-4da5-b426-8f39fe52c137`          |
+| Primary Azure region              | East US (`eastus`)                                               |
+| Secondary/failover region, if any | Central US (`centralus`)                                         |
+| Management group path             | Tenant Root Group > True Value Root > Landing Zones > Corp       |
+| Landing zone name                 | Corp                                                             |
+| Network topology                  | Hub and spoke                                                    |
+| Hub subscription                  | `connectivity-sub-prod` / `3cea8964-57d2-44c4-9c10-0c10866165c8` |
+| Hub network resource group        | `networkvpn-rg-prod`                                             |
+| Hub VNet name                     | `hub-vnet-prod`                                                  |
+| Spoke network resource group      | `tv-avd-rg-network-eus-poc`                                      |
+| Spoke VNet name                   | `tv-avd-vnet-pri-eus-poc`                                        |
+| Hub VNet address space            | `10.243.0.0/21`                                                  |
+| Spoke VNet address space          | `10.243.192.0/24`                                                |
+
+Current DNS servers for `TV.local`:
+
+* `10.113.20.3`
+* `10.113.20.4`
+* `172.16.28.10`
+
+Current domain controllers reachable from AVD planning context:
+
+* `10.113.20.3`
+* `10.113.20.4`
+* `172.16.28.10`
+
+Details still to confirm:
+
+* Required private DNS zones beyond those currently implemented in the repository
+* Internet egress pattern
+* Firewall/NVA path
+* ExpressRoute/VPN/cloud interconnect dependencies
+
+## Network Routing and Connectivity
+
+The AVD spoke network will peer to the shared Azure network hub in `connectivity-sub-prod`.
+
+Traffic from AVD session hosts to True Value internal resources is expected to route through the Azure hub and then through the True Value GCP network hub unless a more direct route is later implemented.
+
+### Current Peering Implementation
+
+The repository includes a dedicated network peering deployment under:
+
+* `infra/modules/network/peering.bicep`
+* `infra/modules/network/poc.peering.bicepparam`
+
+The current PoC peering parameter file defines:
+
+| Item                   | Value                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hub VNet resource ID   | `/subscriptions/3cea8964-57d2-44c4-9c10-0c10866165c8/resourceGroups/networkvpn-rg-prod/providers/Microsoft.Network/virtualNetworks/hub-vnet-prod`                  |
+| Spoke VNet resource ID | `/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/virtualNetworks/tv-avd-vnet-pri-eus-poc` |
+| Hub peering alias      | `hub-prod`                                                                                                                                                         |
+| Virtual network access | Enabled both directions                                                                                                                                            |
+| Forwarded traffic      | Enabled both directions                                                                                                                                            |
+| Gateway transit        | Disabled                                                                                                                                                           |
+| Use remote gateways    | Disabled                                                                                                                                                           |
+
+The network peering deployment requires:
+
+* The AVD spoke VNet to exist before peering is deployed.
+* The deployment identity/service connection to have appropriate permissions on both the hub and spoke VNets.
+
+### Required Connectivity
+
+AVD session hosts must be able to reach:
+
+* `TV.local` domain controllers and DNS servers
+* FSLogix profile storage
+* Required file shares
+* Required application servers
+* Required development or operations tools
+* Microsoft 365 / Entra ID endpoints
+* Azure Virtual Desktop control plane endpoints
+* Windows Update or approved patching sources
+* Monitoring and logging endpoints
+
+### Routing Details To Confirm
+
+* User-defined routes required on the AVD spoke subnet:
+* Next hop for traffic to True Value internal networks:
+* Firewall or NVA inspection path:
+* Whether internet egress is direct, forced tunneled, or routed through a firewall:
+* Required routes to GCP:
+* Required routes to Oracle Cloud:
+* Required routes to AWS:
+* Required routes to Chicago datacenter:
+* Required routes to Cary, Illinois:
+* Required routes to Fort Wayne, Indiana:
+* Required private endpoints:
+* Required private DNS zone links:
+
+## DNS Requirements
+
+AVD session hosts must use DNS servers that can resolve:
+
+* `TV.local`
+* Domain controller records for Active Directory domain join and authentication
+* Internal True Value application names
+* Internal file share names
+* FSLogix storage endpoints
+* Required Azure private endpoint records
+* Required Microsoft 365 and Azure Virtual Desktop service endpoints
+
+Current DNS servers for `TV.local`:
+
+* `10.113.20.3`
+* `10.113.20.4`
+* `172.16.28.10`
+
+DNS design questions to confirm:
+
+* Whether AVD session hosts will use these domain controllers directly for DNS.
+* Whether DNS forwarding is handled through the Azure hub.
+* Whether Azure Private DNS Resolver is required.
+* Which private DNS zones must be linked to the AVD spoke VNet.
+* Whether storage private endpoint DNS will be resolved through Azure Private DNS, custom DNS forwarding, or another method.
+
+## Identity / Domain Join
+
+AVD session hosts are intended to join the `TV.local` Active Directory Domain Services domain.
+
+Implementation details for domain join, VM extensions, OU placement, and session host configuration should be verified against the repository before being documented as current behavior.
+
+### Known Identity Context
+
+| Item                             | Value                                                                         |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| AD DS domain                     | `TV.local`                                                                    |
+| Domain controllers / DNS servers | `10.113.20.3`, `10.113.20.4`, `172.16.28.10`                                  |
+| Microsoft 365 tenant             | True Value Microsoft 365                                                      |
+| Entra tenant primary domain      | `truevalue.onmicrosoft.com`                                                   |
+| Entra tenant relationship        | True Value Microsoft 365 is connected to Do It Best Microsoft 365 through MTO |
+
+### Domain Join Decisions To Confirm
+
+* Domain join method:
+* Domain join account or identity:
+* Target OU for pooled session hosts:
+* Target OU for personal session hosts:
+* Required GPOs:
+* GPOs that should be excluded:
+* Whether existing Horizon desktop GPOs apply to AVD session hosts:
+* Whether new AVD-specific GPOs are required:
+* Whether session hosts require local administrator access for any user groups:
+* Whether local administrator access should be controlled through group policy, Entra groups, LAPS, or another method:
+* Whether Microsoft LAPS / Windows LAPS should be used for local administrator password management:
+
+### Entra ID and Contractor Access Decisions To Confirm
+
+* Contractor account source:
+* Hexaware account lifecycle owner:
+* Required Entra groups:
+* Required AD DS groups:
+* Required AVD application group assignments:
+* MFA requirements:
+* Conditional Access policies affecting Hexaware users:
+* Conditional Access policies affecting administrators:
+* Cross-tenant access or MTO implications:
+
+## Security and Access Review Requirements
+
+Security and access decisions should be reviewed before production deployment and revisited as the PoC design matures.
+
+Areas requiring review:
+
+* Contractor account source and lifecycle ownership
+* Hexaware user onboarding and offboarding process
+* AVD application group assignments
+* Desktop Virtualization User RBAC assignments
+* Local administrator access on session hosts
+* Privileged access for Systems Engineering
+* Privileged access for Operations/SA
+* Domain join permissions
+* OU placement and inherited GPOs
+* Conditional Access policies affecting AVD users and admins
+* MFA requirements
+* Storage account access controls
+* FSLogix share-level and NTFS permissions
+* Key Vault access, if used
+* Managed identity usage, if used
+* Azure DevOps service connection permissions
+* Production approval and branch control settings
+* Diagnostic logging access
+* Break-glass or emergency access requirements
+
+Security review questions:
+
+| Question                                                                   | Notes                                                      |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Who owns Hexaware account lifecycle management?                            | Confirm onboarding, offboarding, and access review process |
+| Which groups are assigned to each AVD application group?                   | Validate least-privilege access                            |
+| Who can administer AVD host pools and session hosts?                       | Confirm RBAC and operational ownership                     |
+| Who can access FSLogix profile storage?                                    | Validate share, NTFS, and admin permissions                |
+| Who can approve production pipeline deployments?                           | Confirm Azure DevOps Environment approvals                 |
+| Are privileged roles permanent or eligible through PIM?                    | Confirm privileged access model                            |
+| Are Conditional Access and MFA policies compatible with contractor access? | Confirm user experience and security requirements          |
+
+## Production Policy Exception Review
+
+Some Azure Landing Zone policy requirements may be relaxed or exempted for the PoC.
+
+Current PoC policy exceptions or non-enforced controls include:
+
+* DDoS protection enforcement
+* Microsoft Defender enforcement
+
+These exceptions should not be assumed acceptable for production.
+
+Before production deployment, review:
+
+* Which Azure Landing Zone policies apply to the production subscription.
+* Which policy exemptions are required.
+* Whether each exemption is temporary or permanent.
+* Whether Microsoft Defender should be enabled for production resources.
+* Whether DDoS Network Protection is required for the production network design.
+* Whether private endpoints, diagnostic settings, logging, backup, and monitoring meet production requirements.
+* Whether the production security posture has been reviewed by the appropriate security stakeholders.
+
+Any production policy exception should include:
+
+| Field                    | Requirement                                              |
+| ------------------------ | -------------------------------------------------------- |
+| Policy / control         | Name or description of the policy or security control    |
+| Scope                    | Subscription, resource group, resource type, or resource |
+| Reason                   | Why the exception is needed                              |
+| Risk                     | Risk introduced by the exception                         |
+| Mitigation               | Compensating control or operational mitigation           |
+| Owner                    | Person or team responsible                               |
+| Expiration / review date | When the exception should be reviewed again              |
+
+## User Profiles and Desktop Use Cases
+
+There are approximately 300 Hexaware users total, split roughly between Operations and Development:
+
+* Operations users: approximately 150
+* Development users: approximately 150
+
+### Operations Users
+
+#### Current Horizon State
+
+* Operations users currently use VMware Horizon personal desktops.
+* They support operations of the True Value IT environment.
+* They work across 24x7 shifts supporting the True Value account.
+
+#### AVD PoC Target State
+
+* Operations users should use pooled AVD desktops during the PoC.
+* The PoC should validate whether pooled desktops can replace the current personal desktop model for this group.
+* Personal desktops may be considered later for rare exception cases, but they are not planned for initial PoC deployment.
+
+#### Key Questions
+
+* What is the expected peak concurrent user count across shifts?
+* What applications and administrative tools do Operations users require?
+* Do any Operations workflows require persistent local state or a personal desktop?
+* What session timeout, idle, disconnect, and logoff settings are acceptable?
+
+### Development Users
+
+#### Current Horizon State
+
+* Development users currently use VMware Horizon personal desktops.
+* Development users often leave their systems powered on 24x7 because of long-running compiler jobs or other jobs that continue while the user is not actively connected.
+* Some development users run nested VMs inside their Horizon personal desktops for development tooling, testing, client VMs, or SQL Server workloads.
+
+#### AVD PoC Target State
+
+* The PoC should test whether a subset of Development users can use pooled AVD desktops.
+* The PoC should also preserve a path for Development personal desktops where pooled desktops are not viable.
+
+#### Key Questions
+
+* Which Development workflows are compatible with pooled desktops?
+* Which Development workflows require personal desktops?
+* Is nested virtualization a hard requirement or a workaround from the Horizon environment?
+* Can long-running jobs move to build servers, CI/CD agents, dedicated lab VMs, or other infrastructure?
+* Do Development users require local administrator rights?
+* What VM sizes are required for realistic Development testing?
+
+## Host Pool Strategy
+
+The PoC should validate the main AVD desktop patterns needed for the Hexaware user base while preserving exception paths for users who cannot operate in pooled desktops.
+
+### Initial PoC Host Pools
+
+The initial PoC design includes:
+
+* Operations pooled host pool
+* Development pooled host pool
+* Development personal host pool
+
+### Future or Exception Host Pools
+
+The design may later add:
+
+* Operations personal host pool for rare exception cases
+
+### Rationale
+
+This host pool strategy validates the major user personas:
+
+* Operations users who should ideally move from personal desktops to pooled desktops.
+* Development users who may be able to use pooled desktops for some workflows.
+* Development users who may require personal desktops because of long-running jobs, nested virtualization, local tooling, or other persistent workload requirements.
+
+The PoC should not assume that all Development users can use pooled desktops. It should also not assume that all Development users require personal desktops without testing.
+
+### Host Pool Implementation Source
+
+The host pool strategy is implemented in Bicep in the repository. If there are questions about the current host pool definitions, names, settings, or deployment behavior, review the Bicep implementation in the GPT-readable GitHub repository before making recommendations.
+
+As of June 6, 2026, the GitHub repository is current with the active implementation state.
+
+## Current Service Objects Implementation
+
+The repository currently includes a `service-objects` module under:
+
+* `infra/modules/service-objects`
+
+As of the latest repository review, the service objects module is responsible for deploying:
+
+* Service Objects resource group
+* AVD host pools
+* One desktop application group per host pool
+* One or more AVD workspaces
+* Workspace publishing for desktop application groups
+* Desktop Virtualization User RBAC assignments on application groups
+
+The service objects module currently does not deploy:
+
+* Virtual networks or subnets
+* Storage accounts or FSLogix shares
+* Session host virtual machines
+
+The current PoC service objects parameter file defines one workspace:
+
+| Workspace Name | Friendly Name        | Purpose                                                         |
+| -------------- | -------------------- | --------------------------------------------------------------- |
+| `primary`      | `True Value AVD POC` | Primary Azure Virtual Desktop workspace for the PoC environment |
+
+The current PoC service objects parameter file defines three host pools:
+
+| Host Pool     | Type       | Load Balancer | Max Sessions | Start VM on Connect | Purpose                                          |
+| ------------- | ---------- | ------------- | -----------: | ------------------- | ------------------------------------------------ |
+| `opsPooled`   | `Pooled`   | `DepthFirst`  |           10 | `true`              | Pooled desktop host pool for Operations users    |
+| `devPooled`   | `Pooled`   | `DepthFirst`  |           10 | `false`             | Pooled desktop host pool for Development users   |
+| `devPersonal` | `Personal` | `Persistent`  |            1 | `false`             | Personal desktop host pool for Development users |
+
+Each host pool has a dedicated desktop application group and is associated with the primary workspace.
+
+The current PoC service objects parameter file also includes AVD user group principal IDs used for Desktop Virtualization User RBAC assignments. These object IDs are implementation details and should be verified in the repository before use.
+
+Before documenting or recommending changes to host pool names, load-balancing behavior, desktop application groups, workspace publishing, or AVD user RBAC, review the current `service-objects` Bicep module and parameter files.
+
+## Current Compute Implementation Status
+
+The repository currently includes a `compute` module under:
+
+* `infra/modules/compute`
+
+As of the latest repository review, the compute module is responsible for:
+
+* Creating resource groups for each planned session host workload.
+* Building a planned session host model for each workload.
+* Optionally creating network interfaces for planned session hosts when enabled.
+
+The compute module currently does not deploy:
+
+* Session host virtual machines
+* VM extensions
+* Domain join extensions
+* AVD registration extensions
+* Application installation
+* Image customization
+* FSLogix agent configuration
+
+The current PoC compute parameter file defines one planned session host for each workload:
+
+| Workload Purpose | Session Host Role Code | Initial Count | VM Size             | OS Disk               |
+| ---------------- | ---------------------: | ------------: | ------------------- | --------------------- |
+| `opsPooled`      |                  `ops` |             1 | `Standard_E16as_v5` | `Premium_LRS`, 128 GB |
+| `devPersonal`    |                  `dvp` |             1 | `Standard_D8als_v6` | `Premium_LRS`, 256 GB |
+| `devPooled`      |                  `dvs` |             1 | `Standard_D8as_v5`  | `Premium_LRS`, 256 GB |
+
+The current PoC compute parameter file sets:
+
+```bicep
+param deployNetworkInterfaces = true
+```
+
+Potential implementation issue to review before compute deployment:
+
+* Verify the session host naming expression uses the correct shared config properties for environment and location codes. The current compute module may reference properties such as `singleCharEnvironmentCode` or `singleCharLocationCode`, while the shared config/types appear to use shorter `code` values.
+
+Before documenting or recommending VM deployment, image settings, domain join behavior, registration tokens, VM extensions, or application installation, review the current `compute` module implementation and confirm whether those capabilities have been added.
+
+## Session Host Image and Build Strategy
+
+The PoC should define how AVD session hosts are built, configured, updated, and replaced.
+
+The current session host image and build configuration is partially represented in the `sharedresources` module. When reviewing or documenting image publisher, offer, SKU, version, domain join behavior, VM extensions, application installation, or session host configuration, check the repository implementation first and avoid adding details that conflict with the current Bicep code.
+
+### Current Image Strategy
+
+As of the latest repository review, the PoC shared resources parameter file defines the source image as:
+
+| Item      | Value                     |
+| --------- | ------------------------- |
+| Publisher | `MicrosoftWindowsDesktop` |
+| Offer     | `office-365`              |
+| SKU       | `win11-25h2-avd-m365`     |
+| Version   | `latest`                  |
+
+The current image definition values are:
+
+| Item                   | Value                                          |
+| ---------------------- | ---------------------------------------------- |
+| Publisher              | `TrueValue`                                    |
+| Offer                  | `AVD`                                          |
+| SKU                    | `win11-25h2-avd-m365`                          |
+| Hyper-V generation     | `V2`                                           |
+| Architecture           | `x64`                                          |
+| Trusted Launch support | Enabled/supported by image definition settings |
+| Microsoft 365 Apps     | Included in the selected source image          |
+
+### Session Host Configuration To Confirm
+
+* Domain join method:
+* OU placement:
+* Required GPOs:
+* Required applications:
+* Required agents:
+* Required certificates:
+* Required security baselines:
+* Required local administrators:
+* Required developer tooling:
+* Required operations tooling:
+
+### Build and Maintenance Model
+
+* Are session hosts treated as disposable/rebuildable?
+* Will updates be applied in-place or through image replacement?
+* Will image customization be manual, scripted, pipeline-driven, or handled by Azure VM Image Builder?
+* Will production use Azure Compute Gallery?
+* How often should pooled session hosts be refreshed?
+* How should personal desktops be patched and maintained?
+
+## Current Shared Resources and Image Builder Implementation
+
+The repository currently includes a `sharedresources` module under:
+
+* `infra/modules/sharedresources`
+
+The PoC pipeline deploys this module before the `compute` module.
+
+As of the latest repository review, the shared resources module is responsible for deploying:
+
+* Shared resources resource group
+* Azure Compute Gallery
+* VM image definition
+* Azure VM Image Builder managed identity
+* Azure VM Image Builder template
+* Automation Account
+
+The shared resources module currently does not deploy:
+
+* Image versions
+* Image build triggers
+* Session host virtual machines
+* Key Vault
+* Azure Monitor resources
+* Network Watcher resources
+* Role entitlement automation
+* Policy assignments
+
+Before documenting or recommending image build automation, gallery image versioning, session host image consumption, build triggers, Key Vault integration, or image lifecycle behavior, review the current `sharedresources` Bicep module and parameter files.
+
+## Autoscale and Session Policy Requirements
+
+The PoC should validate AVD autoscale and session behavior for each user group.
+
+Current host pool settings should be verified in the repository before being documented or changed. Initial PoC settings should not be assumed to be final production policy.
+
+### Policy Areas To Validate
+
+For each host pool, confirm:
+
+* Load balancing algorithm
+* Maximum session limit
+* Start VM on Connect behavior
+* Idle session timeout
+* Disconnected session timeout
+* Logoff behavior
+* Shutdown/deallocation behavior
+* Business hours and off-hours behavior
+* Weekend and holiday behavior
+* Minimum available hosts
+* Ramp-up and ramp-down behavior
+* Whether autoscale is managed through AVD scaling plans, automation, pipeline configuration, or another mechanism
+
+### User Group Considerations
+
+| User Group / Host Pool              | Policy Consideration                                                                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Operations pooled                   | Should prioritize predictable 24x7 availability with cost-aware session controls                                                  |
+| Development pooled                  | May require more generous idle/disconnect behavior because of development workflows                                               |
+| Development personal                | Should not run unnecessarily when not in use; Start VM on Connect and shutdown behavior should be reviewed before assigning users |
+| Operations personal, if added later | Should be exception-based and governed separately from pooled Operations desktops                                                 |
+
+### Production Considerations
+
+Before production deployment, confirm:
+
+* Whether PoC session limits and timeout settings are acceptable for real users.
+* Whether autoscale behavior meets support expectations.
+* Whether shutdown behavior could interrupt long-running development work.
+* Whether personal desktops need a separate lifecycle and cost-control process.
+* Whether monitoring can prove autoscale and session policies are working as expected.
+
+## Personal Desktop Lifecycle Requirements
+
+Personal desktops have a different lifecycle than pooled session hosts and should be managed separately from core pooled AVD infrastructure.
+
+For the PoC, personal desktop provisioning may be manual or pipeline-driven depending on what is implemented in the repository at the time of testing.
+
+For production, the design should support a controlled lifecycle process for personal desktops.
+
+### Lifecycle Capabilities To Define
+
+The personal desktop lifecycle should eventually define how to:
+
+* Request a personal desktop
+* Approve or deny the request
+* Select an appropriate VM size tier
+* Provision the desktop
+* Assign the desktop to a user
+* Grant required access
+* Apply required baseline configuration
+* Resize the desktop
+* Reassign the desktop
+* Reclaim unused desktops
+* Deprovision retired desktops
+* Preserve or remove user data during deprovisioning
+* Track ownership, cost, and business justification
+
+### Size Tier Model
+
+Personal desktop sizing should be controlled through human-readable Entra groups such as:
+
+| Size Tier | Intended Use                            |
+| --------- | --------------------------------------- |
+| Small     | Lightweight personal desktop use        |
+| Medium    | Standard personal desktop use           |
+| Large     | Heavier development or tooling needs    |
+| XL        | Exception-based high-resource workloads |
+
+Automation should map each size-tier group to an approved Azure VM size.
+
+The specific Azure VM size mapped to each tier should be verified in the repository or approved design documentation before being documented as final.
+
+### Governance Requirements
+
+Personal desktops should have stronger governance than pooled desktops because they can create persistent cost and support overhead.
+
+Before assigning personal desktops in production, define:
+
+* Who can request a personal desktop
+* Who approves the request
+* What business justification is required
+* How long the assignment is valid
+* How idle or unused desktops are detected
+* How users are notified before reclamation
+* Who pays for the desktop
+* Whether chargeback or showback is required
+
+## FSLogix Profile Storage
+
+FSLogix profile containers will be used for AVD user profiles.
+
+The current implementation is defined in Bicep in the repository storage module. When reviewing current storage account, file share, private endpoint, RBAC, or diagnostic settings, check the Bicep implementation first.
+
+### Current Storage Design
+
+As of the latest repository review, the storage module deploys:
+
+* FSLogix storage account
+* FSLogix profile file share
+* FSLogix profile share RBAC assignments
+* Azure Files private endpoint
+
+The storage account implementation currently uses or defaults to:
+
+| Item                        | Value         |
+| --------------------------- | ------------- |
+| Storage service             | Azure Files   |
+| Storage kind                | `FileStorage` |
+| SKU                         | `Premium_LRS` |
+| Public network access       | Disabled      |
+| File share name             | `profiles`    |
+| File share quota            | `1024` GiB    |
+| Enabled protocol            | SMB           |
+| Access tier                 | Premium       |
+| Minimum TLS version         | TLS 1.2       |
+| HTTPS-only traffic          | Enabled       |
+| Share soft delete retention | 7 days        |
+
+### Storage Authentication and Authorization
+
+The repository currently includes storage authorization logic inside:
+
+* `infra/modules/storage/storage-auth.bicep`
+
+As of the latest repository review, storage auth assigns:
+
+| Group Type            | Role                                               |
+| --------------------- | -------------------------------------------------- |
+| AVD user groups       | `Storage File Data SMB Share Contributor`          |
+| Admin/operator groups | `Storage File Data SMB Share Elevated Contributor` |
+
+These role assignments are scoped to the FSLogix profile share.
+
+The current PoC storage parameter file includes Microsoft Entra group object IDs for:
+
+* AVD user groups that receive standard FSLogix profile share access
+* Admin/operator groups that can manage FSLogix share ACLs
+
+### Storage Private Endpoint
+
+The repository currently includes private endpoint deployment logic under:
+
+* `infra/modules/storage/private-endpoint.bicep`
+
+The storage private endpoint module deploys:
+
+* Azure Files private endpoint
+* Private DNS zone group for Azure Files private DNS registration
+
+The storage private endpoint module does not deploy:
+
+* The storage account
+* The file share
+* The VNet/subnet
+* The private DNS zone
+* Private DNS VNet links
+
+The current PoC storage parameter file temporarily hardcodes the private endpoint subnet resource ID and Azure Files private DNS zone resource ID for individual module testing. This should be reviewed before productionizing the deployment flow.
+
+### Profile Behavior To Confirm
+
+* Expected profile size per user:
+* Expected concurrent users:
+* Profile container type:
+
+  * VHD
+  * VHDX
+* Profile cleanup policy:
+* Exclusions or redirections:
+* Office container requirements:
+* Cloud Cache required:
+* Backup/retention requirement:
+* Restore testing requirement:
+
+Before documenting or recommending changes to FSLogix storage, share quota, storage SKU, private endpoints, private DNS integration, or share RBAC, review the current `storage` module and parameter files.
+
+## Current Network Implementation
+
+The repository currently includes a `network` module under:
+
+* `infra/modules/network`
+
+As of the latest repository review, the network module is responsible for deploying:
+
+* Network resource group
+* AVD spoke virtual network
+* Session host subnets
+* Private endpoint subnet
+* Session host network security group
+* Private endpoint network security group
+* Optional spoke-to-hub virtual network peering
+* Optional hub-to-spoke virtual network peering
+* Azure Files private DNS zone
+* Private DNS zone virtual network link to the AVD spoke virtual network
+
+The network module currently does not deploy:
+
+* AVD host pools, desktop application groups, or workspaces
+* Storage accounts or FSLogix shares
+* Session host virtual machines
+* Hub virtual network
+
+The current PoC network parameter file defines:
+
+| Item                                                        | Value               |
+| ----------------------------------------------------------- | ------------------- |
+| Environment                                                 | `poc`               |
+| Location                                                    | `eastus`            |
+| VNet address space                                          | `10.243.192.0/24`   |
+| `opsPooled` subnet                                          | `10.243.192.0/27`   |
+| `opsPersonal` subnet                                        | `10.243.192.32/27`  |
+| `devPersonal` subnet                                        | `10.243.192.64/27`  |
+| `devPooled` subnet                                          | `10.243.192.96/27`  |
+| Private endpoint subnet                                     | `10.243.192.128/27` |
+| Reserved for future AzureBastionSubnet or management subnet | `10.243.192.160/27` |
+| Reserved for future expansion                               | `10.243.192.192/26` |
+
+The current PoC VNet DNS servers are:
+
+* `10.113.20.3`
+* `10.113.20.4`
+* `172.16.28.10`
+
+Before documenting or recommending changes to VNet address space, subnet layout, DNS servers, private DNS zones, private endpoints, NSGs, or peering, review the current `network` module and parameter files.
+
+## Current Storage Implementation
+
+The repository currently includes a `storage` module under:
+
+* `infra/modules/storage`
+
+As of the latest repository review, the storage module is responsible for deploying:
+
+* Storage resource group
+* FSLogix storage account
+* FSLogix profile file share
+* FSLogix profile share RBAC assignments
+* Azure Files private endpoint
+
+The storage module currently does not deploy:
+
+* AVD host pools, desktop application groups, or workspaces
+* Session host virtual machines
+* Network resources
+* Private DNS zones
+
+The current PoC storage parameter file defines:
+
+| Item                | Value         |
+| ------------------- | ------------- |
+| Environment         | `poc`         |
+| Location            | `eastus`      |
+| FSLogix share name  | `profiles`    |
+| FSLogix share quota | `1024` GiB    |
+| Storage account SKU | `Premium_LRS` |
+| Deploy storage auth | `true`        |
+
+The current PoC storage parameter file includes Microsoft Entra group object IDs for:
+
+* AVD user groups that receive standard FSLogix profile share access
+* Admin/operator groups that can manage FSLogix share ACLs
+
+The current PoC storage parameter file temporarily hardcodes the private endpoint subnet resource ID and Azure Files private DNS zone resource ID for individual module testing. This should be reviewed before productionizing the deployment flow.
+
+Before documenting or recommending changes to FSLogix storage, share quota, storage SKU, private endpoints, private DNS integration, or share RBAC, review the current `storage` module and parameter files.
+
+## Current Bootstrap Implementation Status
+
+The repository currently includes a `bootstrap` module under:
+
+* `infra/modules/bootstrap`
+
+As of the latest repository review, the bootstrap module exists as a subscription-scope module but appears to be scaffolded or inactive. Its current `main.bicep` contains commented implementation scaffolding rather than active baseline resource deployment.
+
+The `bootstrap` module folder currently includes:
+
+* `main.bicep`
+* `poc.bicepparam`
+* `tv-avd-poc-deployer-customRoleAssignment.json`
+
+The custom role assignment JSON defines a `tv-avd-poc-deployer` custom role scoped to the PoC subscription.
+
+Do not document bootstrap as actively creating baseline resources until the implementation is uncommented or completed in the repository.
+
+Before documenting or recommending changes to baseline resource creation, custom deployment roles, service connection permissions, deployment identities, or initial access setup, review the current `bootstrap` module and related role assignment JSON file.
+
+## Design Decisions
+
+This section records project-level design decisions and rationale. For current implementation details, including deployed resource definitions, host pool settings, module structure, and pipeline behavior, review the Bicep and Azure DevOps pipeline files in the repository.
+
+* AVD session hosts will be Active Directory Domain Services joined to the `TV.local` domain.
+* FSLogix will be used for user profile containers.
+* Profiles will be stored in Azure Files storage.
+* Infrastructure will be deployed using Bicep.
+* Azure DevOps pipelines will be used for deployment automation.
+* Azure Verified Modules should be used where practical.
+* The PoC is disposable and should not be treated as the final production deployment.
+* If production proceeds, a new environment will be deployed using the lessons and IaC from this PoC.
+* The deployment target is the True Value Azure tenant.
+* The workload should live in the Corp Landing Zone.
+* Use Operations pooled, Development pooled, and Development personal host pools, and possibly in the future add an Operations personal host pool.
+
+  * This validates the major user personas while preserving an exception path for users who cannot work in pooled desktops.
+* Deploy AVD in the True Value tenant.
+* Use a shared Azure network hub subscription because the Azure network hub can provide centralized connectivity into the True Value network for AVD and future Azure resources.
+
+  * The network hub will live in `connectivity-sub-prod`.
+  * The AVD spoke network will peer to the hub.
+  * Traffic from AVD session hosts to True Value resources will route through the hub and then through the True Value GCP network hub.
+* Use one modular repository with separate deployment entry points because it provides clear deployment boundaries without creating premature repository sprawl.
+* Use controlled idle, disconnect, logoff, and scaling behavior because the PoC must test AVD as a controlled and cost-aware operating model.
+* Deploy lightweight PoC monitoring with a dedicated Log Analytics workspace because the PoC needs enough telemetry to support troubleshooting and cost modeling without overbuilding production monitoring.
+* Plan a separate personal desktop lifecycle workflow because personal desktops have a different lifecycle than core AVD infrastructure.
+
+## Decision Log
+
+| Date       | Decision                                                                                        | Reason                                                                                                        | Status |
+| ---------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| 2026-06-06 | Use Azure Virtual Desktop as the PoC platform for replacing the current VMware Horizon use case | Supports evaluation of contractor desktop migration as part of the Chicago datacenter exit                    | Active |
+| 2026-06-06 | Treat the PoC environment as disposable                                                         | Production should be deployed cleanly into a separate production subscription if the project moves forward    | Active |
+| 2026-06-06 | Use Bicep and Azure DevOps pipelines for infrastructure deployment                              | Supports repeatability, reviewability, and future production reuse                                            | Active |
+| 2026-06-06 | Use Azure Verified Modules where practical                                                      | Aligns with Microsoft-supported module patterns while preserving maintainability                              | Active |
+| 2026-06-06 | Keep Azure DevOps `origin` as the authoritative implementation source                           | Azure DevOps is the active development and pipeline execution location                                        | Active |
+| 2026-06-06 | Maintain a GPT-readable GitHub repository mirror                                                | Allows ChatGPT to review the repository coherently without relying on individually uploaded overlapping files | Active |
+| 2026-06-06 | Use Operations pooled, Development pooled, and Development personal host pools for the PoC      | Validates the main user personas while preserving an exception path for Development users                     | Active |
+| 2026-06-06 | Keep the design closely aligned to the Microsoft AVD Accelerator where practical                | Provides a strong reference model while preserving customization for True Value maintainability               | Active |
+| 2026-06-06 | Use a shared Azure network hub subscription for AVD connectivity                                | Centralizes connectivity into the True Value network and supports future Azure resources                      | Active |
+| 2026-06-06 | Use FSLogix profile containers for AVD user profiles                                            | Supports user profile persistence across pooled and personal AVD desktops                                     | Active |
+| 2026-06-06 | Join AVD session hosts to the `TV.local` AD DS domain                                           | Aligns session hosts with current True Value identity and domain dependency requirements                      | Active |
+
+## Implementation Notes
+
+Implementation notes describe current or intended implementation details that may change as the Bicep code evolves. When these notes conflict with the repository, the repository should be treated as more current.
+
+* Pooled host pools currently use depth-first load balancing in the PoC service objects parameters.
+* Operations pooled desktops currently have `Start VM on Connect` enabled in the PoC service objects parameters.
+* Development pooled and Development personal host pools currently have `Start VM on Connect` disabled in the PoC service objects parameters.
+* Development personal desktops do not receive initial users unless the relevant user group assignments are configured and validated.
+* The PoC should include a dedicated monitoring resource group and a dedicated PoC Log Analytics workspace if implemented in the repository.
+* AVD diagnostics, session host telemetry, FSLogix-related telemetry where practical, cost tags, and minimal alerts should be included as the implementation matures.
+* Personal desktop provisioning may be manual or pipeline-driven for the PoC.
+* For production, the design should support a request-driven or group-driven workflow that provisions, assigns, resizes, reclaims, and deprovisions personal desktops.
+* Personal desktop sizing should be controlled through human-readable Entra size-tier groups such as Small, Medium, Large, and XL.
+* Automation should map each tier to an Azure VM size.
+
+## Known Unknowns / Open Questions
+
+These items are not yet fully resolved and should not be treated as confirmed design or implementation facts.
+
+### User and Workload Unknowns
+
+* Whether Development users can realistically move from personal desktops to pooled desktops.
+* Which Development workflows require personal desktops.
+* Whether nested virtualization is a hard requirement for Development users.
+* Whether long-running compile, test, or development jobs can be moved to dedicated build infrastructure, CI/CD agents, lab VMs, or other non-desktop platforms.
+* Whether Operations users have any workflows that require persistent local state or personal desktops.
+* Expected peak concurrency for Operations and Development users.
+
+### Network and Dependency Unknowns
+
+* What exact workloads or dependencies are hosted in AWS for True Value.
+* Required network paths from AVD session hosts to GCP, Oracle Cloud, AWS, Chicago, Cary, and Fort Wayne.
+* Which Chicago datacenter dependencies must remain reachable during the PoC.
+* Whether any required traffic paths still depend on the Chicago datacenter.
+* Whether the Azure-to-GCP-to-True-Value routing path introduces unacceptable latency or reliability issues.
+* Required private endpoints and private DNS zone links.
+* Final internet egress pattern and firewall/NVA inspection path.
+
+### Identity and Security Unknowns
+
+* Final identity model details for domain join, OU placement, GPOs, and Entra/M365 access.
+* Contractor account source and lifecycle owner.
+* Required AVD user groups, admin groups, and access review process.
+* Final Conditional Access and MFA behavior for Hexaware users.
+* Final local administrator model for session hosts.
+
+### FSLogix and Storage Unknowns
+
+* Final FSLogix storage authentication method.
+* Required share-level and NTFS permissions.
+* Expected average and peak profile size.
+* Backup, retention, and restore requirements.
+* Whether Cloud Cache or Office containers are required.
+
+### Production Design Unknowns
+
+* Final production subscription, region, naming, tagging, and policy exemptions.
+* Final production monitoring, alerting, and support ownership.
+* Whether Microsoft Defender and DDoS policy exemptions remain acceptable for production.
+* Whether the PoC module structure and deployment flow are sufficient for production or need refactoring.
+
+## Key Risks and Watch Items
+
+The following risks should be tracked during the PoC because they may affect technical viability, cost, user experience, or production readiness.
+
+| Risk                                                            | Why It Matters                                                                                                                 | Mitigation / Validation                                                                                      |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Development users may require personal desktops                 | Long-running jobs, nested VMs, local tooling, or SQL Server workloads may not fit pooled desktops                              | Test representative Development workflows in pooled and personal host pools                                  |
+| Nested virtualization may be a hard requirement                 | Nested virtualization limits VM size options and may significantly affect cost                                                 | Confirm whether nested VMs are required or whether workloads can move to alternate infrastructure            |
+| Long-running jobs may distort desktop sizing                    | Desktops may be used as build or test infrastructure instead of interactive workstations                                       | Identify jobs that could move to CI/CD agents, build servers, lab VMs, or app-specific platforms             |
+| Chicago datacenter dependency may affect PoC results            | Required identity, file, app, or network dependencies may still route through Chicago                                          | Validate required network paths and document remaining Chicago dependencies                                  |
+| GCP network hub dependency may affect latency or reliability    | Azure-to-True Value traffic may route through the Azure hub and then GCP                                                       | Test latency and connectivity to required services from AVD session hosts                                    |
+| FSLogix storage authentication or permissions may delay testing | FSLogix failures can block user profile loading and make the desktop experience unusable                                       | Validate storage auth, share permissions, NTFS permissions, private endpoint DNS, and profile creation early |
+| Domain join and GPO behavior may differ from Horizon            | AVD session hosts may receive different policies or security baselines than Horizon desktops                                   | Confirm target OU, required GPOs, exclusions, and domain join behavior                                       |
+| PoC cost may not reflect production cost                        | PoC shortcuts, reduced user counts, or incomplete monitoring may understate production spend                                   | Build cost estimates for PoC and production-scale scenarios separately                                       |
+| Documentation may lag implementation                            | Some docs may still contain template content or stale examples                                                                 | Update documentation from Bicep, parameter files, pipeline YAML, and scripts outward                         |
+| Compute naming expression may need review                       | The compute module may reference shared config properties that differ from the currently defined shared config/types structure | Validate compute module build/lint output before relying on compute deployment                               |
+
+## PoC Success Criteria
+
+The PoC should answer:
+
+1. Can Operations users effectively work from pooled AVD desktops?
+2. What is the expected concurrency for Operations across 24x7 shifts?
+3. Can any Development users move to pooled desktops without breaking workflows?
+4. Which Development workloads require personal desktops?
+5. Are long-running jobs better moved to build servers, CI/CD agents, or other infrastructure?
+6. Is nested virtualization truly required, or just a workaround from the Horizon environment?
+7. What is the estimated monthly Azure cost for:
+
+   * Operations pooled desktops
+   * Development pooled desktops
+   * Development personal desktops
+   * FSLogix storage
+   * Networking
+   * Backup/monitoring
+8. What operational tasks would Systems Engineering own after production rollout?
+
+## Acceptance Criteria and Evidence Requirements
+
+The PoC should produce enough evidence to support a clear recommendation about whether Azure Virtual Desktop should replace the current VMware Horizon use case.
+
+Each major PoC conclusion should be supported by documented evidence.
+
+Examples:
+
+| Conclusion Area                      | Required Evidence                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Operations pooled desktop viability  | User testing results, application validation, session metrics, support feedback                             |
+| Development pooled desktop viability | Representative workflow testing, compiler/job behavior, tooling validation, user feedback                   |
+| Development personal desktop need    | Documented workflows that cannot reasonably run in pooled desktops                                          |
+| Nested virtualization requirement    | Confirmed use cases, VM size impact, cost impact, alternatives considered                                   |
+| FSLogix viability                    | Successful profile creation, persistence, login behavior, storage performance, permission validation        |
+| Network readiness                    | Connectivity tests to required domain controllers, file shares, application servers, and cloud dependencies |
+| Cost viability                       | PoC actual cost, projected production cost, assumptions, and scaling model                                  |
+| Operational readiness                | Monitoring coverage, runbook readiness, support ownership, escalation paths                                 |
+| Production readiness                 | Gap list, security review, unresolved risks, and required remediation                                       |
+
+A conclusion should be marked as one of:
+
+* `Validated`
+* `Partially validated`
+* `Not validated`
+* `Blocked`
+* `Not applicable`
+
+Any `Partially validated`, `Not validated`, or `Blocked` conclusion should include follow-up actions before production planning.
+
+## Validation Plan Requirements
+
+The PoC should produce evidence that supports a recommendation for or against Azure Virtual Desktop as a replacement for the current VMware Horizon use case.
+
+A dedicated validation plan should be created or updated under:
+
+* `docs/validation-plan.md`
+
+The validation plan should be based on the current repository implementation and should define how the PoC will test:
+
+* Operations pooled desktop usability
+* Development pooled desktop usability
+* Development personal desktop requirements
+* Nested virtualization requirements
+* Long-running development jobs
+* Required application access
+* Domain join and GPO behavior
+* FSLogix profile creation, login performance, and profile persistence
+* Storage authentication and permissions
+* Network connectivity to required True Value resources
+* DNS resolution for `TV.local`, Azure private endpoints, storage, and application dependencies
+* Session timeout, disconnect, logoff, and autoscale behavior
+* Monitoring and diagnostic coverage
+* Estimated PoC and production-scale costs
+* Support and operational handoff requirements
+
+The validation plan should include:
+
+| Item              | Purpose                                                                  |
+| ----------------- | ------------------------------------------------------------------------ |
+| Test scenario     | What is being tested                                                     |
+| User group        | Ops, Dev pooled, Dev personal, or admin/support                          |
+| Success criteria  | What outcome counts as passing                                           |
+| Evidence          | Screenshot, log, metric, what-if output, cost estimate, or user feedback |
+| Result            | Pass, fail, partial, blocked, or not tested                              |
+| Notes / follow-up | Issues, risks, or production considerations                              |
+
+Validation results should be used to update the architecture documentation, operations documentation, cost estimates, and production transition criteria.
+
+## Production Transition Criteria
+
+The PoC environment is disposable and should not be promoted directly into production.
+
+Before using this repository as the basis for a production deployment, the following should be reviewed and completed:
+
+* Confirm whether AVD is the selected replacement for the current VMware Horizon use case.
+* Confirm which user groups will move to AVD:
+
+  * Operations pooled desktops
+  * Development pooled desktops
+  * Development personal desktops
+  * Any exception-based personal desktops
+* Confirm production subscription, region, network, DNS, and routing design.
+* Confirm production identity and domain join model.
+* Confirm production FSLogix storage design, authentication, backup, retention, and recovery requirements.
+* Confirm host pool sizing, autoscale behavior, session policies, and expected concurrency.
+* Confirm session host image/build strategy and patching model.
+* Confirm monitoring, alerting, diagnostics, and operational support ownership.
+* Confirm production security requirements, including Defender, DDoS, private endpoints, Conditional Access, RBAC, and privileged access.
+* Confirm Azure DevOps production deployment approvals, branch controls, service connections, and least-privilege permissions.
+* Confirm cost model and budget approval.
+* Update README and repository documentation to match the final production design.
+* Deploy a new production environment into the production subscription rather than reusing the disposable PoC environment.
+
+## Operational Runbook Requirements
+
+A dedicated operations document should be created or updated under:
+
+* `docs/operations.md`
+
+The operations documentation should be based on the current repository implementation and should describe how the environment is supported after deployment.
+
+The operations runbook should cover:
+
+* How to identify deployed AVD resources by environment, workload, tags, and resource groups.
+* How to review pipeline deployment history.
+* How to review Azure deployment history.
+* How to review what-if output before approving deployments.
+* How to check AVD host pool health.
+* How to check session host registration status.
+* How to drain a session host.
+* How to remove, replace, or rebuild a pooled session host.
+* How to troubleshoot user logon issues.
+* How to troubleshoot FSLogix profile attachment issues.
+* How to validate storage account, share, and NTFS permissions.
+* How to validate DNS resolution from session hosts.
+* How to validate connectivity to domain controllers and required True Value resources.
+* How to review AVD diagnostics and Log Analytics data.
+* How to interpret basic cost and utilization signals.
+* How to handle personal desktop assignment, reassignment, resize, reclamation, and deprovisioning if personal desktops are used.
+* How to escalate issues involving Azure networking, identity, storage, AVD control plane behavior, or application dependencies.
+
+The runbook should distinguish between:
+
+| Area                                   | Source of Truth                                                    |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| Current deployed infrastructure design | Bicep modules and parameter files                                  |
+| Deployment process                     | Azure DevOps pipelines and deployment script                       |
+| Operational procedures                 | `docs/operations.md`                                               |
+| Troubleshooting evidence               | Azure portal, Log Analytics, deployment history, and pipeline logs |
+| Stable project context                 | This source-of-truth document                                      |
+
+## Monitoring, Diagnostics, and Cost Visibility Requirements
+
+The PoC should include enough monitoring and diagnostics to support troubleshooting, usage analysis, and production cost modeling without overbuilding a full production monitoring platform.
+
+### Monitoring Scope
+
+The PoC should collect or make available telemetry for:
+
+* AVD host pools
+* AVD workspaces
+* AVD application groups
+* Session host health
+* Session host registration status
+* User connection and disconnection events
+* Logon performance where practical
+* FSLogix profile behavior where practical
+* Storage account and file share health
+* Storage capacity and transaction trends
+* Network connectivity symptoms
+* Deployment and pipeline failures
+* Azure cost and resource utilization
+
+### Log Analytics
+
+The PoC should use a dedicated Log Analytics workspace for AVD-related diagnostics and troubleshooting.
+
+When documenting or recommending monitoring changes, review the current repository implementation first to confirm:
+
+* Log Analytics workspace name and resource group
+* Diagnostic settings configured for AVD resources
+* Diagnostic settings configured for storage resources
+* Diagnostic settings configured for session hosts, once VMs are implemented
+* Alert rules, if any
+* Retention settings
+* Cost impact of collected logs
+
+### Cost Visibility
+
+The PoC should support cost analysis for:
+
+* Operations pooled desktops
+* Development pooled desktops
+* Development personal desktops
+* FSLogix profile storage
+* Networking
+* Backup and retention
+* Monitoring and Log Analytics ingestion
+* Future production-scale estimates
+
+Azure resources should use the standard repository tag model:
+
+* `Environment`
+* `Division`
+* `Product`
+
+Cost analysis should distinguish between PoC actual usage and production-scale projections.
+
+## Cost Modeling Requirements
+
+The PoC should produce enough cost data to support budget planning for a possible production AVD deployment.
+
+Cost estimates should distinguish between:
+
+* Actual PoC cost
+* Estimated production cost
+* One-time implementation cost
+* Ongoing operational cost
+* Cost differences between pooled and personal desktop models
+
+### Cost Areas To Model
+
+Cost modeling should include:
+
+| Area                                | Notes                                                                                                                            |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Operations pooled desktops          | Include expected concurrency, VM size, session density, autoscale behavior, and 24x7 coverage requirements                       |
+| Development pooled desktops         | Include expected concurrency, larger VM sizes, longer idle/disconnect behavior, and developer workflow needs                     |
+| Development personal desktops       | Include Start VM on Connect, shutdown behavior, persistent VM cost, disk cost, and exception handling                            |
+| Future Operations personal desktops | Model only if exception use cases are identified                                                                                 |
+| FSLogix profile storage             | Include storage tier, quota, transactions, private endpoint, backup, and retention                                               |
+| Networking                          | Include private endpoints, bandwidth, routing path, firewall/NVA costs, and cross-cloud or interconnect costs where applicable   |
+| Monitoring and Log Analytics        | Include diagnostic ingestion, retention, alerting, and workbook/query usage                                                      |
+| Backup and recovery                 | Include storage backup, retention, restore testing, and any VM backup requirements if personal desktops are used                 |
+| Image/build pipeline                | Include image build, gallery storage, and maintenance cost if implemented                                                        |
+| Operations/support                  | Include administrative effort for patching, scaling, troubleshooting, user assignment, and personal desktop lifecycle management |
+
+### Required Assumptions
+
+Each cost estimate should document:
+
+* User count
+* Expected peak concurrency
+* VM size assumptions
+* Session density assumptions
+* Hours of operation
+* Autoscale assumptions
+* Storage size and growth assumptions
+* Backup and retention assumptions
+* Monitoring ingestion assumptions
+* Licensing assumptions
+* Network egress or interconnect assumptions
+
+Cost estimates should be reviewed against current Azure pricing and current repository implementation before being used for budgetary decisions.
+
+## Deployment Entry Points
+
+The repository uses a modular Bicep structure with separate deployment entry points under `infra/modules/`.
+
+The current repository structure includes these module areas:
+
+* `infra/modules/bootstrap`
+* `infra/modules/service-objects`
+* `infra/modules/network`
+* `infra/modules/storage`
+* `infra/modules/sharedresources`
+* `infra/modules/compute`
+
+Storage authorization is currently implemented as a Bicep file under the storage module:
+
+* `infra/modules/storage/storage-auth.bicep`
+
+As of the latest repository review, there is not a separate `infra/modules/storage-auth` module folder.
+
+The current PoC pipeline deployment flow is:
+
+| Order | Deployment Unit   | Notes                                                                                                  |
+| ----: | ----------------- | ------------------------------------------------------------------------------------------------------ |
+|     1 | `bootstrap`       | Exists but appears scaffolded/commented; do not assume active baseline resource deployment             |
+|     2 | `serviceobjects`  | Deploys AVD control plane resources                                                                    |
+|     3 | `network`         | Deploys AVD spoke networking resources                                                                 |
+|     4 | `networkpeering`  | Deploys hub/spoke peering using a dedicated network peering deployment                                 |
+|     5 | `storage`         | Deploys FSLogix storage, share, storage auth, and private endpoint resources                           |
+|     6 | `sharedresources` | Deploys shared image/gallery/Image Builder related resources                                           |
+|     7 | `compute`         | Currently creates resource groups and optional NICs for planned session hosts; does not deploy VMs yet |
+
+When reviewing or recommending changes, first determine which module owns the resource or behavior in question. Do not assume that all resources are deployed from a single root `main.bicep`.
+
+## Pipeline and Deployment Model
+
+The repository uses environment-specific Azure DevOps pipeline entry points and a shared pipeline template.
+
+### Current Pipeline Files
+
+Current visible pipeline files:
+
+* `pipelines/azure-pipelines-poc.yml`
+* `pipelines/azure-pipelines-test.yml`
+* `pipelines/azure-pipelines-prod.yml`
+
+Shared pipeline template:
+
+* `pipelines/templates/bicep-deployment-template.yml`
+
+Deployment script:
+
+* `scripts/Invoke-BicepDeployment.ps1`
+
+The README may reference `pipelines/azure-pipelines-dev.yml`, but that file is not present in the current repository tree as of the latest review. Treat the README reference as stale or ahead of implementation until the file exists.
+
+### Pipeline Implementation Status
+
+| Pipeline                   | Current Status                                                      |
+| -------------------------- | ------------------------------------------------------------------- |
+| `azure-pipelines-poc.yml`  | Implemented PoC pipeline                                            |
+| `azure-pipelines-test.yml` | Placeholder/incomplete                                              |
+| `azure-pipelines-prod.yml` | Placeholder/incomplete                                              |
+| `azure-pipelines-dev.yml`  | Referenced by README but not present in the current repository tree |
+
+The current PoC pipeline uses service connections including:
+
+* `tv-avd-poc-deploy-sc`
+* `tv-avd-shared-deploy-sc`
+* `tv-avd-network-peering-sc`
+
+### Shared Template Stages
+
+The shared pipeline template defines three stages for each module:
+
+| Stage      | Purpose                                           |
+| ---------- | ------------------------------------------------- |
+| `Validate` | Lints, builds, and validates the Bicep deployment |
+| `WhatIf`   | Runs Azure deployment what-if                     |
+| `Deploy`   | Creates the Azure deployment                      |
+
+The deployment script supports the following actions:
+
+| Action     | Purpose                                               |
+| ---------- | ----------------------------------------------------- |
+| `Validate` | Runs Bicep lint/build and Azure deployment validation |
+| `WhatIf`   | Runs Bicep lint/build and Azure deployment what-if    |
+| `Deploy`   | Runs Bicep lint/build and creates the deployment      |
+
+Future recommendations about deployment behavior, approval gates, pipeline triggers, service connections, or deployment ordering should be checked against the pipeline YAML and deployment script in the repository before being added to documentation.
+
+## Deployment Controls and Approvals
+
+The repository uses different pipeline trigger behavior depending on the target environment.
+
+### PoC Pipeline
+
+The `poc` pipeline is configured to run on changes to:
+
+* `infra/**`
+* `scripts/**`
+* `pipelines/**`
+
+Documentation-only changes under `docs/**` are excluded from triggering the PoC pipeline.
+
+### Test and Prod Pipelines
+
+The current `test` and `prod` pipeline files are placeholders/incomplete and are configured with:
+
+```yaml
+trigger: none
+pr: none
+```
+
+These pipelines are intended to be run manually or through an approved release process once completed.
+
+### Azure DevOps Environment Approvals
+
+Deployment approval requirements should be managed through Azure DevOps Environments, not directly in the YAML pipeline.
+
+Recommended approval posture:
+
+| Environment | Approval Requirement                            |
+| ----------- | ----------------------------------------------- |
+| `dev`       | Optional if implemented                         |
+| `test`      | Optional or required depending on workload risk |
+| `prod`      | Required                                        |
+
+For production deployments, configure the `prod` Azure DevOps Environment with required approvers before allowing deployment.
+
+### Branch Control
+
+For additional deployment protection, configure Branch control checks on Azure DevOps Environments.
+
+Recommended branch control posture:
+
+| Environment | Allowed Branches  | Protection Requirement  |
+| ----------- | ----------------- | ----------------------- |
+| `poc`       | `refs/heads/main` | Optional                |
+| `dev`       | `refs/heads/main` | Optional if implemented |
+| `test`      | `refs/heads/main` | Recommended             |
+| `prod`      | `refs/heads/main` | Required                |
+
+Production deployments should require:
+
+* Approval checks
+* Branch control limited to `refs/heads/main`
+* Branch protection enabled on `main`
+
+This provides defense in depth:
+
+1. Pull request policies control what can merge to `main`.
+2. Pipeline YAML prevents deployment from pull request builds where configured.
+3. Pipeline YAML limits deployment to intended branches where configured.
+4. Azure DevOps Environment approvals require human approval before infrastructure changes are applied.
+5. Azure DevOps Environment branch control prevents deployment from unapproved branches even if YAML is changed incorrectly.
+
+## Service Connections and Identity Controls
+
+Each environment pipeline requires an Azure DevOps service connection.
+
+Current PoC service connections in the repository include:
+
+| Service Connection          | Intended Use                                                       |
+| --------------------------- | ------------------------------------------------------------------ |
+| `tv-avd-poc-deploy-sc`      | PoC workload resource deployments                                  |
+| `tv-avd-shared-deploy-sc`   | Shared resource deployments                                        |
+| `tv-avd-network-peering-sc` | Network peering deployment requiring access to hub and spoke VNets |
+
+Future environment service connections should be verified in the relevant pipeline files before being documented as final.
+
+Service connections must follow least-privilege access principles. Do not assume Owner permissions are required unless the deployment scope, role assignments, or resource provider behavior requires it.
+
+Approved secret and identity patterns include:
+
+* Azure Key Vault references
+* Azure DevOps service connections
+* Managed identities
+* Approved enterprise secret management systems
+
+The repository must not contain:
+
+* Plaintext credentials
+* Client secrets
+* Private keys
+* Certificates
+* Unmanaged deployment credentials
+* Production-only secrets in parameter files
+
+When recommending changes involving deployment identity, role assignments, Key Vault access, storage authentication, domain join credentials, or pipeline permissions, first review the relevant Bicep modules, pipeline YAML, and deployment script.
+
+## Environment Naming and Required Tags
+
+The repository uses short deployment environment names for pipeline selection, parameter file selection, resource naming suffixes, and deployment targeting.
+
+### Environment Support
+
+The shared Bicep configuration currently supports the following environment names:
+
+| Short Name | Azure `Environment` Tag Value |
+| ---------- | ----------------------------- |
+| `dev`      | `Development`                 |
+| `test`     | `Stage`                       |
+| `prod`     | `Production`                  |
+| `e2e`      | `End-to-End Testing`          |
+| `poc`      | `Proof of Concept`            |
+| `dr`       | `Disaster Recovery`           |
+
+The shared pipeline template currently allows these environment values:
+
+* `poc`
+* `dev`
+* `test`
+* `prod`
+
+Current visible pipeline files are:
+
+* `poc`
+* `test`
+* `prod`
+
+The current fully implemented pipeline is:
+
+* `poc`
+
+### Required Tags
+
+Azure resources deployed from this repository must use the standard required tags:
+
+| Tag           | Purpose                                                                 |
+| ------------- | ----------------------------------------------------------------------- |
+| `Environment` | Identifies the lifecycle stage of the resource                          |
+| `Division`    | Identifies the owning VP-level organizational unit                      |
+| `Product`     | Identifies the business product or service associated with the resource |
+
+The `Environment` tag should be derived from `environmentName` through the shared environment configuration map.
+
+The `Division` and `Product` values should be consistent across the repository and all resources deployed by it.
+
+Shared Bicep types, reusable configuration, and naming functions are stored under:
+
+* `infra/shared/types.bicep`
+* `infra/shared/config.bicep`
+* `infra/shared/naming.bicep`
+
+When recommending changes to naming, tagging, or environment behavior, review the shared Bicep files before proposing documentation or implementation changes.
+
+## Workload Name vs. Product Name
+
+The repository intentionally separates `workloadName` from `product`.
+
+| Parameter      | Meaning                                        | Used For                                   |
+| -------------- | ---------------------------------------------- | ------------------------------------------ |
+| `workloadName` | Technical name of the deployable workload      | Resource names and deployment naming       |
+| `product`      | Approved business product or service tag value | Azure tags, governance, and cost reporting |
+
+A single product may have multiple workloads.
+
+For this project:
+
+| Value          | Intended Meaning                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| `workloadName` | The technical workload name used in resource naming for the AVD deployment                        |
+| `product`      | The business product or service tag value for Azure Virtual Desktop cost reporting and governance |
+
+When recommending naming, tagging, parameter, or shared configuration changes, preserve this separation unless there is a deliberate reason to change the repository convention.
+
+## Parameter Files and Secret Handling
+
+The repository uses module-specific `.bicepparam` files for environment-specific deployment values.
+
+Each individual module should have a matching parameter file for each supported environment where that module is deployed.
+
+Current expected environment parameter file pattern:
+
+| Environment | Parameter File    |
+| ----------- | ----------------- |
+| `poc`       | `poc.bicepparam`  |
+| `dev`       | `dev.bicepparam`  |
+| `test`      | `test.bicepparam` |
+| `prod`      | `prod.bicepparam` |
+
+Shared configuration should be defined in the shared Bicep files where practical, then imported into modules to keep configuration consistent across deployment stages.
+
+Parameter files must not contain:
+
+* Secrets
+* Credentials
+* Private keys
+* Certificate material
+* Other sensitive authentication material
+
+Parameter files are expected to contain deployable values before pipeline execution. The deployment script blocks unreplaced placeholder values such as `<workload-name>` or `<product-name>` before calling Azure CLI.
+
+When recommending parameter changes, first check the owning module, its `.bicepparam` files, and the shared Bicep configuration files.
+
+## Module Design Guidance
+
+Reusable Azure resource modules should be stored under:
+
+* `infra/modules/`
+
+Modules should:
+
+* Accept required values as parameters.
+* Accept standard tags from the calling entry point.
+* Avoid hardcoded subscription IDs.
+* Avoid hardcoded resource group names.
+* Avoid hardcoded environment names.
+* Use shared types from `infra/shared/types.bicep` where useful.
+* Use shared configuration from `infra/shared/config.bicep` where appropriate.
+* Use shared naming helpers from `infra/shared/naming.bicep` where appropriate.
+* Keep resource-specific defaults inside the module when appropriate.
+
+When recommending module changes, review the owning module and shared Bicep files first. Recommendations should preserve the repository’s modular structure and avoid creating one-off patterns unless there is a clear reason.
+
+## Bicep Linting and Quality Gates
+
+The repository includes a root `bicepconfig.json` file that enables the Bicep core analyzer.
+
+The lint configuration treats several security-sensitive findings as errors, including:
+
+* Outputs that may contain secrets
+* Secrets exposed through command execution
+* Insecure secure-parameter defaults
+* Insecure secret handling in nested deployments
+* Secrets in parameter files
+
+Other Bicep quality, style, maintainability, and hygiene checks are configured as warnings.
+
+When recommending Bicep changes, preserve or improve compatibility with the repository lint configuration. Do not recommend changes that require weakening security-sensitive lint rules unless there is a clearly documented reason.
+
+## Development Workflow and Local Tooling
+
+The repository follows an infrastructure-as-code workflow.
+
+Recommended development workflow:
+
+1. Create a feature branch.
+2. Make Bicep, parameter, pipeline, script, or documentation changes.
+3. Run local Bicep validation where practical.
+4. Open a pull request.
+5. Review pipeline validation results.
+6. Review what-if output before approving deployments.
+7. Merge the pull request.
+8. Deploy through the approved Azure DevOps pipeline.
+
+Expected local development tools:
+
+| Tool                    | Purpose                                      |
+| ----------------------- | -------------------------------------------- |
+| Azure CLI               | Azure authentication and deployment commands |
+| Bicep CLI               | Bicep build, lint, and compile               |
+| PowerShell 7+           | Running deployment scripts                   |
+| Visual Studio Code      | Recommended editor                           |
+| Bicep VS Code extension | Bicep language support                       |
+
+When recommending implementation changes, prefer changes that fit this workflow. Avoid recommending manual portal changes except for discovery, emergency remediation, or tasks that are not yet automated.
+
+## Repository Review Expectations
+
+When reviewing the GitHub repository, inspect:
+
+* Bicep module structure
+* Parameter files
+* Naming conventions
+* Tagging conventions
+* Azure DevOps pipeline YAML
+* Scope usage: tenant, management group, subscription, resource group
+* AVM module usage
+* AVD host pool/application group/workspace design
+* Session host deployment status
+* Domain join implementation status
+* FSLogix storage implementation
+* RBAC assignments
+* Diagnostic settings
+* Private endpoint/private DNS implementation
+* Alignment or deviation from Microsoft AVD Accelerator patterns
+
+## AVD Accelerator Alignment Rule
+
+The Microsoft AVD Accelerator should be used as the primary reference model for this deployment’s architecture, sequencing, and design patterns where practical.
+
+The goal is to model this deployment closely after the AVD Accelerator while keeping the repository custom enough to remain understandable, maintainable, and adaptable for a future True Value production environment.
+
+When comparing this repository to the AVD Accelerator:
+
+* Review the current repository implementation first.
+* Identify meaningful differences between the repository and the Accelerator.
+* Explain whether each difference is:
+
+  * intentional for the True Value environment
+  * a PoC simplification
+  * a maintainability-driven customization
+  * a missing feature
+  * a risk
+  * a possible future production improvement
+* Do not recommend changing the repository to match the Accelerator only for the sake of strict parity.
+* Do recommend changes that bring the repository closer to the Accelerator when those changes improve:
+
+  * production readiness
+  * security
+  * operational supportability
+  * deployment reliability
+  * cost visibility
+  * troubleshooting
+  * maintainability
+  * alignment with the True Value AVD goals
+* Prefer recommendations that fit the existing modular Bicep and Azure DevOps pipeline model.
+
+## Terminology and Acronyms
+
+| Term               | Meaning                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| AVD                | Azure Virtual Desktop                                                                                         |
+| ALZ                | Azure Landing Zone                                                                                            |
+| AVM                | Azure Verified Modules                                                                                        |
+| DIB                | Do It Best                                                                                                    |
+| TV                 | True Value                                                                                                    |
+| PoC                | Proof of Concept                                                                                              |
+| GCP                | Google Cloud Platform                                                                                         |
+| M365               | Microsoft 365                                                                                                 |
+| MTO                | Microsoft 365 multitenant organization                                                                        |
+| Entra ID           | Microsoft Entra ID                                                                                            |
+| AD DS              | Active Directory Domain Services                                                                              |
+| FSLogix            | Microsoft profile container technology used for AVD user profiles                                             |
+| VMware Horizon     | Current on-premises virtual desktop platform used by Hexaware contractors                                     |
+| Hexaware           | Outside consultant group using the current Horizon environment and planned AVD PoC                            |
+| Operations / Ops   | Hexaware operations users supporting the True Value IT environment                                            |
+| Development / Dev  | Hexaware development users with heavier workstation, tooling, and possible nested virtualization requirements |
+| Chicago datacenter | True Value HQ datacenter targeted for exit                                                                    |
+| Cary, Illinois     | True Value paint manufacturing / DR location being sold to Sherwin-Williams                                   |
+| Fort Wayne         | Do It Best datacenter location under consideration for some migrated workloads                                |
+
+## Documentation Set
+
+Additional repository documentation may be stored under:
+
+* `docs/`
+
+Current and recommended documentation includes:
+
+| Document                          | Purpose                                                                                      | Status                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `docs/project-source-of-truth.md` | Stable project context, source authority, design intent, and implementation boundary summary | Recommended maintained location for this file               |
+| `docs/deployment.md`              | Deployment process and environment-specific notes                                            | Exists in repository but may contain template/stale content |
+| `docs/architecture.md`            | Architecture and design context                                                              | Recommended                                                 |
+| `docs/validation-plan.md`         | Validation and testing approach                                                              | Recommended                                                 |
+| `docs/operations.md`              | Operational support notes                                                                    | Recommended                                                 |
+
+This source-of-truth document should provide stable project context. More detailed procedural, architectural, validation, and operations documentation should live in dedicated files under `docs/` when the content becomes large enough to maintain separately.
+
+When creating or updating documentation, avoid duplicating implementation details across multiple files unless there is a clear reason. Link to the authoritative file or repository location instead.
+
+## Documentation Debt and Placeholder Documents
+
+Some documentation files in the repository may still contain placeholder content from the template repository or may not yet fully reflect the current implementation.
+
+Before treating repository documentation as authoritative, compare it against the current Bicep modules, parameter files, pipeline YAML, and deployment scripts.
+
+Known documentation follow-up work:
+
+* Review `docs/deployment.md` and update it to match the current module-based deployment flow.
+* Create or update `docs/architecture.md` to reflect the actual AVD, network, storage, host pool, identity, image builder, compute, and monitoring design.
+* Create or update `docs/validation-plan.md` to define how the PoC will be tested and what success looks like.
+* Create or update `docs/operations.md` to document support, monitoring, scaling, troubleshooting, and lifecycle operations.
+* Review the README for template leftovers or stale examples and update it to match the current repository design.
+* Ensure documentation references the actual module entry points under `infra/modules/` rather than outdated or generic root deployment paths.
+* Ensure any documented commands, parameter paths, deployment order, environment names, service connections, and script parameters match the current repository implementation.
+
+Documentation should be updated from the implementation outward:
+
+1. Review the current Bicep modules, parameter files, pipeline YAML, and scripts.
+2. Confirm the actual deployment behavior.
+3. Update README and docs to match reality.
+4. Update this source-of-truth document only with stable context or implementation details verified against the repository.
+
+## Repository Accuracy Review Notes
+
+The GPT-readable GitHub repository is the best available source for ChatGPT repository-wide review, but not every documentation file in the repository should be treated as fully current.
+
+The Bicep modules, parameter files, pipeline YAML, and deployment scripts should be treated as higher-authority implementation evidence than README examples or placeholder documentation.
+
+When reviewing repository documentation:
+
+* Treat module folders and implementation files as the primary evidence for current behavior.
+* Treat README and `docs/` content as useful but potentially stale until verified against implementation files.
+* Watch for template-derived examples, placeholder values, stale paths, or generic workload examples.
+* Update documentation to match the current implementation rather than updating implementation to match stale documentation.
+* Preserve useful documentation patterns from the template only when they still fit the current AVD repository design.
+
+## README Cleanup Items
+
+The repository README may still contain template leftovers or stale examples that should be reviewed and corrected against the current implementation.
+
+Known README cleanup items:
+
+* Replace `useast` with the correct Azure location code `eastus` if East US is the intended region.
+* Confirm whether the README Azure Scope should list only `poc` and `prod`, or whether it should list all supported environment names.
+* Review local validation examples that reference `infra/main.bicep` and update them to match the module-based deployment structure under `infra/modules/`.
+* Review deployment script parameter examples that reference `infra/main.bicep` and update them to the actual module entry point paths.
+* Fix the `POC and Dec Pipelines` heading to `PoC and Dev Pipelines` if still present.
+* Review placeholder values such as `[resource-group-name]`, `<scope>`, and service connection names.
+* Confirm any service connection table entries that appear to use incorrect placeholder values.
+* Review example `workloadName` and `product` values that still use generic examples like `order-api`, `oms-api`, and `OMS`, and replace them with AVD-specific examples if helpful.
+* Remove or revise references to `azure-pipelines-dev.yml` unless or until that file exists.
+* Update README deployment flow to include the current PoC pipeline deployment units: `bootstrap`, `serviceobjects`, `network`, `networkpeering`, `storage`, `sharedresources`, and `compute`.
+
+## First-Time Setup Checklist Status
+
+The repository includes `first-time-setup.md`, which appears to be template-derived and should be reviewed before being treated as current guidance.
+
+The checklist is useful as a reminder to confirm:
+
+* Repository ownership
+* Azure scope
+* Pipeline variables
+* Environment parameter files
+* Division and product tag values
+* Azure DevOps Environments
+* Branch control
+* Service connections
+* Bicep validation
+* Deployment validation
+* Supporting documentation
+
+However, the checklist may contain stale paths or template assumptions. Before using it as operational guidance, update it to match the current module-based repository structure, pipeline design, deployment script usage, and environment-specific parameter files.
+
+Known cleanup items:
+
+* Replace references to `infra/main.bicep` with the actual module entry point paths.
+* Replace references to `infra/parameters/*.bicepparam` with the actual module-specific parameter file paths.
+* Confirm that `poc` is included wherever relevant, since the current project uses a PoC environment.
+* Confirm that listed supporting documents match the current `docs/` plan.
+* Remove or replace any generic template placeholders before relying on the checklist.

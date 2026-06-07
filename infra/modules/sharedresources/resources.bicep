@@ -649,25 +649,16 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
 
     customize: imageTemplateCustomizers
 
-    distribute: [
-      {
-        type: 'SharedImage'
-        runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
-        galleryImageId: galleryImages[0].id
-        targetRegions: [
-          for replicationRegion in imageReplicationRegions: {
-            name: replicationRegion
-            replicaCount: 1
-            storageAccountType: imageVersionStorageAccountType
-          }
-        ]
-        versioning: {
-          scheme: 'Latest'
-          major: 0
-        }
-        artifactTags: tags
-      }
-    ]
+  distribute: [
+    {
+      type: 'SharedImage'
+      runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
+      galleryImageId: '${galleryImages[0].id}/versions/${galleryImageDefinitionTargetVersion}'
+      replicationRegions: imageReplicationRegions
+      storageAccountType: imageVersionStorageAccountType
+      artifactTags: tags
+    }
+  ]
 
     vmProfile: union(
       {

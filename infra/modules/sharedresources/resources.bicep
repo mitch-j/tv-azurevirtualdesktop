@@ -276,6 +276,10 @@ param imageVersionStorageAccountType string = 'Standard_LRS'
 
 @description('Image build schedule start time. Must be a future ISO 8601 datetime.')
 param imageBuildScheduleStartTime string = dateTimeAdd(utcNow(), 'PT15M')
+
+@description('Target Azure Compute Gallery image version produced by Azure VM Image Builder. Must use Major.Minor.Build format.')
+param galleryImageDefinitionTargetVersion string
+
 // Variables
 
 var galleryName = computeGalleryName(
@@ -531,6 +535,7 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     location: location
     tags: tags
     description: galleryDescription
+    images: imageDefinitions
 
     // Image Builder needs permission to publish image versions into the gallery.
     roleAssignments: [
@@ -543,6 +548,7 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
   }
 }
 
+/*
 resource gallery 'Microsoft.Compute/galleries@2025-03-03' existing = {
   name: galleryName
 }
@@ -641,6 +647,7 @@ resource galleryImageDefinitions 'Microsoft.Compute/galleries/images@2025-03-03'
     ]
   }
 ]
+*/
 
 module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.6.1' = {
   name: '${deployment().name}-it'
@@ -659,7 +666,8 @@ module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.
     distributions: [
       {
         type: 'SharedImage'
-        sharedImageGalleryImageDefinitionResourceId: galleryImageDefinitions[0].id
+        sharedImageGalleryImageDefinitionResourceId: computeGallery.outputs.imageResourceIds[0]
+        sharedImageGalleryImageDefinitionTargetVersion: galleryImageDefinitionTargetVersion
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
         replicationRegions: imageReplicationRegions
         storageAccountType: imageVersionStorageAccountType
@@ -706,15 +714,13 @@ output computeGalleryName string = computeGallery.outputs.name
 output computeGalleryResourceId string = computeGallery.outputs.resourceId
 
 @description('Resource IDs of the Azure Compute Gallery image definitions.')
-output galleryImageDefinitionResourceIds string[] = [
-  for index in range(0, length(imageDefinitions)): galleryImageDefinitions[index].id
-]
+output galleryImageDefinitionResourceIds string[] = computeGallery.outputs.imageResourceIds
 
 @description('Name of the primary VM image definition.')
 output primaryImageDefinitionName string = imageDefinitions[0].name
 
 @description('Resource ID of the primary VM image definition.')
-output primaryImageDefinitionResourceId string = galleryImageDefinitions[0].id
+output primaryImageDefinitionResourceId string = computeGallery.outputs.imageResourceIds[0]
 
 @description('Name of the Azure VM Image Builder managed identity.')
 output imageBuilderIdentityName string = imageBuilderIdentity.outputs.name

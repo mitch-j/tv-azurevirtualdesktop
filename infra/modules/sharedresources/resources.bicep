@@ -280,6 +280,9 @@ param imageBuildScheduleStartTime string = dateTimeAdd(utcNow(), 'PT15M')
 @description('Target Azure Compute Gallery image version produced by Azure VM Image Builder. Must use Major.Minor.Build format.')
 param galleryImageDefinitionTargetVersion string
 
+@description('Timestamp suffix used for Azure VM Image Builder template names. Image templates are commonly deployed as non-idempotent build definitions.')
+param imageTemplateBaseTime string = utcNow('yyyyMMdd-HHmmss')
+
 // Variables
 
 var galleryName = computeGalleryName(
@@ -376,6 +379,13 @@ var imageBuildActionGroupResourceId = resourceId(
 
 var contributorRoleDefinitionId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 
+var imageBuilderIdentityResourceId = resourceId(
+  'Microsoft.ManagedIdentity/userAssignedIdentities',
+  imageBuilderIdentityName
+)
+
+var imageTemplateDeploymentName = '${imageTemplateName}-${imageTemplateBaseTime}'
+
 // Modules
 
 module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.5.1' = {
@@ -444,7 +454,7 @@ module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1
           ImageSku: imageTemplateSource.sku
           Location: location
           SubscriptionId: subscription().subscriptionId
-          TemplateName: imageTemplateName
+          TemplateName: imageTemplateDeploymentName
           TemplateResourceGroupName: resourceGroup().name
           TenantId: subscription().tenantId
         }
@@ -548,147 +558,54 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
   }
 }
 
-/*
-resource gallery 'Microsoft.Compute/galleries@2025-03-03' existing = {
-  name: galleryName
-}
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01' = {
+  name: imageTemplateDeploymentName
+  location: location
+  tags: tags
 
-resource galleryImageDefinitions 'Microsoft.Compute/galleries/images@2025-03-03' = [
-  for imageDefinition in imageDefinitions: {
-    name: imageDefinition.name
-    parent: gallery
-    location: location
-    tags: imageDefinition.?tags ?? tags
-
-    properties: union(
-      {
-        allowUpdateImage: imageDefinition.?allowUpdateImage
-        architecture: imageDefinition.?architecture
-        description: imageDefinition.?description
-        endOfLifeDate: imageDefinition.?endOfLife
-        eula: imageDefinition.?eula
-
-        features: union(
-          imageDefinition.?isAcceleratedNetworkSupported != null
-            ? [
-                {
-                  name: 'IsAcceleratedNetworkSupported'
-                  value: '${imageDefinition.isAcceleratedNetworkSupported}'
-                }
-              ]
-            : [],
-          imageDefinition.?securityType != null && imageDefinition.securityType != 'Standard'
-            ? [
-                {
-                  name: 'SecurityType'
-                  value: imageDefinition.securityType
-                }
-              ]
-            : [],
-          imageDefinition.?isHibernateSupported != null
-            ? [
-                {
-                  name: 'IsHibernateSupported'
-                  value: '${imageDefinition.isHibernateSupported}'
-                }
-              ]
-            : [],
-          imageDefinition.?diskControllerType != null
-            ? [
-                {
-                  name: 'DiskControllerTypes'
-                  value: imageDefinition.diskControllerType
-                }
-              ]
-            : []
-        )
-
-        hyperVGeneration: imageDefinition.?hyperVGeneration ?? (!empty(imageDefinition.?securityType ?? '') ? 'V2' : 'V1')
-
-        identifier: {
-          publisher: imageDefinition.identifier.publisher
-          offer: imageDefinition.identifier.offer
-          sku: imageDefinition.identifier.sku
-        }
-
-        osState: imageDefinition.osState
-        osType: imageDefinition.osType
-        privacyStatementUri: imageDefinition.?privacyStatementUri
-
-        recommended: {
-          vCPUs: imageDefinition.?vCPUs ?? {
-            min: 1
-            max: 4
-          }
-          memory: imageDefinition.?memory ?? {
-            min: 4
-            max: 16
-          }
-        }
-
-        releaseNoteUri: imageDefinition.?releaseNoteUri
-      },
-      !empty(imageDefinition.?purchasePlan ?? null)
-        ? {
-            purchasePlan: imageDefinition.purchasePlan
-          }
-        : {},
-      !empty(imageDefinition.?excludedDiskTypes ?? [])
-        ? {
-            disallowed: {
-              diskTypes: imageDefinition.excludedDiskTypes
-            }
-          }
-        : {}
-    )
-
-    dependsOn: [
-      computeGallery
-    ]
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${imageBuilderIdentityResourceId}': {}
+    }
   }
-]
-*/
 
-module imageTemplate 'br/public:avm/res/virtual-machine-images/image-template:0.6.1' = {
-  name: '${deployment().name}-it'
-  params: {
-    name: imageTemplateName
-    location: location
-    tags: tags
+  properties: {
+    buildTimeoutInMinutes: imageBuildTimeoutInMinutes
 
-    vnetConfig: !empty(imageBuilderSubnetResourceId) ? {
-      subnetId: imageBuilderSubnetResourceId
-    } : null
+    source: imageTemplateSource
 
-    imageSource: imageTemplateSource
-    customizationSteps: imageTemplateCustomizers
+    customize: imageTemplateCustomizers
 
-    distributions: [
+    distribute: [
       {
         type: 'SharedImage'
-        sharedImageGalleryImageDefinitionResourceId: computeGallery.outputs.imageResourceIds[0]
-        sharedImageGalleryImageDefinitionTargetVersion: galleryImageDefinitionTargetVersion
         runOutputName: '${imageDefinitions[0].name}-${environmentShortName}'
+        galleryImageId: '${computeGallery.outputs.imageResourceIds[0]}/versions/${galleryImageDefinitionTargetVersion}'
         replicationRegions: imageReplicationRegions
         storageAccountType: imageVersionStorageAccountType
         artifactTags: tags
       }
     ]
 
-    managedIdentities: {
-      userAssignedResourceIds: [
-        imageBuilderIdentity.outputs.resourceId
-      ]
+    vmProfile: union(
+      {
+        vmSize: imageBuilderVmSize
+        osDiskSizeGB: imageBuilderOsDiskSizeGB
+        userAssignedIdentities: [
+          imageBuilderIdentityResourceId
+        ]
+      },
+      !empty(imageBuilderSubnetResourceId) ? {
+        vnetConfig: {
+          subnetId: imageBuilderSubnetResourceId
+        }
+      } : {}
+    )
+
+    autoRun: {
+      state: imageTemplateAutoRunState
     }
-
-    vmUserAssignedIdentities: [
-      imageBuilderIdentity.outputs.resourceId
-    ]
-
-    vmSize: imageBuilderVmSize
-    osDiskSizeGB: imageBuilderOsDiskSizeGB
-    buildTimeoutInMinutes: imageBuildTimeoutInMinutes
-    autoRunState: imageTemplateAutoRunState
   }
 }
 
@@ -732,16 +649,16 @@ output imageBuilderIdentityResourceId string = imageBuilderIdentity.outputs.reso
 output imageBuilderIdentityPrincipalId string = imageBuilderIdentity.outputs.principalId
 
 @description('Name of the Azure VM Image Builder template.')
-output imageTemplateName string = imageTemplate.outputs.name
+output imageTemplateName string = imageTemplate.name
 
 @description('Input name prefix of the Azure VM Image Builder template.')
-output imageTemplateNamePrefix string = imageTemplate.outputs.namePrefix
+output imageTemplateNamePrefix string = imageTemplateName
 
 @description('Resource ID of the Azure VM Image Builder template.')
-output imageTemplateResourceId string = imageTemplate.outputs.resourceId
+output imageTemplateResourceId string = imageTemplate.id
 
 @description('Command to trigger the Azure VM Image Builder template run.')
-output imageTemplateRunCommand string = imageTemplate.outputs.runThisCommand
+output imageTemplateRunCommand string = 'az resource invoke-action --ids ${imageTemplate.id} --action Run'
 
 @description('Name of the Automation Account.')
 output automationAccountName string = automationAccount.outputs.name

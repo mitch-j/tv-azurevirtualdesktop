@@ -365,23 +365,16 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
   }
 }
 
-/*
-resource imageBuilderStagingResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
-  scope: subscription()
-  name: last(split(imageBuilderStagingResourceGroupResourceId, '/'))
-}
-*/
-
-module imageBuilderStagingContributorRoleAssignment 'br/public:avm/res/authorization/role-assignment/rg-scope:0.1.1' = {
+module imageBuilderStagingContributorRoleAssignment './role-assignment.resourcegroup.bicep' = {
   name: '${deployment().name}-img-rg-rbac'
   scope: resourceGroup(last(split(imageBuilderStagingResourceGroupResourceId, '/')))
   params: {
     principalId: imageBuilderIdentity.outputs.principalId
-    roleDefinitionIdOrName: contributorRoleDefinitionId
     principalType: 'ServicePrincipal'
+    roleDefinitionId: contributorRoleDefinitionId
+    roleAssignmentNameSeed: imageBuilderIdentityName
   }
 }
-
 module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1' = {
   name: '${deployment().name}-aa'
   params: {

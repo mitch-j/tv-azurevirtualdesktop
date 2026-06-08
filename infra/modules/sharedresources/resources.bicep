@@ -24,12 +24,10 @@ Does not deploy:
 
 import {
   resourcePurpose
-  resourceType
 } from '../../shared/config.bicep'
 
 import {
   computeGalleryName
-  resourceNameWithPurpose
 } from '../../shared/naming.bicep'
 
 // Types
@@ -294,45 +292,11 @@ var galleryName = computeGalleryName(
   resourcePurpose.images
 )
 
-var imageBuilderIdentityName = resourceNameWithPurpose(
-  namePrefix,
-  workloadName,
-  resourceType.managedIdentity,
-  resourcePurpose.images,
-  sharedResourcesNameSuffix
-)
-
-var imageTemplateName = resourceNameWithPurpose(
-  namePrefix,
-  workloadName,
-  resourceType.imageTemplate,
-  resourcePurpose.images,
-  sharedResourcesNameSuffix
-)
-
-var automationAccountName = resourceNameWithPurpose(
-  namePrefix,
-  workloadName,
-  resourceType.automationAccount,
-  resourcePurpose.sharedResources,
-  sharedResourcesNameSuffix
-)
-
-var logAnalyticsWorkspaceName = resourceNameWithPurpose(
-  namePrefix,
-  workloadName,
-  resourceType.logAnalyticsWorkspace,
-  resourcePurpose.logs,
-  sharedResourcesNameSuffix
-)
-
-var imageBuildActionGroupName = resourceNameWithPurpose(
-  namePrefix,
-  workloadName,
-  resourceType.actionGroup,
-  resourcePurpose.images,
-  sharedResourcesNameSuffix
-)
+var imageBuilderIdentityName = 'tv-avd-id-img-shared'
+var imageTemplateName = 'tv-avd-it-img-shared'
+var automationAccountName = 'tv-avd-aa-shared'
+var logAnalyticsWorkspaceName = 'tv-avd-law-shared'
+var imageBuildActionGroupName = 'tv-avd-ag-img-shared'
 
 var imageBuildRunbookName = 'aib-build-automation'
 var imageBuildScheduleName = '${imageTemplateName}-schedule'

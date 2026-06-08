@@ -27,12 +27,7 @@ import {
 import {
   baseTags
   commonConfig
-  resourceGroupPurpose
 } from '../../shared/config.bicep'
-
-import {
-  resourceGroupName
-} from '../../shared/naming.bicep'
 
 // Parameters
 

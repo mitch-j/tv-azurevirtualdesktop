@@ -211,6 +211,7 @@ var resourceType ResourceTypeConfigMap = {
   vmImageDefinition: 'vmImageDefinition'
   workspace: 'workspace'
   actionGroup: 'actionGroup'
+  routeTable: 'routeTable'
 }
 
 @description('Standard Azure resource type abbreviations used for naming.')
@@ -243,6 +244,7 @@ var resourceAbbreviationMap ResourceAbbreviationMap = {
   vmImageDefinition: 'imgdef'
   workspace: 'vdws'
   actionGroup: 'ag'
+  routeTable: 'rt'
 }
 
 // Resource Purpose Naming

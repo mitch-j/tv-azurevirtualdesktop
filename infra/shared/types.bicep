@@ -364,6 +364,7 @@ type ResourceTypeName =
   | 'privateDnsZone'
   | 'privateEndpoint'
   | 'resourceGroup'
+  | 'routeTable'
   | 'scalingPlan'
   | 'sessionHost'
   | 'storageAccount'
@@ -396,6 +397,7 @@ type ResourceTypeConfigMap = {
   privateDnsZone: ResourceTypeName
   privateEndpoint: ResourceTypeName
   resourceGroup: ResourceTypeName
+  routeTable: ResourceTypeName
   scalingPlan: ResourceTypeName
   sessionHost: ResourceTypeName
   storageAccount: ResourceTypeName
@@ -438,6 +440,7 @@ type ResourceAbbreviationMap = {
   vmImageDefinition: string
   workspace: string
   actionGroup: string
+  routeTable: string
 }
 
 @description('Supported resource group purpose keys for standard naming.')

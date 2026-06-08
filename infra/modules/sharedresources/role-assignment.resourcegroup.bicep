@@ -9,11 +9,8 @@ param principalType string = 'ServicePrincipal'
 @description('Role definition ID, not the full resource ID.')
 param roleDefinitionId string
 
-@description('Stable seed used for the role assignment name.')
-param roleAssignmentNameSeed string
-
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, principalId, roleDefinitionId, roleAssignmentNameSeed)
+  name: guid(resourceGroup().id, principalId, roleDefinitionId)
   properties: {
     principalId: principalId
     principalType: principalType

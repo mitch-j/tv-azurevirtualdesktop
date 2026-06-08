@@ -372,7 +372,6 @@ module imageBuilderStagingContributorRoleAssignment './role-assignment.resourceg
     principalId: imageBuilderIdentity.outputs.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: contributorRoleDefinitionId
-    roleAssignmentNameSeed: imageBuilderIdentityName
   }
 }
 module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1' = {

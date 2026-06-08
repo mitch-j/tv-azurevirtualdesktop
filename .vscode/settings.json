@@ -1,0 +1,27 @@
+{
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "editor.fontFamily": "\"MesloLGS Nerd Font\"",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "cSpell.words": ["tflint", "tfvars", "bicepconfig", "bicepparam","whatif"],
+  "cSpell.customDictionaries": {
+    "custom-dictionary-workspace": {
+      "name": "custom-dictionary-workspace",
+      "path": "${workspaceFolder:DoItBest.Azure.IaC.Template}/.cspell/custom-dictionary-workspace.txt",
+      "addWords": true,
+      "scope": "workspace"
+    }
+  }
+}

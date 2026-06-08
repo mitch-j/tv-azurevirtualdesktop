@@ -365,21 +365,20 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
   }
 }
 
+/*
 resource imageBuilderStagingResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   scope: subscription()
   name: last(split(imageBuilderStagingResourceGroupResourceId, '/'))
 }
+*/
 
-resource imageBuilderStagingContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(imageBuilderStagingResourceGroup.id, imageBuilderIdentity.outputs.principalId, contributorRoleDefinitionId)
-  scope: imageBuilderStagingResourceGroup
-  properties: {
+module imageBuilderStagingContributorRoleAssignment 'br/public:avm/res/authorization/role-assignment/rg-scope:0.1.1' = {
+  name: '${deployment().name}-img-rg-rbac'
+  scope: resourceGroup(last(split(imageBuilderStagingResourceGroupResourceId, '/')))
+  params: {
     principalId: imageBuilderIdentity.outputs.principalId
+    roleDefinitionIdOrName: contributorRoleDefinitionId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      contributorRoleDefinitionId
-    )
   }
 }
 

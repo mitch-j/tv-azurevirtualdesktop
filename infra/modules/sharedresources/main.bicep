@@ -131,6 +131,7 @@ module sharedResources './resources.bicep' = {
   scope: resourceGroup(sharedResourcesResourceGroupName)
   dependsOn: [
     sharedResourcesResourceGroup
+    imageBuilderResourceGroup
   ]
   params: {
     location: location

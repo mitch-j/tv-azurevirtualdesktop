@@ -295,7 +295,7 @@ var galleryName = computeGalleryName(
 var imageBuilderIdentityName = 'tv-avd-id-img-shared'
 var imageTemplateName = 'tv-avd-it-img-shared'
 var automationAccountName = 'tv-avd-aa-shared'
-var logAnalyticsWorkspaceName = 'tv-avd-law-shared'
+var logAnalyticsWorkspaceName = 'tv-avd-log-shared'
 var imageBuildActionGroupName = 'tv-avd-ag-img-shared'
 
 var imageBuildRunbookName = 'aib-build-automation'
@@ -370,13 +370,16 @@ resource imageBuilderStagingResourceGroup 'Microsoft.Resources/resourceGroups@20
   name: last(split(imageBuilderStagingResourceGroupResourceId, '/'))
 }
 
-module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
-  name: '${deployment().name}-rbac'
-  params: {
-      principalId: imageBuilderIdentity.outputs.principalId
-      resourceId: imageBuilderStagingResourceGroup.id
-      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
-      principalType: 'ServicePrincipal'
+resource imageBuilderStagingContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(imageBuilderStagingResourceGroup.id, imageBuilderIdentity.outputs.principalId, contributorRoleDefinitionId)
+  scope: imageBuilderStagingResourceGroup
+  properties: {
+    principalId: imageBuilderIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      contributorRoleDefinitionId
+    )
   }
 }
 
@@ -636,16 +639,16 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
     source: imageTemplateSource
     customize: imageTemplateCustomizers
 
-  distribute: [
-    {
-      type: 'SharedImage'
-      runOutputName: '${imageDefinitions[0].name}-${sharedResourcesNameSuffix}'
-      galleryImageId: '${galleryImages[0].id}/versions/${galleryImageDefinitionTargetVersion}'
-      replicationRegions: imageReplicationRegions
-      storageAccountType: imageVersionStorageAccountType
-      artifactTags: tags
-    }
-  ]
+    distribute: [
+      {
+        type: 'SharedImage'
+        runOutputName: '${imageDefinitions[0].name}-${sharedResourcesNameSuffix}'
+        galleryImageId: '${galleryImages[0].id}/versions/${galleryImageDefinitionTargetVersion}'
+        replicationRegions: imageReplicationRegions
+        storageAccountType: imageVersionStorageAccountType
+        artifactTags: tags
+      }
+    ]
 
     vmProfile: union(
       {
@@ -666,6 +669,12 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
       state: imageTemplateAutoRunState
     }
   }
+
+  dependsOn: [
+    imageBuilderIdentity
+    galleryImages
+    imageBuilderStagingContributorRoleAssignment
+  ]
 }
 
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.15.1' = if (deployLogAnalyticsWorkspace) {

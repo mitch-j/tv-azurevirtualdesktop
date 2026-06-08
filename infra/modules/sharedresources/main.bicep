@@ -99,7 +99,7 @@ var tags = union(baseTags, {
 })
 
 var sharedResourcesResourceGroupName = 'tv-avd-rg-shared'
-var imageBuilderResourceGroupName = 'tv-avd-rg-img-shared'
+var imageBuilderResourceGroupName = 'tv-avd-rg-img-shared-${replace(galleryImageDefinitionTargetVersion, '.', '-')}'
 
 // Modules
 

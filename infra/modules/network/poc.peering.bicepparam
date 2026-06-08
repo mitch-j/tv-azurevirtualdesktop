@@ -27,9 +27,9 @@ param hubPeeringAlias = 'hub-prod'
 param spokeToHubAllowVirtualNetworkAccess = true
 param spokeToHubAllowForwardedTraffic = true
 param spokeToHubAllowGatewayTransit = false
-param spokeToHubUseRemoteGateways = false
+param spokeToHubUseRemoteGateways = true
 
 param hubToSpokeAllowVirtualNetworkAccess = true
 param hubToSpokeAllowForwardedTraffic = true
-param hubToSpokeAllowGatewayTransit = false
+param hubToSpokeAllowGatewayTransit = true
 param hubToSpokeUseRemoteGateways = false

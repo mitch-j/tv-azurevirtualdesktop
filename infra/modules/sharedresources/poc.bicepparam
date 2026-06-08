@@ -25,7 +25,7 @@ param galleryDescription = 'Azure Compute Gallery for Azure Virtual Desktop cust
 param automationAccountSkuName = 'Basic'
 param automationAccountPublicNetworkAccess = 'Disabled'
 
-param imageBuilderVmSize = 'Standard_D4s_v5'
+param imageBuilderVmSize = 'Standard_D4as_v5'
 param imageBuilderOsDiskSizeGB = 128
 param imageBuildTimeoutInMinutes = 240
 param imageReplicationRegions = [

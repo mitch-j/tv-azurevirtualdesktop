@@ -6,7 +6,7 @@ Infrastructure as Code repository for the True Value Azure Virtual Desktop.
 
 it deploys the required resources for a full Azure Virtual Desktop environment for use in the True Value environment.
 
-- Host-Pools for each of the three user workloads defiend.
+- Host-Pools for each of the three user workloads defined.
 - Azure DevOps Pipelines
 - Environment-specific parameter files
 - Shared Bicep type and configuration files

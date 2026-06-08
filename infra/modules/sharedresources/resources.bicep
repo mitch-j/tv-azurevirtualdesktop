@@ -355,21 +355,28 @@ var imageTemplateDeploymentName = '${imageTemplateName}-${imageTemplateBaseTime}
 
 // Modules
 
-module resourceRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
-  name: '${deployment().name}-rbac'
-  params: {
-      principalId: imageBuilderIdentity.outputs.principalId
-      resourceId: '<resourceId>'
-      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
-      principalType: 'ServicePrincipal'
-  }
-}
+
 module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.5.1' = {
   name: '${deployment().name}-id-img'
   params: {
     name: imageBuilderIdentityName
     location: location
     tags: tags
+  }
+}
+
+resource imageBuilderStagingResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
+  scope: subscription()
+  name: last(split(imageBuilderStagingResourceGroupResourceId, '/'))
+}
+
+module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
+  name: '${deployment().name}-rbac'
+  params: {
+      principalId: imageBuilderIdentity.outputs.principalId
+      resourceId: imageBuilderStagingResourceGroup.id
+      roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', contributorRoleDefinitionId)
+      principalType: 'ServicePrincipal'
   }
 }
 
@@ -624,11 +631,9 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2025-10-01
 
   properties: {
     buildTimeoutInMinutes: imageBuildTimeoutInMinutes
-
     stagingResourceGroup: imageBuilderStagingResourceGroupResourceId
 
     source: imageTemplateSource
-
     customize: imageTemplateCustomizers
 
   distribute: [

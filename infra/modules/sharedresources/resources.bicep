@@ -28,12 +28,12 @@ import {
 
 import {
   resourcePurpose
+  locationConfigMap
 } from '../../shared/config.bicep'
 
 import {
   computeGalleryName
   keyVaultNameWithLocation
-
 } from '../../shared/naming.bicep'
 
 // Types
@@ -320,6 +320,7 @@ var galleryName = computeGalleryName(
   workloadName,
   resourcePurpose.images
 )
+var locationConfig = locationConfigMap[location]
 
 var imageBuilderIdentityName = 'tv-avd-id-img-shared'
 var imageTemplateName = 'tv-avd-it-img-shared'
@@ -408,9 +409,9 @@ var keyVaultRoleAssignments = concat(
 var keyVaultName = keyVaultNameWithLocation(
   namePrefix,
   workloadName,
-  'sharedResources',
-  location.code,
-  'prod'
+  resourcePurpose.sharedResources,
+  locationConfig.shortCode,
+  'test'
 )
 
 // Modules

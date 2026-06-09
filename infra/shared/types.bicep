@@ -29,6 +29,7 @@ type EnvironmentName =
   | 'e2e'
   | 'poc'
   | 'dr'
+  | 'shared'
 
 @description('Short deployment environment names used in resource names.')
 @export()
@@ -39,6 +40,7 @@ type EnvironmentShortName =
   | 'e2e'
   | 'poc'
   | 'dr'
+  | 'share'
 
 @description('Single-character environment codes used where compact names are required.')
 @export()
@@ -49,6 +51,7 @@ type EnvironmentCode =
   | 'e'
   | 'x'
   | 'r'
+  | 'h'
 
 @description('Azure policy-compliant Environment tag values.')
 @export()
@@ -60,6 +63,7 @@ type EnvironmentTagName =
   | 'Proof of Concept'
   | 'End to End'
   | 'Disaster Recovery'
+  | 'Shared'
 
 @description('Standard environment configuration used by shared repo templates.')
 @sealed()
@@ -91,6 +95,7 @@ type EnvironmentConfigMap = {
   e2e: EnvironmentConfig
   poc: EnvironmentConfig
   dr: EnvironmentConfig
+  shared: EnvironmentConfig
 }
 
 // Location Types

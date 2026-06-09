@@ -29,6 +29,9 @@ parameters:
       - dev
       - test
       - prod
+      - shared
+      - e2e
+      - dr
 
   - name: workloadName
     displayName: Workload name

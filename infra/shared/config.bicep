@@ -64,6 +64,12 @@ var environmentConfigMap EnvironmentConfigMap = {
     tagName: 'Disaster Recovery'
     logRetentionDays: 90
   }
+  shared: {
+    shortName: 'share'
+    code: 'h'
+    tagName: 'Shared'
+    logRetentionDays: 30
+  }
 }
 
 @description('Standard location settings used across deployment templates.')

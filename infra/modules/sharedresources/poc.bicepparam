@@ -101,3 +101,9 @@ param imageVersionStorageAccountType = 'Standard_LRS'
 
 param galleryImageDefinitionTargetVersion = '0.0.1'
 param imageTemplateBaseTime = 'v0-0-1'
+
+param keyVaultPublicNetworkAccess = 'Enabled'
+param keyVaultEnablePurgeProtection = true
+param keyVaultSoftDeleteRetentionInDays = 7
+param keyVaultSecretsUserPrincipalIds = []
+param keyVaultSecretsOfficerPrincipalIds = []

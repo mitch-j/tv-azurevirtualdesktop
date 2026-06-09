@@ -9,13 +9,14 @@ Scope:
 Deploys:
 - Shared resources resource group
 - Shared image and automation resources through the resource-group scoped resources module
+- Shared Key Vault through the resource-group scoped key-vault module
 
 Does not deploy:
 - AVD host pools or workspaces
 - Session host virtual machines
 - FSLogix storage
 - Network resources
-- Key Vault, Azure Monitor, Network Watcher, role entitlement, or policy assignments yet
+- Azure Monitor, Network Watcher, role entitlement, or policy assignments yet
 */
 
 // Imports
@@ -90,6 +91,28 @@ param imageVersionStorageAccountType string
 param galleryImageDefinitionTargetVersion string
 
 param imageTemplateBaseTime string
+
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+@description('Whether Key Vault public network access is enabled.')
+param keyVaultPublicNetworkAccess string = 'Enabled'
+
+@description('When true, enables Key Vault purge protection.')
+param keyVaultEnablePurgeProtection bool = true
+
+@minValue(7)
+@maxValue(90)
+@description('Soft delete retention period in days.')
+param keyVaultSoftDeleteRetentionInDays int = 7
+
+@description('Principal IDs that can read deployment secrets from the Key Vault.')
+param keyVaultSecretsUserPrincipalIds array = []
+
+@description('Principal IDs that can manage secrets in the Key Vault.')
+param keyVaultSecretsOfficerPrincipalIds array = []
+
 
 // Variables
 
@@ -173,6 +196,13 @@ module sharedResources './resources.bicep' = {
     imageVersionStorageAccountType: imageVersionStorageAccountType
     galleryImageDefinitionTargetVersion: galleryImageDefinitionTargetVersion
     imageTemplateBaseTime: imageTemplateBaseTime
+
+    keyVaultPublicNetworkAccess: keyVaultPublicNetworkAccess
+    keyVaultEnablePurgeProtection: keyVaultEnablePurgeProtection
+    keyVaultSoftDeleteRetentionInDays: keyVaultSoftDeleteRetentionInDays
+    keyVaultSecretsUserPrincipalIds: keyVaultSecretsUserPrincipalIds
+    keyVaultSecretsOfficerPrincipalIds: keyVaultSecretsOfficerPrincipalIds
+
   }
 }
 

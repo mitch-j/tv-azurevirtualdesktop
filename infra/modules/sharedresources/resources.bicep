@@ -23,11 +23,17 @@ Does not deploy:
 // Imports
 
 import {
+  LocationName
+} from '../../shared/types.bicep'
+
+import {
   resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
   computeGalleryName
+  keyVaultNameWithLocation
+
 } from '../../shared/naming.bicep'
 
 // Types
@@ -122,10 +128,10 @@ type GalleryImageDefinitionConfig = {
 
 // Parameters
 
-@description('Azure region for shared resources.')
-param location string
+@description('Azure region where storage resources are deployed.')
+param location LocationName
 
-@description('Standard tags applied to deployed resources.')
+@description('Tags applied to deployed AVD resources.')
 param tags object
 
 @description('Standard resource name prefix.')
@@ -284,6 +290,29 @@ param imageTemplateBaseTime string = 'manual'
 @description('Resource ID of the resource group Azure VM Image Builder uses for staging resources.')
 param imageBuilderStagingResourceGroupResourceId string
 
+@description('Whether Key Vault public network access is enabled. For PoC with Microsoft-hosted Azure DevOps agents, Enabled is usually simplest.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param keyVaultPublicNetworkAccess string = 'Enabled'
+
+@description('When true, enables Key Vault purge protection.')
+param keyVaultEnablePurgeProtection bool = true
+
+@description('Soft delete retention period in days.')
+@minValue(7)
+@maxValue(90)
+param keyVaultSoftDeleteRetentionInDays int = 7
+
+@description('Principal IDs that can read deployment secrets from the Key Vault, such as the Azure DevOps service connection principal.')
+param keyVaultSecretsUserPrincipalIds array = []
+
+@description('Principal IDs that can manage secrets in the Key Vault, such as an admin/operator group.')
+param keyVaultSecretsOfficerPrincipalIds array = []
+
+
+
 // Variables
 
 var galleryName = computeGalleryName(
@@ -353,6 +382,37 @@ var imageBuilderIdentityResourceId = resourceId(
 
 var imageTemplateDeploymentName = '${imageTemplateName}-${imageTemplateBaseTime}'
 
+// --- Key Vault ---
+
+var keyVaultSecretsUserRoleAssignments = [
+  for principalId in keyVaultSecretsUserPrincipalIds: {
+    principalId: principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionIdOrName: 'Key Vault Secrets User'
+  }
+]
+
+var keyVaultSecretsOfficerRoleAssignments = [
+  for principalId in keyVaultSecretsOfficerPrincipalIds: {
+    principalId: principalId
+    principalType: 'Group'
+    roleDefinitionIdOrName: 'Key Vault Secrets Officer'
+  }
+]
+
+var keyVaultRoleAssignments = concat(
+  keyVaultSecretsUserRoleAssignments,
+  keyVaultSecretsOfficerRoleAssignments
+)
+
+var keyVaultName = keyVaultNameWithLocation(
+  namePrefix,
+  workloadName,
+  'sharedResources',
+  location.code,
+  'prod'
+)
+
 // Modules
 
 
@@ -365,6 +425,21 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
   }
 }
 
+
+module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' ={
+  name: '${deployment().name}-img-rg-rbac'
+  params: {
+    principalId: imageBuilderIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      contributorRoleDefinitionId
+    )
+    resourceId: imageBuilderStagingResourceGroupResourceId
+  }
+}
+
+/*
 module imageBuilderStagingContributorRoleAssignment './role-assignment.resourcegroup.bicep' = {
   name: '${deployment().name}-img-rg-rbac'
   scope: resourceGroup(last(split(imageBuilderStagingResourceGroupResourceId, '/')))
@@ -374,6 +449,8 @@ module imageBuilderStagingContributorRoleAssignment './role-assignment.resourceg
     roleDefinitionId: contributorRoleDefinitionId
   }
 }
+*/
+
 module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1' = {
   name: '${deployment().name}-aa'
   params: {
@@ -681,6 +758,34 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
+@description('Deploy Key Vault for AVD deployment-time secrets.')
+module deploymentSecretsVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
+  name: '${deployment().name}-kv'
+  params: {
+    name: keyVaultName
+    location: location
+    tags: tags
+
+    enableRbacAuthorization: true
+    enableSoftDelete: true
+    enablePurgeProtection: keyVaultEnablePurgeProtection
+    softDeleteRetentionInDays: keyVaultSoftDeleteRetentionInDays
+
+    publicNetworkAccess: keyVaultPublicNetworkAccess
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: keyVaultPublicNetworkAccess == 'Enabled' ? 'Allow' : 'Deny'
+    }
+
+    roleAssignments: keyVaultRoleAssignments
+
+    // Do not create real secrets here unless their values are passed securely.
+    // Secret values do not belong in repo-backed .bicepparam files.
+    secrets: []
+  }
+}
+
+
 // Outputs
 
 @description('Name of the Azure Compute Gallery.')
@@ -749,3 +854,9 @@ output imageBuildActionGroupName string = deployImageBuildActionGroup
 output imageBuildActionGroupResourceId string = deployImageBuildActionGroup
   ? imageBuildActionGroupResourceId
   : ''
+
+@description('Key Vault resource ID used for AVD deployment-time secrets.')
+output keyVaultResourceId string = deploymentSecretsVault.outputs.resourceId
+
+@description('Key Vault URI used for AVD deployment-time secrets.')
+output keyVaultUri string = deploymentSecretsVault.outputs.uri

@@ -113,6 +113,7 @@ param keyVaultSecretsUserPrincipalIds array = []
 @description('Principal IDs that can manage secrets in the Key Vault.')
 param keyVaultSecretsOfficerPrincipalIds array = []
 
+param subscriptionId string
 
 // Variables
 
@@ -173,6 +174,9 @@ module sharedResources './resources.bicep' = {
       imageBuilderResourceGroupName
     )
 
+    subscriptionId: subscriptionId
+
+    imageBuilderResourceGroup: imageBuilderResourceGroup.name
     imageBuilderVmSize: imageBuilderVmSize
     imageBuilderOsDiskSizeGB: imageBuilderOsDiskSizeGB
     imageBuildTimeoutInMinutes: imageBuildTimeoutInMinutes

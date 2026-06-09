@@ -313,7 +313,10 @@ param keyVaultSecretsUserPrincipalIds array = []
 @description('Principal IDs that can manage secrets in the Key Vault, such as an admin/operator group.')
 param keyVaultSecretsOfficerPrincipalIds array = []
 
+@description('The resource group name of the image builder')
+param imageBuilderResourceGroup string
 
+param subscriptionId string
 
 // Variables
 
@@ -425,16 +428,12 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
 }
 
 
-module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' ={
+module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
   name: '${deployment().name}-img-rg-rbac'
   params: {
-    principalId: imageBuilderIdentity.outputs.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      contributorRoleDefinitionId
-    )
     resourceId: imageBuilderStagingResourceGroupResourceId
+    principalId: imageBuilderIdentity.outputs.principalId
+    roleDefinitionId: contributorRoleDefinitionId
   }
 }
 

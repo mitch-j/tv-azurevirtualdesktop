@@ -31,11 +31,11 @@ import {
 import {
   resourcePurpose
   locationConfigMap
+  resourcePurposeMap
 } from '../../shared/config.bicep'
 
 import {
   computeGalleryName
-  keyVaultNameWithLocation
 } from '../../shared/naming.bicep'
 
 // Types
@@ -410,7 +410,7 @@ var keyVaultRoleAssignments = concat(
 
 var keyVaultUniqueSuffix = take(uniqueString(subscription().id, resourceGroup().id, 'keyVault'), 5)
 
-var keyVaultName = take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurposeMap['sharedResources']}-${locationConfig.shortCode}-${keyVaultUniqueSuffix}'), 24)
+var keyVaultName = take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurposeMap.sharedResources}-${locationConfig.shortCode}-${keyVaultUniqueSuffix}'), 24)
 
 // Modules
 

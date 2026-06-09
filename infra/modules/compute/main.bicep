@@ -9,7 +9,9 @@ Scope:
 Deploys:
 - Session host resource groups
 - Resource group scoped compute workload deployments
-- Network interfaces for planned session hosts when enabled
+- Network interfaces for planned session hosts
+- Session host virtual machines
+- Optional AD DS domain join extension
 
 Does not deploy:
 - Virtual networks or subnets
@@ -54,6 +56,49 @@ param deployNetworkInterfaces bool = false
 
 @description('Session host workload configuration.')
 param sessionHostGroups SessionHostGroupConfig[]
+
+@description('Azure Compute Gallery image version resource ID used for session host VMs.')
+param sessionHostImageVersionResourceId string
+
+@description('VM Local Admin account')
+param localAdminUsername string = '<username>'
+
+@secure()
+@description('Local Administrative Account password')
+param localAdminPassword string
+
+param enableTrustedLaunch bool = true
+
+param secureBootEnabled bool = true
+
+param vTpmEnabled bool = true
+
+@description('Azure Hybrid Benefit / Windows license type for the session host VM.')
+param licenseType string = 'Windows_Client'
+
+param patchMode string = 'AutomaticByOS'
+
+@description('When true, deploys the AD DS domain join extension to session host VMs.')
+param deployDomainJoinExtension bool = false
+
+@description('Active Directory domain DNS name used for session host domain join.')
+param domainName string = 'TV.local'
+
+@description('Active Directory domain join username. Use either user@domain or DOMAIN\\user format.')
+param domainJoinUserName string
+
+@secure()
+@description('Active Directory domain join account password.')
+param domainJoinPassword string
+
+@description('Optional OU distinguished name where session host computer objects should be created.')
+param domainJoinOuPath string = ''
+
+@description('Domain join extension options. 3 = join domain and create computer account if needed.')
+param domainJoinOptions int = 3
+
+@description('Whether the domain join extension should restart the VM after joining the domain.')
+param restartAfterDomainJoin bool = true
 
 // Variables
 
@@ -110,8 +155,8 @@ var plannedSessionHostGroups = [
     )
 
     // Keep the generated session host name under the 15-character Windows computer name limit.
-    // Pattern: namePrefix + workloadName + singleCharEnvironmentCode + sessionHostRoleCode + 2-digit sequence.
-    sessionHostNamePrefix: toLower('${commonConfig.namePrefix}${commonConfig.workloadName}${environmentConfig.singleCharEnvironmentCode}${locationConfig.singleCharLocationCode}${sessionHostGroup.sessionHostRoleCode}')
+    // Pattern: namePrefix + workloadName + code + sessionHostRoleCode + 2-digit sequence.
+    sessionHostNamePrefix: toLower('${commonConfig.namePrefix}${commonConfig.workloadName}${environmentConfig.code}${locationConfig.code}${sessionHostGroup.sessionHostRoleCode}')
     vmCount: sessionHostGroup.vmCount
     vmSize: sessionHostGroup.vmSize
     osDisk: sessionHostGroup.osDisk
@@ -146,6 +191,23 @@ module sessionHostWorkload './resources.bicep' = [
       tags: tags
       deployNetworkInterfaces: deployNetworkInterfaces
       sessionHostGroup: sessionHostGroup
+
+      sessionHostImageVersionResourceId: sessionHostImageVersionResourceId
+      localAdminUsername: localAdminUsername
+      localAdminPassword: localAdminPassword
+      enableTrustedLaunch: enableTrustedLaunch
+      secureBootEnabled: secureBootEnabled
+      vTpmEnabled: vTpmEnabled
+      licenseType: licenseType
+      patchMode: patchMode
+
+      deployDomainJoinExtension: deployDomainJoinExtension
+      domainName: domainName
+      domainJoinUserName: domainJoinUserName
+      domainJoinPassword: domainJoinPassword
+      domainJoinOuPath: domainJoinOuPath
+      domainJoinOptions: domainJoinOptions
+      restartAfterDomainJoin: restartAfterDomainJoin
     }
     dependsOn: [
       avdResourceGroups
@@ -173,5 +235,23 @@ output plannedSessionHosts array = [
     purpose: sessionHostGroup.purpose
     resourceGroupName: sessionHostGroup.resourceGroupName
     sessionHosts: sessionHostWorkload[index].outputs.plannedSessionHosts
+  }
+]
+
+@description('Session host virtual machines returned by each resource group scoped deployment.')
+output sessionHostVirtualMachines array = [
+  for (sessionHostGroup, index) in plannedSessionHostGroups: {
+    purpose: sessionHostGroup.purpose
+    resourceGroupName: sessionHostGroup.resourceGroupName
+    virtualMachines: sessionHostWorkload[index].outputs.sessionHostVirtualMachines
+  }
+]
+
+@description('Domain join extension targets returned by each resource group scoped deployment.')
+output domainJoinTargets array = [
+  for (sessionHostGroup, index) in plannedSessionHostGroups: {
+    purpose: sessionHostGroup.purpose
+    resourceGroupName: sessionHostGroup.resourceGroupName
+    targets: sessionHostWorkload[index].outputs.domainJoinTargets
   }
 ]

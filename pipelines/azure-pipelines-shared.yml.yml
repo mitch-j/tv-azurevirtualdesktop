@@ -1,16 +1,21 @@
-name: shared-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
-
 trigger:
   branches:
     include:
       - main
   paths:
     include:
-      - infra/**
-      - scripts/**
-      - pipelines/**
+      - infra/modules/sharedresources/**
+      - pipelines/azure-pipelines-shared.yml
     exclude:
       - docs/**
+      - infra/modules/bootstrap/**
+      - infra/modules/service-objects/**
+      - infra/modules/network/**
+      - infra/modules/storage/**
+      - infra/modules/compute/**
+      - infra/shared/**
+      - scripts/**
+      - pipelines/templates/**
 
 pr:
   branches:
@@ -18,11 +23,18 @@ pr:
       - main
   paths:
     include:
-      - infra/**
-      - scripts/**
-      - pipelines/**
+      - infra/modules/sharedresources/**
+      - pipelines/azure-pipelines-shared.yml
     exclude:
       - docs/**
+      - infra/modules/bootstrap/**
+      - infra/modules/service-objects/**
+      - infra/modules/network/**
+      - infra/modules/storage/**
+      - infra/modules/compute/**
+      - infra/shared/**
+      - scripts/**
+      - pipelines/templates/**
 
 variables:
   workloadName: avd
@@ -43,7 +55,7 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: sharedresources
-      azureDevOpsEnvironment: $(avdSharedDevOpsEnvironment)
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdSharedResourcesServiceConnection)
       environmentName: poc
       workloadName: $(workloadName)-sharedresources

@@ -6,11 +6,18 @@ trigger:
       - main
   paths:
     include:
-      - infra/**
+      - infra/modules/bootstrap/**
+      - infra/modules/service-objects/**
+      - infra/modules/network/**
+      - infra/modules/storage/**
+      - infra/modules/compute/**
+      - infra/shared/**
       - scripts/**
-      - pipelines/**
+      - pipelines/templates/**
+      - pipelines/azure-pipelines-poc.yml
     exclude:
       - docs/**
+      - infra/modules/sharedresources/**
 
 pr:
   branches:
@@ -18,11 +25,18 @@ pr:
       - main
   paths:
     include:
-      - infra/**
+      - infra/modules/bootstrap/**
+      - infra/modules/service-objects/**
+      - infra/modules/network/**
+      - infra/modules/storage/**
+      - infra/modules/compute/**
+      - infra/shared/**
       - scripts/**
-      - pipelines/**
+      - pipelines/templates/**
+      - pipelines/azure-pipelines-poc.yml
     exclude:
       - docs/**
+      - infra/modules/sharedresources/**
 
 variables:
   workloadName: avd
@@ -124,6 +138,18 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/storage/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
+
+  - task: AzureKeyVault@2
+    displayName: 'Get AVD compute secrets'
+    inputs:
+      azureSubscription: 'tv-avd-poc-deploy-sc'
+      KeyVaultName: 'tv-avd-kv-shared-eus-poc'
+      SecretsFilter: |
+        avd-poc-local-admin-username,
+        avd-poc-local-admin-password,
+        avd-poc-domain-join-username,
+        avd-poc-domain-join-password
+      RunAsPreJob: false
 
   - template: templates/bicep-deployment-template.yml
     parameters:

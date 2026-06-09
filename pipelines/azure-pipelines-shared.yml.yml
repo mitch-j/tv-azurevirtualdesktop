@@ -47,8 +47,9 @@ variables:
   avdNetworkPeeringServiceConnection: tv-avd-network-peering-sc
   azureLocation: eastus
 
-Pool: Azure Pipelines
-Image: ubuntu-latest
+Pool:
+  name: SharedPipeline
+  vmImage: ubuntu-latest
 
 stages:
   - template: templates/bicep-deployment-template.yml

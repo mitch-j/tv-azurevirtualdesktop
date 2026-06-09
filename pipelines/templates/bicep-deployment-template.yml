@@ -89,8 +89,6 @@ stages:
     jobs:
       - job: ValidateBicep
         displayName: Compile and Validate Bicep
-        pool:
-          vmImage: ubuntu-latest
         steps:
           - checkout: self
             displayName: "Checkout Bicep Module"
@@ -126,8 +124,6 @@ stages:
     jobs:
       - job: WhatIf
         displayName: Run Bicep what-if
-        pool:
-          vmImage: ubuntu-latest
         steps:
           - checkout: self
 
@@ -173,8 +169,6 @@ stages:
     jobs:
       - deployment: DeployInfrastructure
         displayName: Deploy Infrastructure
-        pool:
-          vmImage: ubuntu-latest
         environment: "${{ parameters.azureDevOpsEnvironment }}"
         strategy:
           runOnce:

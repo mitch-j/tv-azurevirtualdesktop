@@ -50,15 +50,17 @@ variables:
 pool:
   vmImage: ubuntu-latest
 
-parameters:
-  deploymentUnitName: sharedresources
-  azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-  azureServiceConnection: $(avdSharedResourcesServiceConnection)
-  environmentName: $(environmentName)
-  workloadName: $(workloadName)-sharedresources
-  deploymentScope: Subscription
-  deploymentLocation: $(azureLocation)
-  templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
-  parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
-  validationLevel: Provider
-  whatIfResultFormat: FullResourcePayloads
+stages:
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: sharedresources
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(avdSharedResourcesServiceConnection)
+      environmentName: $(environmentName)
+      workloadName: $(workloadName)-sharedresources
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads

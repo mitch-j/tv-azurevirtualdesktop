@@ -222,15 +222,16 @@ func keyVaultName(
   environmentShortName EnvironmentShortName
 ) string => take(toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.keyVault}-${resourcePurposeMap[purpose]}-${environmentShortName}'), 24)
 
-@description('Builds a location-aware Key Vault name. Key Vault names must be 3-24 characters and may contain only alphanumeric characters and hyphens.')
+@description('Builds a compact globally safer Key Vault name. Key Vault names must be 3-24 characters and may contain only alphanumeric characters and hyphens.')
 @export()
 func keyVaultNameWithLocation(
   namePrefix NamePrefix,
   workloadName WorkloadName,
   purpose PurposeName,
   locationShortCode LocationShortCode,
-  environmentShortName EnvironmentShortName
-) string => take(toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.keyVault}-${resourcePurposeMap[purpose]}-${locationShortCode}-${environmentShortName}'), 24)
+  environmentShortName EnvironmentShortName,
+  uniqueSuffix string
+) string => take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurposeMap[purpose]}-${locationShortCode}-${environmentShortName}-${uniqueSuffix}'), 24)
 
 @description('Builds an Azure Compute Gallery name. Gallery names may contain letters, numbers, dots, and underscores. Hyphens are avoided.')
 @export()

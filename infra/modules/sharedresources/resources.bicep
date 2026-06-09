@@ -12,12 +12,14 @@ Deploys:
 - Azure VM Image Builder managed identity
 - Azure VM Image Builder template
 - Automation Account
+- Log Analytics workspace for image build monitoring, when enabled
+- Key Vault for deployment-time secrets
 
 Does not deploy:
 - Image versions
-- Image build triggers
 - Session host virtual machines
-- Key Vault, Azure Monitor, Network Watcher, role entitlement, or policy assignments yet
+- Network Watcher
+- Policy assignments
 */
 
 // Imports
@@ -406,13 +408,9 @@ var keyVaultRoleAssignments = concat(
   keyVaultSecretsOfficerRoleAssignments
 )
 
-var keyVaultName = keyVaultNameWithLocation(
-  namePrefix,
-  workloadName,
-  resourcePurpose.sharedResources,
-  locationConfig.shortCode,
-  'test'
-)
+var keyVaultUniqueSuffix = take(uniqueString(subscription().id, resourceGroup().id, 'keyVault'), 5)
+
+var keyVaultName = take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurposeMap['sharedResources']}-${locationConfig.shortCode}-${keyVaultUniqueSuffix}'), 24)
 
 // Modules
 

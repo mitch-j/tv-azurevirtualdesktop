@@ -56,7 +56,7 @@ stages:
       deploymentUnitName: sharedresources
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(avdSharedResourcesServiceConnection)
-      environmentName: $(environmentName)
+      environmentName: shared
       workloadName: $(workloadName)-sharedresources
       deploymentScope: Subscription
       deploymentLocation: $(azureLocation)

@@ -313,11 +313,6 @@ param keyVaultSecretsUserPrincipalIds array = []
 @description('Principal IDs that can manage secrets in the Key Vault, such as an admin/operator group.')
 param keyVaultSecretsOfficerPrincipalIds array = []
 
-@description('The resource group name of the image builder')
-param imageBuilderResourceGroup string
-
-param subscriptionId string
-
 // Variables
 
 var galleryName = computeGalleryName(

@@ -20,7 +20,6 @@ Notes:
 param location = 'eastus'
 param sharedResourcesNameSuffix = 'shared'
 
-param subscriptionId = 'b908e3b2-448e-4a3f-9d79-996703913a99'
 
 param galleryDescription = 'Azure Compute Gallery for Azure Virtual Desktop custom images.'
 

@@ -28,6 +28,7 @@ param principalType string = 'ServicePrincipal'
 @description('Role definition ID, not the full resource ID.')
 param roleDefinitionId string
 
+/*
 module roleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
   name: '${deployment().name}-rbac'
   params: {
@@ -40,8 +41,8 @@ module roleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:
     resourceId: guid(resourceGroup().id)
   }
 }
+*/
 
-/*
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, principalId, roleDefinitionId)
   properties: {
@@ -53,4 +54,4 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
     )
   }
 }
-*/
+

@@ -410,6 +410,9 @@ var keyVaultUniqueSuffix = take(uniqueString(subscription().id, resourceGroup().
 
 var keyVaultName = take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurposeMap.sharedResources}-${locationConfig.shortCode}-${keyVaultUniqueSuffix}'), 24)
 
+var imageBuilderStagingResourceGroupIdParts = split(imageBuilderStagingResourceGroupResourceId, '/')
+var imageBuilderStagingResourceGroupName = imageBuilderStagingResourceGroupIdParts[4]
+
 // Modules
 
 
@@ -423,11 +426,12 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
 }
 
 
-module imageBuilderStagingContributorRoleAssignment 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
+module imageBuilderStagingContributorRoleAssignment 'role-assignment.resourcegroup.bicep' = {
   name: '${deployment().name}-img-rg-rbac'
+  scope: resourceGroup(imageBuilderStagingResourceGroupName)
   params: {
-    resourceId: imageBuilderStagingResourceGroupResourceId
     principalId: imageBuilderIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
     roleDefinitionId: contributorRoleDefinitionId
   }
 }

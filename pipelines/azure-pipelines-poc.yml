@@ -51,7 +51,7 @@ variables:
   avdNetworkPeeringServiceConnection: tv-avd-network-peering-sc
   azureLocation: eastus
 
-Pool:
+pool:
   vmImage: ubuntu-latest
 
 stages:

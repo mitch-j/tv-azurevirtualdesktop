@@ -52,7 +52,6 @@ variables:
   azureLocation: eastus
 
 Pool:
-  name: SharedPipeline
   vmImage: ubuntu-latest
 
 stages:

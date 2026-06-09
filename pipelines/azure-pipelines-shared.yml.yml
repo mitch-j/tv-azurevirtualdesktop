@@ -1,3 +1,5 @@
+name: shared-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
+
 trigger:
   branches:
     include:
@@ -5,6 +7,9 @@ trigger:
   paths:
     include:
       - infra/modules/sharedresources/**
+      - infra/shared/**
+      - scripts/**
+      - pipelines/templates/**
       - pipelines/azure-pipelines-shared.yml
     exclude:
       - docs/**
@@ -13,9 +18,6 @@ trigger:
       - infra/modules/network/**
       - infra/modules/storage/**
       - infra/modules/compute/**
-      - infra/shared/**
-      - scripts/**
-      - pipelines/templates/**
 
 pr:
   branches:
@@ -24,6 +26,9 @@ pr:
   paths:
     include:
       - infra/modules/sharedresources/**
+      - infra/shared/**
+      - scripts/**
+      - pipelines/templates/**
       - pipelines/azure-pipelines-shared.yml
     exclude:
       - docs/**
@@ -32,36 +37,28 @@ pr:
       - infra/modules/network/**
       - infra/modules/storage/**
       - infra/modules/compute/**
-      - infra/shared/**
-      - scripts/**
-      - pipelines/templates/**
 
 variables:
   workloadName: avd
   environmentName: shared
   avdDevOpsEnvironment: shared-avd
-  # Service connection for normal AVD POC workload resources.
   azureServiceConnection: tv-avd-poc-deploy-sc
-  # Service connection for shared image/gallery/platform resources.
   avdSharedResourcesServiceConnection: tv-avd-shared-deploy-sc
-  # Service connection for hub/spoke peering work.
   avdNetworkPeeringServiceConnection: tv-avd-network-peering-sc
   azureLocation: eastus
 
 pool:
   vmImage: ubuntu-latest
 
-stages:
-  - template: templates/bicep-deployment-template.yml
-    parameters:
-      deploymentUnitName: sharedresources
-      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
-      azureServiceConnection: $(avdSharedResourcesServiceConnection)
-      environmentName: poc
-      workloadName: $(workloadName)-sharedresources
-      deploymentScope: Subscription
-      deploymentLocation: $(azureLocation)
-      templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
-      parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
-      validationLevel: Provider
-      whatIfResultFormat: FullResourcePayloads
+parameters:
+  deploymentUnitName: sharedresources
+  azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+  azureServiceConnection: $(avdSharedResourcesServiceConnection)
+  environmentName: $(environmentName)
+  workloadName: $(workloadName)-sharedresources
+  deploymentScope: Subscription
+  deploymentLocation: $(azureLocation)
+  templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
+  parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
+  validationLevel: Provider
+  whatIfResultFormat: FullResourcePayloads

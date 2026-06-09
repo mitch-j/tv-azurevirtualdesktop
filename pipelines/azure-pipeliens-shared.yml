@@ -1,0 +1,55 @@
+name: shared-bicep-$(workloadName)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/**
+      - scripts/**
+      - pipelines/**
+    exclude:
+      - docs/**
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/**
+      - scripts/**
+      - pipelines/**
+    exclude:
+      - docs/**
+
+variables:
+  workloadName: avd
+  environmentName: shared
+  avdDevOpsEnvironment: shared-avd
+  # Service connection for normal AVD POC workload resources.
+  azureServiceConnection: tv-avd-poc-deploy-sc
+  # Service connection for shared image/gallery/platform resources.
+  avdSharedResourcesServiceConnection: tv-avd-shared-deploy-sc
+  # Service connection for hub/spoke peering work.
+  avdNetworkPeeringServiceConnection: tv-avd-network-peering-sc
+  azureLocation: eastus
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - template: templates/bicep-deployment-template.yml
+    parameters:
+      deploymentUnitName: sharedresources
+      azureDevOpsEnvironment: $(avdSharedDevOpsEnvironment)
+      azureServiceConnection: $(avdSharedResourcesServiceConnection)
+      environmentName: poc
+      workloadName: $(workloadName)-sharedresources
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/sharedresources/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads

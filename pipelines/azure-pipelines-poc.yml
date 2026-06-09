@@ -139,18 +139,6 @@ stages:
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
 
-  - task: AzureKeyVault@2
-    displayName: 'Get AVD compute secrets'
-    inputs:
-      azureSubscription: 'tv-avd-poc-deploy-sc'
-      KeyVaultName: 'tv-avd-kv-shared-eus-poc'
-      SecretsFilter: |
-        avd-poc-local-admin-username,
-        avd-poc-local-admin-password,
-        avd-poc-domain-join-username,
-        avd-poc-domain-join-password
-      RunAsPreJob: false
-
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: compute

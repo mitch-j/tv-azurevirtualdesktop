@@ -162,4 +162,4 @@ stages:
       keyVaultName: tv-avd-kv-shared-eus-553
       keyVaultSecretsFilter: avd-local-admin-username,avd-local-admin-password,avd-domain-join-username,avd-domain-join-password
       additionalScriptArguments: -SkipBuild
-      additionalParametersJson: '["localAdminUsername=$(avd-local-admin-username)","localAdminPassword=$(avd-local-admin-password)","domainJoinUserName=$(avd-domain-join-username)","domainJoinPassword=$(avd-domain-join-password)"]'
+      useComputeSecretParameters: true

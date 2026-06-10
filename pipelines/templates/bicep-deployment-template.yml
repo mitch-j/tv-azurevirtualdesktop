@@ -105,6 +105,9 @@ parameters:
     type: boolean
     default: false
 
+  - name: useComputeSecretParameters
+    type: boolean
+    default: false
 
 stages:
   - stage: Validate_${{ parameters.deploymentUnitName }}
@@ -133,21 +136,37 @@ stages:
             inputs:
               azureSubscription: "${{ parameters.azureServiceConnection }}"
               scriptType: pscore
-              scriptLocation: scriptPath
-              scriptPath: "$(scriptPath)"
-              arguments: >
-                -Action Validate
-                -DeploymentScope "${{ parameters.deploymentScope }}"
-                -DeploymentLocation "${{ parameters.deploymentLocation }}"
-                -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                -TemplateFile "${{ parameters.templateFile }}"
-                -ParameterFile "${{ parameters.parameterFile }}"
-                -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-validate-$(Build.BuildId)"
-                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
-                -ValidationLevel "${{ parameters.validationLevel }}"
-                -EnsureBicep
-                ${{ parameters.additionalScriptArguments }}
-                -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
+              scriptLocation: inlineScript
+              inlineScript: |
+                $additionalParametersJson = ''
+
+                if ('${{ parameters.useComputeSecretParameters }}' -eq 'true') {
+                    $additionalParametersJson = @(
+                        "localAdminUsername=$env:AVD_LOCAL_ADMIN_USERNAME"
+                        "localAdminPassword=$env:AVD_LOCAL_ADMIN_PASSWORD"
+                        "domainJoinUserName=$env:AVD_DOMAIN_JOIN_USERNAME"
+                        "domainJoinPassword=$env:AVD_DOMAIN_JOIN_PASSWORD"
+                    ) | ConvertTo-Json -Compress
+                }
+
+                . "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1" `
+                  -Action Validate `
+                  -DeploymentScope "${{ parameters.deploymentScope }}" `
+                  -DeploymentLocation "${{ parameters.deploymentLocation }}" `
+                  -ResourceGroupName "${{ parameters.resourceGroupName }}" `
+                  -TemplateFile "${{ parameters.templateFile }}" `
+                  -ParameterFile "${{ parameters.parameterFile }}" `
+                  -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-validate-$(Build.BuildId)" `
+                  -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate" `
+                  -ValidationLevel "${{ parameters.validationLevel }}" `
+                  -EnsureBicep `
+                  ${{ parameters.additionalScriptArguments }} `
+                  -AdditionalParametersJson $additionalParametersJson
+            env:
+              AVD_LOCAL_ADMIN_USERNAME: $(avd-local-admin-username)
+              AVD_LOCAL_ADMIN_PASSWORD: $(avd-local-admin-password)
+              AVD_DOMAIN_JOIN_USERNAME: $(avd-domain-join-username)
+              AVD_DOMAIN_JOIN_PASSWORD: $(avd-domain-join-password)
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate"
@@ -178,22 +197,33 @@ stages:
             inputs:
               azureSubscription: "${{ parameters.azureServiceConnection }}"
               scriptType: pscore
-              scriptLocation: scriptPath
-              scriptPath: "$(scriptPath)"
-              arguments: >
-                -Action WhatIf
-                -DeploymentScope "${{ parameters.deploymentScope }}"
-                -DeploymentLocation "${{ parameters.deploymentLocation }}"
-                -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                -TemplateFile "${{ parameters.templateFile }}"
-                -ParameterFile "${{ parameters.parameterFile }}"
-                -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-whatif-$(Build.BuildId)"
-                -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
-                -ValidationLevel "${{ parameters.validationLevel }}"
-                -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
-                -EnsureBicep
-                ${{ parameters.additionalScriptArguments }}
-                -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
+              scriptLocation: inlineScript
+              inlineScript: |
+                $additionalParametersJson = ''
+
+                if ('${{ parameters.useComputeSecretParameters }}' -eq 'true') {
+                    $additionalParametersJson = @(
+                        "localAdminUsername=$env:AVD_LOCAL_ADMIN_USERNAME"
+                        "localAdminPassword=$env:AVD_LOCAL_ADMIN_PASSWORD"
+                        "domainJoinUserName=$env:AVD_DOMAIN_JOIN_USERNAME"
+                        "domainJoinPassword=$env:AVD_DOMAIN_JOIN_PASSWORD"
+                    ) | ConvertTo-Json -Compress
+                }
+
+                . "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1" `
+                  -Action WhatIf
+                  -DeploymentScope "${{ parameters.deploymentScope }}"
+                  -DeploymentLocation "${{ parameters.deploymentLocation }}"
+                  -ResourceGroupName "${{ parameters.resourceGroupName }}"
+                  -TemplateFile "${{ parameters.templateFile }}"
+                  -ParameterFile "${{ parameters.parameterFile }}"
+                  -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-whatif-$(Build.BuildId)"
+                  -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
+                  -ValidationLevel "${{ parameters.validationLevel }}"
+                  -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
+                  -EnsureBicep
+                  ${{ parameters.additionalScriptArguments }}
+                  -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"
@@ -238,20 +268,31 @@ stages:
                   inputs:
                     azureSubscription: "${{ parameters.azureServiceConnection }}"
                     scriptType: pscore
-                    scriptLocation: scriptPath
-                    scriptPath: "$(scriptPath)"
-                    arguments: >
-                      -Action Deploy
-                      -DeploymentScope "${{ parameters.deploymentScope }}"
-                      -DeploymentLocation "${{ parameters.deploymentLocation }}"
-                      -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                      -TemplateFile "${{ parameters.templateFile }}"
-                      -ParameterFile "${{ parameters.parameterFile }}"
-                      -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
-                      -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
-                      -EnsureBicep
-                      ${{ parameters.additionalScriptArguments }}
-                      -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      $additionalParametersJson = ''
+
+                      if ('${{ parameters.useComputeSecretParameters }}' -eq 'true') {
+                          $additionalParametersJson = @(
+                              "localAdminUsername=$env:AVD_LOCAL_ADMIN_USERNAME"
+                              "localAdminPassword=$env:AVD_LOCAL_ADMIN_PASSWORD"
+                              "domainJoinUserName=$env:AVD_DOMAIN_JOIN_USERNAME"
+                              "domainJoinPassword=$env:AVD_DOMAIN_JOIN_PASSWORD"
+                          ) | ConvertTo-Json -Compress
+                      }
+
+                      . "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1" `
+                            -Action Deploy
+                            -DeploymentScope "${{ parameters.deploymentScope }}"
+                            -DeploymentLocation "${{ parameters.deploymentLocation }}"
+                            -ResourceGroupName "${{ parameters.resourceGroupName }}"
+                            -TemplateFile "${{ parameters.templateFile }}"
+                            -ParameterFile "${{ parameters.parameterFile }}"
+                            -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
+                            -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
+                            -EnsureBicep
+                            ${{ parameters.additionalScriptArguments }}
+                            -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
 
                 - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                   artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy"

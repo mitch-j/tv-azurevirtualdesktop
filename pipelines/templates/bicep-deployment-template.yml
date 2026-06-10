@@ -95,6 +95,11 @@ parameters:
     type: string
     default: ""
 
+  - name: additionalScriptArguments
+    displayName: Optional additional script arguments passed to Invoke-BicepDeployment.ps1
+    type: string
+    default: ""
+
   - name: skipBuild
     displayName: Skip Bicep build/build-params
     type: boolean
@@ -141,7 +146,7 @@ stages:
                 -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
-                ${{ if eq(parameters.skipBuild, true) }} -SkipBuild
+                ${{ parameters.additionalScriptArguments }}
                 ${{ parameters.additionalParameters }}
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
@@ -187,7 +192,7 @@ stages:
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
-                ${{ if eq(parameters.skipBuild, true) }} -SkipBuild
+                ${{ parameters.additionalScriptArguments }}
                 ${{ parameters.additionalParameters }}
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
@@ -245,7 +250,7 @@ stages:
                       -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
                       -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                       -EnsureBicep
-                      ${{ if eq(parameters.skipBuild, true) }} -SkipBuild
+                      ${{ parameters.additionalScriptArguments }}
                       ${{ parameters.additionalParameters }}
 
                 - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"

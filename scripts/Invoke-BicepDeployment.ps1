@@ -47,7 +47,7 @@ param(
     [switch]$SkipLint,
 
     [Parameter()]
-    [string[]]$AdditionalParameters = @(),
+    [string[]]$AdditionalParameters = @()
 
 )
 

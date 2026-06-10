@@ -90,8 +90,8 @@ parameters:
     type: string
     default: ""
 
-  - name: additionalParameters
-    displayName: Optional additional parameters passed to Invoke-BicepDeployment.ps1
+  - name: additionalParametersJson
+    displayName: Optional additional deployment parameters as JSON array
     type: string
     default: ""
 
@@ -147,7 +147,7 @@ stages:
                 -ValidationLevel "${{ parameters.validationLevel }}"
                 -EnsureBicep
                 ${{ parameters.additionalScriptArguments }}
-                ${{ parameters.additionalParameters }}
+                -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-validate"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate"
@@ -193,7 +193,7 @@ stages:
                 -WhatIfResultFormat "${{ parameters.whatIfResultFormat }}"
                 -EnsureBicep
                 ${{ parameters.additionalScriptArguments }}
-                ${{ parameters.additionalParameters }}
+                -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
 
           - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"
@@ -251,7 +251,7 @@ stages:
                       -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                       -EnsureBicep
                       ${{ parameters.additionalScriptArguments }}
-                      ${{ parameters.additionalParameters }}
+                      -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
 
                 - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                   artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy"

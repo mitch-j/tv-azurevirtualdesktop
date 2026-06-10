@@ -47,7 +47,7 @@ param(
     [switch]$SkipLint,
 
     [Parameter()]
-    [string[]]$AdditionalParameters = @()
+    [string]$AdditionalParametersJson = ''
 
 )
 
@@ -421,9 +421,29 @@ try {
         $deploymentArgs = $baseArgs + @('--template-file', $TemplateFile, '--parameters', "@$ParameterFile")
     }
 
-    if ($AdditionalParameters.Count -gt 0) {
+
+    $additionalParameterArgs = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($AdditionalParametersJson)) {
+        try {
+            $additionalParameterArgs = $AdditionalParametersJson | ConvertFrom-Json
+        }
+        catch {
+            throw "AdditionalParametersJson is not valid JSON. Value received: $AdditionalParametersJson"
+        }
+
+        if ($null -eq $additionalParameterArgs) {
+            $additionalParameterArgs = @()
+        }
+
+        if ($additionalParameterArgs -isnot [array]) {
+            $additionalParameterArgs = @($additionalParameterArgs)
+        }
+    }
+
+    if ($additionalParameterArgs.Count -gt 0) {
         $deploymentArgs += @('--parameters')
-        $deploymentArgs += $AdditionalParameters
+        $deploymentArgs += $additionalParameterArgs
     }
 
     switch ($Action) {

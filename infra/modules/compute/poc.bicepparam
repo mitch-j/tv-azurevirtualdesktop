@@ -18,8 +18,6 @@ Notes:
 param environment = 'poc'
 param location = 'eastus'
 
-param deployNetworkInterfaces = true
-
 param sessionHostGroups = [
   {
     purpose: 'opsPooled'
@@ -64,7 +62,15 @@ param sessionHostImageVersionResourceId = '/subscriptions/f70559ab-d7c3-453e-98c
 param deployDomainJoinExtension = false
 
 param domainName = 'TV.local'
-// param domainJoinOuPath = 'placeholder,OU=Session Hosts,OU=AVD,OU=Azure,DC=TV,DC=local'
+param domainJoinOuPath = ''
 param domainJoinOptions = 3
 
 param restartAfterDomainJoin = true
+
+param domainJoinUserName = ''
+param domainJoinPassword = ''
+
+param localAdminPassword = ''
+param localAdminUsername = ''
+
+param logAnalyticsWorkspaceResourceId = ''

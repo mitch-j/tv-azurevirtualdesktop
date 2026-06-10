@@ -124,6 +124,8 @@ param domainJoinOptions int = 3
 @description('Whether the domain join extension should restart the VM after joining the domain.')
 param restartAfterDomainJoin bool = true
 
+@description('')
+param logAnalyticsWorkspaceResourceId string
 
 // Variables
 
@@ -297,3 +299,8 @@ output domainJoinTargets array = [
     )
   }
 ]
+
+// Output
+
+@description('')
+output logAnalyticsWorkspaceResourceId string = logAnalyticsWorkspaceResourceId

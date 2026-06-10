@@ -51,9 +51,6 @@ param environment EnvironmentName
 @description('Azure region where storage resources are deployed.')
 param location LocationName
 
-@description('When true, this module creates network interfaces for planned session hosts.')
-param deployNetworkInterfaces bool = false
-
 @description('Session host workload configuration.')
 param sessionHostGroups SessionHostGroupConfig[]
 

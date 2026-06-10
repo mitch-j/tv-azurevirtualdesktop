@@ -64,7 +64,7 @@ param sessionHostImageVersionResourceId = '/subscriptions/f70559ab-d7c3-453e-98c
 param deployDomainJoinExtension = false
 
 param domainName = 'TV.local'
-param domainJoinOuPath = '<placeholder>,OU=Session Hosts,OU=AVD,OU=Azure,DC=TV,DC=local'
+// param domainJoinOuPath = 'placeholder,OU=Session Hosts,OU=AVD,OU=Azure,DC=TV,DC=local'
 param domainJoinOptions = 3
 
 param restartAfterDomainJoin = true

@@ -83,8 +83,8 @@ param sessionHostImageVersionResourceId string
 @description('VM local administrator username.')
 param localAdminUsername string
 
-@secure()
 @description('VM local administrator password.')
+@secure()
 param localAdminPassword string
 
 @description('When true, deploys the VM using Trusted Launch security type.')
@@ -111,8 +111,8 @@ param domainName string = 'TV.local'
 @description('Active Directory domain join username. Use either user@domain or DOMAIN\\user format.')
 param domainJoinUserName string
 
-@secure()
 @description('Active Directory domain join account password.')
+@secure()
 param domainJoinPassword string
 
 @description('Optional OU distinguished name where session host computer objects should be created.')

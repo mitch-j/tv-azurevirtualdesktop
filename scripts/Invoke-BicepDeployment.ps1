@@ -44,7 +44,10 @@ param(
     [switch]$SkipBuild,
 
     [Parameter()]
-    [switch]$SkipLint
+    [switch]$SkipLint,
+
+    [Parameter()]
+    [string[]]$AdditionalParameters = @(),
 
 )
 
@@ -412,14 +415,16 @@ try {
 
     if ($isBicepParam) {
         # For .bicepparam files, pass the file directly and do not pass --template-file.
-        # Prefixing with @ makes Azure CLI treat it like a JSON/inline parameter file.
         $deploymentArgs = $baseArgs + @('--parameters', $ParameterFile)
     }
     else {
         $deploymentArgs = $baseArgs + @('--template-file', $TemplateFile, '--parameters', "@$ParameterFile")
     }
 
-
+    if ($AdditionalParameters.Count -gt 0) {
+        $deploymentArgs += @('--parameters')
+        $deploymentArgs += $AdditionalParameters
+    }
 
     switch ($Action) {
         'Validate' {

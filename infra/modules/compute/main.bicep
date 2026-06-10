@@ -60,11 +60,11 @@ param sessionHostGroups SessionHostGroupConfig[]
 @description('Azure Compute Gallery image version resource ID used for session host VMs.')
 param sessionHostImageVersionResourceId string
 
-@description('VM Local Admin account')
-param localAdminUsername string = '<username>'
+@description('VM local administrator username.')
+param localAdminUsername string
 
-@secure()
 @description('Local Administrative Account password')
+@secure()
 param localAdminPassword string
 
 param enableTrustedLaunch bool = true
@@ -87,8 +87,9 @@ param domainName string = 'TV.local'
 @description('Active Directory domain join username. Use either user@domain or DOMAIN\\user format.')
 param domainJoinUserName string
 
-@secure()
+
 @description('Active Directory domain join account password.')
+@secure()
 param domainJoinPassword string
 
 @description('Optional OU distinguished name where session host computer objects should be created.')
@@ -99,6 +100,10 @@ param domainJoinOptions int = 3
 
 @description('Whether the domain join extension should restart the VM after joining the domain.')
 param restartAfterDomainJoin bool = true
+
+@description('Optional Log Analytics workspace resource ID for Key Vault diagnostics.')
+param logAnalyticsWorkspaceResourceId string = ''
+
 
 // Variables
 
@@ -189,7 +194,6 @@ module sessionHostWorkload './resources.bicep' = [
     params: {
       location: commonConfig.location
       tags: tags
-      deployNetworkInterfaces: deployNetworkInterfaces
       sessionHostGroup: sessionHostGroup
 
       sessionHostImageVersionResourceId: sessionHostImageVersionResourceId
@@ -208,6 +212,8 @@ module sessionHostWorkload './resources.bicep' = [
       domainJoinOuPath: domainJoinOuPath
       domainJoinOptions: domainJoinOptions
       restartAfterDomainJoin: restartAfterDomainJoin
+
+      logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     }
     dependsOn: [
       avdResourceGroups

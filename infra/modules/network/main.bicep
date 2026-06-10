@@ -208,6 +208,9 @@ module filePrivateDnsZone './private-dns-zone.bicep' = {
     virtualNetworkLinkName: filePrivateDnsZoneVirtualNetworkLinkName
     virtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
   }
+  dependsOn: [
+    spokeVnet
+  ]
 }
 
 // Outputs

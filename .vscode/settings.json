@@ -15,7 +15,7 @@
     "**/dist": true,
     "**/build": true
   },
-  "cSpell.words": ["tflint", "tfvars", "bicepconfig", "bicepparam","whatif"],
+  "cSpell.words": [],
   "cSpell.customDictionaries": {
     "custom-dictionary-workspace": {
       "name": "custom-dictionary-workspace",

@@ -58,7 +58,7 @@ param vTpmEnabled = true
 param licenseType = 'Windows_Client'
 param patchMode = 'AutomaticByOS'
 
-param sessionHostImageVersionResourceId = '/subscriptions/f70559ab-d7c3-453e-98c5-bea562d2a102/resourceGroups/tv-avd-rg-shared/providers/Microsoft.Compute/galleries/tv_avd_gal_img/images/win11-25h2-avd-m365/versions/0.0.4'
+param sessionHostImageVersionResourceId = '/subscriptions/f70559ab-d7c3-453e-98c5-bea562d2a102/resourceGroups/tv-avd-rg-shared/providers/Microsoft.Compute/galleries/tv_avd_gal_img/images/win11-25h2-avd-m365/versions/0.0.1'
 param deployDomainJoinExtension = false
 
 param domainName = 'TV.local'

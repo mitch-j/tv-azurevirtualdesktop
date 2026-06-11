@@ -22,7 +22,6 @@ import {
   avdRdpPropertyPresets
   resourceDefaults
   roleDefinitionIds
-  resourcePurpose
 } from '../../shared/config.bicep'
 
 // Parameters
@@ -132,7 +131,7 @@ param deployAutoscaleRbac = true
 // Object ID of the Azure Virtual Desktop service principal in the True Value tenant.
 // Get this with:
 // az ad sp list --display-name "Azure Virtual Desktop" --query "[].{displayName:displayName, appId:appId, id:id}" -o table
-param avdAutoscaleServicePrincipalObjectId = '<avd-service-principal-object-id>'
+param avdAutoscaleServicePrincipalObjectId = '9cdead84-a844-4324-93f2-b2e6bb768d07'
 
 param scalingPlans = [
   {

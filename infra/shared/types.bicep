@@ -508,7 +508,7 @@ type PurposeName =
   | 'fslogix'
   | 'avdToHub'
   | 'hubToAvd'
-  | 'pooledAutosacle'
+  | 'pooledAutoscale'
   | 'personalAutoscale'
 
 

@@ -135,7 +135,7 @@ param avdAutoscaleServicePrincipalObjectId = '9cdead84-a844-4324-93f2-b2e6bb768d
 
 param scalingPlans = [
   {
-    name: 'pooledAutosacle'
+    name: 'pooledAutoscale'
     friendlyName: 'True Value AVD POC Pooled Autoscale'
     description: 'Power management autoscale plan for pooled AVD host pools in the POC environment.'
     hostPoolType: 'Pooled'

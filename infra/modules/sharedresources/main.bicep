@@ -113,6 +113,8 @@ param keyVaultSecretsUserPrincipalIds array = []
 @description('Principal IDs that can manage secrets in the Key Vault.')
 param keyVaultSecretsOfficerPrincipalIds array = []
 
+@description('Principal IDs allowed to consume shared image gallery images.')
+param imageGalleryReaderPrincipalIds array = []
 
 // Variables
 
@@ -123,6 +125,7 @@ var tags = union(baseTags, {
 
 var sharedResourcesResourceGroupName = 'tv-avd-rg-shared'
 var imageBuilderResourceGroupName = 'tv-avd-rg-img-shared-${replace(galleryImageDefinitionTargetVersion, '.', '-')}'
+
 
 // Modules
 
@@ -201,6 +204,7 @@ module sharedResources './resources.bicep' = {
     keyVaultSoftDeleteRetentionInDays: keyVaultSoftDeleteRetentionInDays
     keyVaultSecretsUserPrincipalIds: keyVaultSecretsUserPrincipalIds
     keyVaultSecretsOfficerPrincipalIds: keyVaultSecretsOfficerPrincipalIds
+    imageGalleryReaderPrincipalIds: imageGalleryReaderPrincipalIds
 
   }
 }

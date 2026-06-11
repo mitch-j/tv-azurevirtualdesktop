@@ -313,6 +313,9 @@ param keyVaultSecretsUserPrincipalIds array = []
 @description('Principal IDs that can manage secrets in the Key Vault, such as an admin/operator group.')
 param keyVaultSecretsOfficerPrincipalIds array = []
 
+@description('Principal IDs allowed to consume shared image gallery images.')
+param imageGalleryReaderPrincipalIds array = []
+
 // Variables
 
 var galleryName = computeGalleryName(
@@ -383,6 +386,8 @@ var imageBuilderIdentityResourceId = resourceId(
 
 var imageTemplateDeploymentName = '${imageTemplateName}-${imageTemplateBaseTime}'
 
+var readerRoleDefinitionId = 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+
 // --- Key Vault ---
 
 var keyVaultSecretsUserRoleAssignments = [
@@ -413,6 +418,27 @@ var keyVaultName = take(toLower('${namePrefix}-${workloadName}-kv-${resourcePurp
 var imageBuilderStagingResourceGroupIdParts = split(imageBuilderStagingResourceGroupResourceId, '/')
 var imageBuilderStagingResourceGroupName = imageBuilderStagingResourceGroupIdParts[4]
 
+var imageBuilderGalleryRoleAssignments = [
+  {
+    principalId: imageBuilderIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionIdOrName: contributorRoleDefinitionId
+  }
+]
+
+var imageGalleryReaderRoleAssignments = [
+  for principalId in imageGalleryReaderPrincipalIds: {
+    principalId: principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionIdOrName: readerRoleDefinitionId
+  }
+]
+
+var computeGalleryRoleAssignments = concat(
+  imageBuilderGalleryRoleAssignments,
+  imageGalleryReaderRoleAssignments
+)
+
 // Modules
 
 
@@ -426,7 +452,7 @@ module imageBuilderIdentity 'br/public:avm/res/managed-identity/user-assigned-id
 }
 
 
-module imageBuilderStagingContributorRoleAssignment 'role-assignment.resourcegroup.bicep' = {
+module imageBuilderStagingContributorRoleAssignment './role-assignment.resourcegroup.bicep' = {
   name: '${deployment().name}-img-rg-rbac'
   scope: resourceGroup(imageBuilderStagingResourceGroupName)
   params: {
@@ -435,18 +461,6 @@ module imageBuilderStagingContributorRoleAssignment 'role-assignment.resourcegro
     roleDefinitionId: contributorRoleDefinitionId
   }
 }
-
-/*
-module imageBuilderStagingContributorRoleAssignment './role-assignment.resourcegroup.bicep' = {
-  name: '${deployment().name}-img-rg-rbac'
-  scope: resourceGroup(last(split(imageBuilderStagingResourceGroupResourceId, '/')))
-  params: {
-    principalId: imageBuilderIdentity.outputs.principalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: contributorRoleDefinitionId
-  }
-}
-*/
 
 module automationAccount 'br/public:avm/res/automation/automation-account:0.19.1' = {
   name: '${deployment().name}-aa'
@@ -597,14 +611,7 @@ module computeGallery 'br/public:avm/res/compute/gallery:0.9.5' = {
     tags: tags
     description: galleryDescription
 
-    // Image Builder needs permission to publish image versions into the gallery.
-    roleAssignments: [
-      {
-        principalId: imageBuilderIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: contributorRoleDefinitionId
-      }
-    ]
+    roleAssignments: computeGalleryRoleAssignments
   }
 }
 
@@ -781,7 +788,6 @@ module deploymentSecretsVault 'br/public:avm/res/key-vault/vault:0.13.3' = {
     secrets: []
   }
 }
-
 
 // Outputs
 

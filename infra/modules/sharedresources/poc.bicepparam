@@ -108,3 +108,7 @@ param keyVaultEnablePurgeProtection = true
 param keyVaultSoftDeleteRetentionInDays = 7
 param keyVaultSecretsUserPrincipalIds = []
 param keyVaultSecretsOfficerPrincipalIds = []
+
+param imageGalleryReaderPrincipalIds = [
+  'a05ed6ff-2c60-44a3-b9a9-8793d9e6f22e'
+]

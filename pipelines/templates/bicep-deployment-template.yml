@@ -172,6 +172,26 @@ stages:
             artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-validate"
             condition: always()
 
+  - stage: WhatIf_${{ parameters.deploymentUnitName }}
+    displayName: What-if ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
+    dependsOn: Validate_${{ parameters.deploymentUnitName }}
+    variables:
+      scriptPath: "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1"
+    jobs:
+      - job: WhatIf
+        displayName: Run Bicep what-if
+        steps:
+          - checkout: self
+
+          - ${{ if ne(parameters.keyVaultName, '') }}:
+              - task: AzureKeyVault@2
+                displayName: "Get Key Vault secrets"
+                inputs:
+                  azureSubscription: "${{ parameters.azureServiceConnection }}"
+                  KeyVaultName: "${{ parameters.keyVaultName }}"
+                  SecretsFilter: "${{ parameters.keyVaultSecretsFilter }}"
+                  RunAsPreJob: false
+
           - task: AzureCLI@2
             displayName: What-if Bicep
             inputs:
@@ -180,7 +200,6 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 $artifactOutputPath = "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
-
                 New-Item -ItemType Directory -Path $artifactOutputPath -Force | Out-Null
 
                 $additionalParametersJson = ''
@@ -219,14 +238,14 @@ stages:
             condition: and(succeededOrFailed(), exists('$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif'))
             inputs:
               targetPath: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
-              artifact: "${{ parameters.deploymentUnitName }}-bicep-whatif"
+              artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"
 
   - stage: Deploy_${{ parameters.deploymentUnitName }}
     displayName: Deploy ${{ parameters.deploymentUnitName }} ${{ parameters.environmentName }}
     dependsOn:
       - WhatIf_${{ parameters.deploymentUnitName }}
       - ${{ each dependency in parameters.deployDependsOn }}:
-          - ${{ dependency }}
+        - ${{ dependency }}
     condition: >
       and(
         succeeded(),
@@ -262,6 +281,9 @@ stages:
                     scriptType: pscore
                     scriptLocation: inlineScript
                     inlineScript: |
+                      $artifactOutputPath = "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
+                      New-Item -ItemType Directory -Path $artifactOutputPath -Force | Out-Null
+
                       $additionalParametersJson = ''
 
                       if ('${{ parameters.useComputeSecretParameters }}' -eq 'true') {
@@ -274,17 +296,22 @@ stages:
                       }
 
                       . "$(Build.SourcesDirectory)/scripts/Invoke-BicepDeployment.ps1" `
-                            -Action Deploy
-                            -DeploymentScope "${{ parameters.deploymentScope }}"
-                            -DeploymentLocation "${{ parameters.deploymentLocation }}"
-                            -ResourceGroupName "${{ parameters.resourceGroupName }}"
-                            -TemplateFile "${{ parameters.templateFile }}"
-                            -ParameterFile "${{ parameters.parameterFile }}"
-                            -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)"
-                            -ArtifactOutputPath "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
-                            -EnsureBicep
-                            ${{ parameters.additionalScriptArguments }}
-                            -AdditionalParametersJson '${{ parameters.additionalParametersJson }}'
+                        -Action Deploy `
+                        -DeploymentScope "${{ parameters.deploymentScope }}" `
+                        -DeploymentLocation "${{ parameters.deploymentLocation }}" `
+                        -ResourceGroupName "${{ parameters.resourceGroupName }}" `
+                        -TemplateFile "${{ parameters.templateFile }}" `
+                        -ParameterFile "${{ parameters.parameterFile }}" `
+                        -DeploymentName "${{ parameters.environmentName }}-${{ parameters.workloadName }}-deploy-$(Build.BuildId)" `
+                        -ArtifactOutputPath $artifactOutputPath `
+                        -EnsureBicep `
+                        ${{ parameters.additionalScriptArguments }} `
+                        -AdditionalParametersJson $additionalParametersJson
+                  env:
+                    AVD_LOCAL_ADMIN_USERNAME: $(avd-local-admin-username)
+                    AVD_LOCAL_ADMIN_PASSWORD: $(avd-local-admin-password)
+                    AVD_DOMAIN_JOIN_USERNAME: $(avd-domain-join-username)
+                    AVD_DOMAIN_JOIN_PASSWORD: $(avd-domain-join-password)
 
                 - publish: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-deploy"
                   artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-deploy"

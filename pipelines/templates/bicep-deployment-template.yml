@@ -235,7 +235,7 @@ stages:
 
           - task: PublishPipelineArtifact@1
             displayName: "Publish what-if output"
-            condition: and(succeededOrFailed(), exists('$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif'))
+            condition: always()
             inputs:
               targetPath: "$(Build.ArtifactStagingDirectory)/${{ parameters.deploymentUnitName }}/bicep-whatif"
               artifact: "${{ parameters.environmentName }}-${{ parameters.deploymentUnitName }}-bicep-whatif"

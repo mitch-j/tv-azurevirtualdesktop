@@ -165,7 +165,7 @@ var plannedSessionHostGroups = [
   }
 ]
 
-// Resources
+// Modules
 
 @description('Create resource groups for each session host workload.')
 module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
@@ -181,8 +181,6 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
     }
   }
 ]
-
-// Modules
 
 module sessionHostWorkload './resources.bicep' = [
   for (sessionHostGroup, index) in plannedSessionHostGroups: {

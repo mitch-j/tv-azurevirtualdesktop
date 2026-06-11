@@ -27,6 +27,7 @@ import {
   LocationName
   WorkspaceConfig
   HostPoolConfig
+  ScalingPlanConfig
 } from '../../shared/types.bicep'
 
 import {
@@ -58,10 +59,25 @@ param workspaces WorkspaceConfig[]
 @description('Host pool configurations to deploy in the target resource group.')
 param hostPools HostPoolConfig[]
 
+@description('Scaling plan configurations to deploy in the target resource group.')
+param scalingPlans ScalingPlanConfig[] = []
+
 // Variables
 
 // Environment-specific naming values.
 var environmentConfig = environmentConfigMap[environment]
+
+@description('Azure resource names generated for each configured AVD scaling plan.')
+var scalingPlanNames = [
+  for scalingPlanItem in scalingPlans: resourceNameWithPurposeAndLocation(
+    commonConfig.namePrefix,
+    commonConfig.workloadName,
+    resourceType.scalingPlan,
+    scalingPlanItem.name,
+    locationConfig.shortCode,
+    environmentConfig.shortName
+  )
+]
 
 // Shared location configuration for the selected Azure region.
 var locationConfig = locationConfigMap[location]
@@ -231,6 +247,46 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
   }
 ]
 
+module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.3.0' = [
+  for (scalingPlanItem, i) in scalingPlans: {
+    name: '${environmentConfig.shortName}-${locationConfig.shortCode}-vdscaling-${i}'
+    dependsOn: [
+      hostPool
+    ]
+    params: {
+      name: scalingPlanNames[i]
+      location: location
+      tags: tags
+      friendlyName: scalingPlanItem.?friendlyName ?? scalingPlanNames[i]
+      description: scalingPlanItem.?description ?? ''
+      hostPoolType: scalingPlanItem.hostPoolType
+      timeZone: scalingPlanItem.timeZone
+      exclusionTag: scalingPlanItem.?exclusionTag
+      hostPoolReferences: [
+        for hostPoolName in scalingPlanItem.hostPoolNames: {
+          hostPoolResourceId: resourceId(
+            'Microsoft.DesktopVirtualization/hostPools',
+            resourceNameWithPurposeAndLocation(
+              commonConfig.namePrefix,
+              commonConfig.workloadName,
+              resourceType.hostPool,
+              hostPoolName,
+              locationConfig.shortCode,
+              environmentConfig.shortName
+            )
+          )
+          scalingPlanEnabled: true
+        }
+      ]
+      schedules: scalingPlanItem.schedules
+      lock: {
+        kind: commonConfig.lockKind
+      }
+      enableTelemetry: false
+    }
+  }
+]
+
 // Outputs
 
 @description('Names of the deployed AVD workspaces.')
@@ -263,4 +319,14 @@ output hostPools array = [
 @description('Resource IDs of the deployed desktop application groups.')
 output desktopApplicationGroupIds array = [
   for i in range(0, length(desktopApplicationGroups)): desktopApplicationGroup[i].outputs.resourceId
+]
+
+@description('Resource IDs of the deployed AVD scaling plans.')
+output scalingPlanIds array = [
+  for i in range(0, length(scalingPlans)): scalingPlan[i].outputs.resourceId
+]
+
+@description('Names of the deployed AVD scaling plans.')
+output scalingPlanNames array = [
+  for i in range(0, length(scalingPlans)): scalingPlan[i].outputs.name
 ]

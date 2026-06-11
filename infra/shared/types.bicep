@@ -508,6 +508,9 @@ type PurposeName =
   | 'fslogix'
   | 'avdToHub'
   | 'hubToAvd'
+  | 'pooledAutosacle'
+  | 'personalAutoscale'
+
 
 @description('Standard resource purpose keys used for naming.')
 @sealed()
@@ -536,6 +539,8 @@ type ResourcePurposeConfigMap = {
   fslogix: PurposeName
   avdToHub: PurposeName
   hubToAvd: PurposeName
+  pooledAutoscale: PurposeName
+  personalAutoscale: PurposeName
 }
 
 @description('Resource purpose name segment map used by naming functions.')
@@ -565,6 +570,8 @@ type ResourcePurposeSegmentMap = {
   fslogix: string
   avdToHub: string
   hubToAvd: string
+  pooledAutoscale: string
+  personalAutoscale: string
 }
 
 // Existing Resource References
@@ -769,34 +776,18 @@ type RoleAssignmentConfig = {
   roleDefinitionId: string
 }
 
-@description('Azure Virtual Desktop role definition IDs.')
-@sealed()
-@export()
-type AvdRoleDefinitionIds = {
-  @description('Desktop Virtualization User role definition ID.')
-  desktopVirtualizationUser: string
-}
-
-@description('Azure Storage role definition IDs.')
-@sealed()
-@export()
-type StorageRoleDefinitionIds = {
-  @description('Storage File Data SMB Share Contributor role definition ID.')
-  fileDataSmbShareContributor: string
-
-  @description('Storage File Data SMB Share Elevated Contributor role definition ID.')
-  fileDataSmbShareElevatedContributor: string
-}
-
-@description('Standard Azure built-in role definition IDs used across AVD deployments.')
-@sealed()
+@description('Azure built-in role definition IDs used by this deployment.')
 @export()
 type RoleDefinitionIds = {
-  @description('Azure Virtual Desktop role definition IDs.')
-  avd: AvdRoleDefinitionIds
-
-  @description('Azure Storage role definition IDs.')
-  storage: StorageRoleDefinitionIds
+  avd: {
+    desktopVirtualizationUser: string
+    desktopVirtualizationPowerOnOffContributor: string
+    desktopVirtualizationVirtualMachineContributor: string
+  }
+  storage: {
+    fileDataSmbShareContributor: string
+    fileDataSmbShareElevatedContributor: string
+  }
 }
 
 // Azure Virtual Desktop Value Types
@@ -940,4 +931,66 @@ type SessionHostGroupConfig = {
 
   @description('OS disk settings for this workload.')
   osDisk: SessionHostOsDiskConfig
+}
+
+@description('Azure Virtual Desktop scaling plan configuration.')
+@export()
+type ScalingPlanConfig = {
+  @description('Logical scaling plan name used for generated Azure resource naming.')
+  name: PurposeName
+
+  @description('Friendly name for the scaling plan.')
+  friendlyName: string?
+
+  @description('Description for the scaling plan.')
+  description: string?
+
+  @description('Host pool type this scaling plan applies to.')
+  hostPoolType: 'Pooled' | 'Personal'
+
+  @description('Time zone used by the scaling plan schedule.')
+  timeZone: string
+
+  @description('Optional tag name used to exclude session hosts from autoscale actions.')
+  exclusionTag: string?
+
+  @description('Host pool logical names assigned to this scaling plan.')
+  hostPoolNames: PurposeName[]
+
+  @description('Scaling schedules assigned to this scaling plan.')
+  schedules: ScalingScheduleConfig[]
+}
+
+@description('Azure Virtual Desktop scaling schedule configuration.')
+@export()
+type ScalingScheduleConfig = {
+  name: string
+  daysOfWeek: string[]
+
+  rampUpStartTime: ScalingPlanTime
+  rampUpLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+  rampUpMinimumHostsPct: int
+  rampUpCapacityThresholdPct: int
+
+  peakStartTime: ScalingPlanTime
+  peakLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+
+  rampDownStartTime: ScalingPlanTime
+  rampDownLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+  rampDownMinimumHostsPct: int
+  rampDownCapacityThresholdPct: int
+  rampDownWaitTimeMinutes: int
+  rampDownForceLogoffUsers: bool
+  rampDownStopHostsWhen: 'ZeroSessions' | 'ZeroActiveSessions'
+  rampDownNotificationMessage: string?
+
+  offPeakStartTime: ScalingPlanTime
+  offPeakLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+}
+
+@description('Hour/minute object used by AVD scaling plan schedules.')
+@export()
+type ScalingPlanTime = {
+  hour: int
+  minute: int
 }

@@ -303,6 +303,8 @@ var resourcePurpose ResourcePurposeConfigMap = {
   fslogix: 'fslogix'
   avdToHub: 'avdToHub'
   hubToAvd: 'hubToAvd'
+  pooledAutoscale: 'personalAutoscale'
+  personalAutoscale: 'personalAutoscale'
 }
 
 @description('Standard resource purpose name segments used in resource names.')
@@ -331,6 +333,8 @@ var resourcePurposeMap ResourcePurposeSegmentMap = {
   fslogix: 'fslogix'
   avdToHub: 'avd2hub'
   hubToAvd: 'hub2avd'
+  pooledAutoscale: 'pooled'
+  personalAutoscale: 'personal'
 }
 
 // Role Definition IDs
@@ -340,6 +344,8 @@ var resourcePurposeMap ResourcePurposeSegmentMap = {
 var roleDefinitionIds RoleDefinitionIds = {
   avd: {
     desktopVirtualizationUser: '1d18fff3-a72a-46b5-b4a9-0b38a3cd7e63'
+    desktopVirtualizationPowerOnOffContributor: '40c5ff49-9181-41f8-ae61-143b0e78555e'
+    desktopVirtualizationVirtualMachineContributor: 'a959dbd1-f747-45e3-8ba6-dd80f235f97c'
   }
   storage: {
     fileDataSmbShareContributor: '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb'

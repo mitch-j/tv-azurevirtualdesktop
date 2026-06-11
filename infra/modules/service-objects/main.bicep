@@ -27,6 +27,7 @@ import {
   LocationName
   WorkspaceConfig
   HostPoolConfig
+  ScalingPlanConfig
 } from '../../shared/types.bicep'
 
 import {
@@ -35,6 +36,7 @@ import {
   environmentConfigMap
   locationConfigMap
   resourceGroupPurpose
+  roleDefinitionIds
 } from '../../shared/config.bicep'
 
 import {
@@ -54,6 +56,15 @@ param workspaces WorkspaceConfig[]
 
 @description('Host pool configurations to deploy for the selected environment.')
 param hostPools HostPoolConfig[]
+
+@description('Scaling plan configurations to deploy for the selected environment.')
+param scalingPlans ScalingPlanConfig[] = []
+
+@description('Object ID of the Azure Virtual Desktop service principal used by autoscale.')
+param avdAutoscaleServicePrincipalObjectId string = ''
+
+@description('Deploy Azure RBAC assignments required for AVD autoscale.')
+param deployAutoscaleRbac bool = true
 
 // Variables
 
@@ -78,6 +89,21 @@ var serviceObjectsResourceGroupName = resourceGroupNameWithLocation(
   locationConfig.shortCode,
   environmentConfig.shortName
 )
+
+// Resources
+
+resource avdAutoscalePowerOnOffRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAutoscaleRbac && !empty(avdAutoscaleServicePrincipalObjectId) && !empty(scalingPlans)) {
+  name: guid(subscription().id, avdAutoscaleServicePrincipalObjectId, roleDefinitionIds.avd.desktopVirtualizationPowerOnOffContributor)
+  scope: subscription()
+  properties: {
+    principalId: avdAutoscaleServicePrincipalObjectId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      roleDefinitionIds.avd.desktopVirtualizationPowerOnOffContributor
+    )
+  }
+}
 
 // Modules
 
@@ -105,6 +131,7 @@ module serviceObjectsResources './resources.bicep' = {
     tags: tags
     hostPools: hostPools
     workspaces: workspaces
+    scalingPlans: scalingPlans
   }
 }
 
@@ -127,3 +154,9 @@ output hostPoolIds array = serviceObjectsResources.outputs.hostPoolIds
 
 @description('Resource IDs of the deployed desktop application groups.')
 output desktopApplicationGroupIds array = serviceObjectsResources.outputs.desktopApplicationGroupIds
+
+@description('Names of the deployed AVD scaling plans.')
+output scalingPlanNames array = serviceObjectsResources.outputs.scalingPlanNames
+
+@description('Resource IDs of the deployed AVD scaling plans.')
+output scalingPlanIds array = serviceObjectsResources.outputs.scalingPlanIds

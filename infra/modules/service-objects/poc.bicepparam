@@ -22,6 +22,7 @@ import {
   avdRdpPropertyPresets
   resourceDefaults
   roleDefinitionIds
+  resourcePurpose
 } from '../../shared/config.bicep'
 
 // Parameters
@@ -123,5 +124,110 @@ param hostPools = [
         }
       ]
     }
+  }
+]
+
+param deployAutoscaleRbac = true
+
+// Object ID of the Azure Virtual Desktop service principal in the True Value tenant.
+// Get this with:
+// az ad sp list --display-name "Azure Virtual Desktop" --query "[].{displayName:displayName, appId:appId, id:id}" -o table
+param avdAutoscaleServicePrincipalObjectId = '<avd-service-principal-object-id>'
+
+param scalingPlans = [
+  {
+    name: 'pooledAutosacle'
+    friendlyName: 'True Value AVD POC Pooled Autoscale'
+    description: 'Power management autoscale plan for pooled AVD host pools in the POC environment.'
+    hostPoolType: 'Pooled'
+    timeZone: 'Central Standard Time'
+    exclusionTag: 'excludeFromScaling'
+    hostPoolNames: [
+      'opsPooled'
+      'devPooled'
+    ]
+    schedules: [
+      {
+        name: 'weekdays'
+        daysOfWeek: [
+          'Monday'
+          'Tuesday'
+          'Wednesday'
+          'Thursday'
+          'Friday'
+        ]
+
+        rampUpStartTime: {
+          hour: 6
+          minute: 0
+        }
+        rampUpLoadBalancingAlgorithm: 'DepthFirst'
+        rampUpMinimumHostsPct: 50
+        rampUpCapacityThresholdPct: 70
+
+        peakStartTime: {
+          hour: 8
+          minute: 0
+        }
+        peakLoadBalancingAlgorithm: 'DepthFirst'
+
+        rampDownStartTime: {
+          hour: 18
+          minute: 0
+        }
+        rampDownLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownMinimumHostsPct: 10
+        rampDownCapacityThresholdPct: 90
+        rampDownWaitTimeMinutes: 30
+        rampDownForceLogoffUsers: false
+        rampDownStopHostsWhen: 'ZeroSessions'
+        rampDownNotificationMessage: 'Your AVD session host may be shut down after active sessions end.'
+
+        offPeakStartTime: {
+          hour: 22
+          minute: 0
+        }
+        offPeakLoadBalancingAlgorithm: 'DepthFirst'
+      }
+      {
+        name: 'weekends'
+        daysOfWeek: [
+          'Saturday'
+          'Sunday'
+        ]
+
+        rampUpStartTime: {
+          hour: 8
+          minute: 0
+        }
+        rampUpLoadBalancingAlgorithm: 'DepthFirst'
+        rampUpMinimumHostsPct: 10
+        rampUpCapacityThresholdPct: 80
+
+        peakStartTime: {
+          hour: 10
+          minute: 0
+        }
+        peakLoadBalancingAlgorithm: 'DepthFirst'
+
+        rampDownStartTime: {
+          hour: 16
+          minute: 0
+        }
+        rampDownLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownMinimumHostsPct: 0
+        rampDownCapacityThresholdPct: 90
+        rampDownWaitTimeMinutes: 30
+        rampDownForceLogoffUsers: false
+        rampDownStopHostsWhen: 'ZeroSessions'
+        rampDownNotificationMessage: 'Your AVD session host may be shut down after active sessions end.'
+
+        offPeakStartTime: {
+          hour: 18
+          minute: 0
+        }
+        offPeakLoadBalancingAlgorithm: 'DepthFirst'
+      }
+    ]
   }
 ]

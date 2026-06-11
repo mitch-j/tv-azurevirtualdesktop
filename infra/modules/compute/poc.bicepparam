@@ -23,7 +23,7 @@ param sessionHostGroups = [
     purpose: 'opsPooled'
     sessionHostRoleCode: 'ops'
     vmCount: 1
-    vmSize: 'Standard_E16as_v5'
+    vmSize: 'Standard_E16s_v7'
     osDisk: {
       storageAccountType: 'Premium_LRS'
       diskSizeGB: 128
@@ -33,7 +33,7 @@ param sessionHostGroups = [
     purpose: 'devPersonal'
     sessionHostRoleCode: 'dvp'
     vmCount: 1
-    vmSize: 'Standard_D8als_v6'
+    vmSize: 'Standard_D8als_v7'
     osDisk: {
       storageAccountType: 'Premium_LRS'
       diskSizeGB: 256
@@ -43,7 +43,7 @@ param sessionHostGroups = [
     purpose: 'devPooled'
     sessionHostRoleCode: 'dvs'
     vmCount: 1
-    vmSize: 'Standard_D8as_v7'
+    vmSize: 'Standard_D8s_v7'
     osDisk: {
       storageAccountType: 'Premium_LRS'
       diskSizeGB: 256

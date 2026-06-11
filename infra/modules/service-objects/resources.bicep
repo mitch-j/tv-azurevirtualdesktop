@@ -264,7 +264,7 @@ module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.3.0'
       exclusionTag: scalingPlanItem.?exclusionTag
       hostPoolReferences: [
         for hostPoolName in scalingPlanItem.hostPoolNames: {
-          hostPoolResourceId: resourceId(
+          hostPoolArmPath: resourceId(
             'Microsoft.DesktopVirtualization/hostPools',
             resourceNameWithPurposeAndLocation(
               commonConfig.namePrefix,

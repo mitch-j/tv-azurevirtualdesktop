@@ -100,8 +100,8 @@ param imageBuildScheduleTimeZone = 'America/Chicago'
 param imageBuilderSubnetResourceId = ''
 param imageVersionStorageAccountType = 'Standard_LRS'
 
-param galleryImageDefinitionTargetVersion = '0.0.4'
-param imageTemplateBaseTime = 'v0-0-4'
+param galleryImageDefinitionTargetVersion = '0.0.1'
+param imageTemplateBaseTime = 'v0-0-1'
 
 param keyVaultPublicNetworkAccess = 'Enabled'
 param keyVaultEnablePurgeProtection = true

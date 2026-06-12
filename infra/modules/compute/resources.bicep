@@ -264,7 +264,7 @@ module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.2
   }
 ]
 
-@description('Send VM platform logs and metrics to Log Analytics.')
+@description('Send VM platform metrics to Log Analytics.')
 resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [
   for (sessionHost, index) in plannedSessionHosts: if (diagnosticSettingsEnabled) {
     name: 'diag-vm'
@@ -272,16 +272,6 @@ resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnos
     properties: {
       workspaceId: logAnalyticsWorkspaceResourceId
       logAnalyticsDestinationType: 'Dedicated'
-      logs: [
-        {
-          category: 'SoftwareUpdateProfile'
-          enabled: true
-        }
-        {
-          category: 'SoftwareUpdates'
-          enabled: true
-        }
-      ]
       metrics: [
         {
           category: 'AllMetrics'
@@ -290,7 +280,7 @@ resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnos
       ]
     }
     dependsOn: [
-      sessionHostVirtualMachines
+      sessionHostVirtualMachines[index]
     ]
   }
 ]

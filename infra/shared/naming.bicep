@@ -83,6 +83,15 @@ func resourceGroupNameWithLocation(
   environmentShortName EnvironmentShortName
 ) string => toLower('${namePrefix}-${workloadName}-${resourceAbbreviationMap.resourceGroup}-${resourceGroupPurposeMap[purpose]}-${locationShortCode}-${environmentShortName}')
 
+@export()
+func resourceGroupNameWithPurposeAndLocation(
+  namePrefix string,
+  workloadName string,
+  purpose string,
+  locationShortCode string,
+  environmentShortName string
+) string => '${namePrefix}-${workloadName}-rg-${purpose}-${locationShortCode}-${environmentShortName}'
+
 // Compact Resource Names
 
 @description('Builds a compact resource name using the pattern: prefixworkloadabbreviationenvironment.')

@@ -39,6 +39,7 @@ import {
 
 import {
   resourceGroupNameWithLocation
+  resourceGroupNameWithPurposeAndLocation
   resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
@@ -140,7 +141,7 @@ var virtualNetworkName = resourceNameWithPurposeAndLocation(
 var plannedSessionHostGroups = [
   for sessionHostGroup in sessionHostGroups: {
     purpose: sessionHostGroup.purpose
-    resourceGroupName: resourceGroupNameWithLocation(
+    resourceGroupName: resourceGroupNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,
       sessionHostGroup.purpose,

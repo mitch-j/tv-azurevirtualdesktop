@@ -201,6 +201,9 @@ module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.2
         id: sessionHostImageVersionResourceId
       }
 
+      ultraSSDEnabled: false
+      hibernationEnabled: false
+
       osDisk: {
         createOption: 'FromImage'
         caching: 'ReadWrite'

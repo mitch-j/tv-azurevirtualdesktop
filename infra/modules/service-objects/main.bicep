@@ -37,7 +37,6 @@ import {
   locationConfigMap
   resourceGroupPurpose
   roleDefinitionIds
-  monitoringConfig
   resourceType
   resourcePurpose
 } from '../../shared/config.bicep'
@@ -115,14 +114,18 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
   environmentConfig.shortName
 )
 
-var logAnalyticsWorkspaceResourceId = resourceId(
-  monitoringResourceGroupName,
-  monitoringConfig.logAnalyticsWorkspaceResourceType,
-  logAnalyticsWorkspaceName
-)
-
 // Resources
 
+// Existing Log Analytics workspace used as the diagnostics target for resources.
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
+
+var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace.id
+
+
+// RBAC role assignment
 resource avdAutoscalePowerOnOffRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployAutoscaleRbac && !empty(avdAutoscaleServicePrincipalObjectId) && !empty(scalingPlans)) {
   name: guid(subscription().id, avdAutoscaleServicePrincipalObjectId, roleDefinitionIds.avd.desktopVirtualizationPowerOnOffContributor)
   scope: subscription()

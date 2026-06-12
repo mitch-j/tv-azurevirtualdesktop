@@ -9,19 +9,19 @@ Scope:
 Deploys:
 - Network resource group
 - AVD spoke virtual network
-- Session host subnet
+- Session host subnets
 - Private endpoint subnet
 - Session host network security group
-- Optional spoke-to-hub virtual network peering
-- Hub-to-spoke peering
+- Private endpoint network security group
 - Azure Files private DNS zone
 - Private DNS zone VNet link to the AVD spoke virtual network
 
 Does not deploy:
+- Hub virtual network
+- Virtual network peering
 - AVD host pools, desktop application groups, or workspaces
 - Storage accounts or FSLogix shares
 - Session host virtual machines
-- Hub virtual network
 */
 
 // Imports
@@ -67,7 +67,7 @@ param environment EnvironmentName
 param location LocationName
 
 @description('Virtual network address prefixes.')
-param virtualNetworkAddressPrefixes array
+param virtualNetworkAddressPrefixes string[]
 
 @description('Session host subnet definitions.')
 param sessionHostSubnets SubnetConfig[]
@@ -76,7 +76,7 @@ param sessionHostSubnets SubnetConfig[]
 param privateEndpointSubnet SubnetConfig
 
 @description('Optional custom DNS servers for the virtual network. Leave empty to use Azure-provided DNS.')
-param dnsServers array = []
+param dnsServers string[] = []
 
 /*
 @description('Optional management subnet definition.')
@@ -85,6 +85,9 @@ param managementSubnet SubnetConfig?
 
 @description('Deploy diagnostic settings for resources created by this module.')
 param deployDiagnosticSettings bool = true
+
+@description('Optional resource ID of the Log Analytics workspace that receives diagnostic logs. If empty, the module resolves the workspace from the deterministic monitoring resource group and workspace name.')
+param logAnalyticsWorkspaceResourceId string = ''
 
 // Variables
 
@@ -98,6 +101,31 @@ var locationConfig = locationConfigMap[location]
 var tags = union(baseTags, {
   Environment: environmentConfig.tagName
 })
+
+var sessionHostSubnetResources = [
+  for sessionHostSubnet in sessionHostSubnetDefinitions: {
+    addressPrefix: sessionHostSubnet.addressPrefix
+    name: sessionHostSubnet.name
+    networkSecurityGroupResourceId: sessionHostNetworkSecurityGroupResourceId
+    privateEndpointNetworkPolicies: 'Enabled'
+    privateLinkServiceNetworkPolicies: 'Enabled'
+  }
+]
+
+var privateEndpointSubnetResource = {
+  addressPrefix: privateEndpointSubnetDefinition.addressPrefix
+  name: privateEndpointSubnetDefinition.name
+  networkSecurityGroupResourceId: privateEndpointNetworkSecurityGroupResourceId
+  privateEndpointNetworkPolicies: 'Disabled'
+  privateLinkServiceNetworkPolicies: 'Enabled'
+}
+
+var virtualNetworkSubnets = concat(
+  sessionHostSubnetResources,
+  [
+    privateEndpointSubnetResource
+  ]
+)
 
 // Resource Names
 
@@ -185,6 +213,20 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
   environmentConfig.shortName
 )
 
+// Resource IDs
+
+var sessionHostNetworkSecurityGroupResourceId = resourceId(
+  networkResourceGroupName,
+  'Microsoft.Network/networkSecurityGroups',
+  sessionHostNetworkSecurityGroupName
+)
+
+var privateEndpointNetworkSecurityGroupResourceId = resourceId(
+  networkResourceGroupName,
+  'Microsoft.Network/networkSecurityGroups',
+  privateEndpointNetworkSecurityGroupName
+)
+
 // Resources
 
 // Existing Log Analytics workspace used as the diagnostics target for resources.
@@ -193,7 +235,70 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07
   scope: resourceGroup(monitoringResourceGroupName)
 }
 
-var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace.id
+var effectiveLogAnalyticsWorkspaceResourceId = empty(logAnalyticsWorkspaceResourceId)
+  ? logAnalyticsWorkspace.id
+  : logAnalyticsWorkspaceResourceId
+
+var diagnosticsEnabled = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
+
+var sessionHostNetworkSecurityGroupDiagnosticSettings = diagnosticsEnabled
+  ? [
+      {
+        name: 'diag-network-nsg-session-hosts'
+        workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            category: 'NetworkSecurityGroupEvent'
+            enabled: true
+          }
+          {
+            category: 'NetworkSecurityGroupRuleCounter'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
+
+var privateEndpointNetworkSecurityGroupDiagnosticSettings = diagnosticsEnabled
+  ? [
+      {
+        name: 'diag-network-nsg-session-hosts'
+        workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            category: 'NetworkSecurityGroupEvent'
+            enabled: true
+          }
+          {
+            category: 'NetworkSecurityGroupRuleCounter'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
+
+var virtualNetworkDiagnosticSettings = diagnosticsEnabled
+  ? [
+      {
+        name: 'diag-network-vnet-primary'
+        workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
 
 // Modules
 
@@ -209,36 +314,74 @@ module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' =
   }
 }
 
-module spokeVnet './spoke-vnet.bicep' = {
-  name: '${deployment().name}-${locationConfig.shortCode}-spoke-vnet'
+module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-vdsh-nsg'
   scope: resourceGroup(networkResourceGroupName)
   params: {
+    name: sessionHostNetworkSecurityGroupName
     location: location
     tags: tags
-    virtualNetworkName: virtualNetworkName
-    virtualNetworkAddressPrefixes: virtualNetworkAddressPrefixes
-    sessionHostSubnets: sessionHostSubnetDefinitions
-    privateEndpointNetworkSecurityGroupName: privateEndpointNetworkSecurityGroupName
-    privateEndpointSubnet: privateEndpointSubnetDefinition
-    sessionHostNetworkSecurityGroupName: sessionHostNetworkSecurityGroupName
-    dnsServers: dnsServers
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
-    deployDiagnosticSettings: deployDiagnosticSettings
+    securityRules: []
+    diagnosticSettings: sessionHostNetworkSecurityGroupDiagnosticSettings
   }
   dependsOn: [
     networkResourceGroup
   ]
 }
 
+module privateEndpointNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-pe-nsg'
+  scope: resourceGroup(networkResourceGroupName)
+  params: {
+    name: privateEndpointNetworkSecurityGroupName
+    location: location
+    tags: tags
+    securityRules: []
+    diagnosticSettings: privateEndpointNetworkSecurityGroupDiagnosticSettings
+  }
+  dependsOn: [
+    networkResourceGroup
+  ]
+}
+
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
+  name: '${deployment().name}-${locationConfig.shortCode}-vnet'
+  scope: resourceGroup(networkResourceGroupName)
+  params: {
+    name: virtualNetworkName
+    location: location
+    tags: tags
+    addressPrefixes: virtualNetworkAddressPrefixes
+    dnsServers: dnsServers
+    lock: {
+      kind: commonConfig.lockKind
+    }
+    subnets: virtualNetworkSubnets
+    diagnosticSettings: virtualNetworkDiagnosticSettings
+  }
+  dependsOn: [
+    sessionHostNetworkSecurityGroup
+    privateEndpointNetworkSecurityGroup
+  ]
+}
+
 // Network owns the Azure Files private DNS zone because storage private endpoints depend on spoke VNet DNS resolution.
-module filePrivateDnsZone './private-dns-zone.bicep' = {
+module filePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
   name: '${deployment().name}-${locationConfig.shortCode}-file-dns'
   scope: resourceGroup(networkResourceGroupName)
   params: {
+    name: filePrivateDnsZoneName
+    location: 'global'
     tags: tags
-    privateDnsZoneName: filePrivateDnsZoneName
-    virtualNetworkLinkName: filePrivateDnsZoneVirtualNetworkLinkName
-    virtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
+    virtualNetworkLinks: [
+      {
+        name: filePrivateDnsZoneVirtualNetworkLinkName
+        virtualNetworkResourceId: virtualNetwork.outputs.resourceId
+        location: 'global'
+        registrationEnabled: false
+        tags: tags
+      }
+    ]
   }
 }
 
@@ -251,10 +394,10 @@ output networkResourceGroupName string = networkResourceGroupName
 output virtualNetworkName string = virtualNetworkName
 
 @description('Resource ID of the deployed AVD spoke virtual network.')
-output virtualNetworkResourceId string = spokeVnet.outputs.virtualNetworkResourceId
+output virtualNetworkResourceId string = virtualNetwork.outputs.resourceId
 
 @description('Names of the subnets created in the AVD spoke virtual network.')
-output virtualNetworkSubnetNames array = spokeVnet.outputs.virtualNetworkSubnetNames
+output virtualNetworkSubnetNames array = virtualNetwork.outputs.subnetNames
 
 @description('Names of the session host subnets.')
 output sessionHostSubnetNames array = [
@@ -262,28 +405,40 @@ output sessionHostSubnetNames array = [
 ]
 
 @description('Resource IDs of the session host subnets.')
-output sessionHostSubnetResourceIds array = spokeVnet.outputs.sessionHostSubnetResourceIds
+output sessionHostSubnetResourceIds array = [
+  for sessionHostSubnet in sessionHostSubnetDefinitions: resourceId(
+    networkResourceGroupName,
+    'Microsoft.Network/virtualNetworks/subnets',
+    virtualNetworkName,
+    sessionHostSubnet.name
+  )
+]
 
 @description('Name of the network security group associated with the session host subnet.')
 output sessionHostNetworkSecurityGroupName string = sessionHostNetworkSecurityGroupName
 
-@description('Resource ID of the network security group associated with the session host subnet.')
-output sessionHostNetworkSecurityGroupResourceId string = spokeVnet.outputs.sessionHostNetworkSecurityGroupResourceId
+@description('Resource ID of the network security group associated with the session host subnets.')
+output sessionHostNetworkSecurityGroupResourceId string = sessionHostNetworkSecurityGroup.outputs.resourceId
 
 @description('Name of the subnet used by private endpoints.')
 output privateEndpointSubnetName string = privateEndpointSubnetDefinition.name
 
-@description('Resource ID of the subnet used by private endpoints.')
-output privateEndpointSubnetResourceId string = spokeVnet.outputs.privateEndpointSubnetResourceId
+@description('Resource ID of the private endpoint subnet.')
+output privateEndpointSubnetResourceId string = resourceId(
+  networkResourceGroupName,
+  'Microsoft.Network/virtualNetworks/subnets',
+  virtualNetworkName,
+  privateEndpointSubnetDefinition.name
+)
 
 @description('Name of the network security group associated with the private endpoint subnet.')
 output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSecurityGroupName
 
 @description('Resource ID of the network security group associated with the private endpoint subnet.')
-output privateEndpointNetworkSecurityGroupResourceId string = spokeVnet.outputs.privateEndpointNetworkSecurityGroupResourceId
+output privateEndpointNetworkSecurityGroupResourceId string = privateEndpointNetworkSecurityGroup.outputs.resourceId
 
 @description('Resource ID of the Azure Files private DNS zone.')
-output filePrivateDnsZoneResourceId string = filePrivateDnsZone.outputs.privateDnsZoneResourceId
+output filePrivateDnsZoneResourceId string = filePrivateDnsZone.outputs.resourceId
 
 @description('Name of the Azure Files private DNS zone.')
 output filePrivateDnsZoneName string = filePrivateDnsZoneName

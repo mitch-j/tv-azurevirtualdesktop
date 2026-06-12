@@ -36,9 +36,12 @@ import {
   locationConfigMap
   resourceDefaults
   resourceType
+  resourceGroupPurpose
+  resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
+  resourceGroupNameWithLocation
   resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
@@ -62,10 +65,11 @@ param hostPools HostPoolConfig[]
 @description('Scaling plan configurations to deploy in the target resource group.')
 param scalingPlans ScalingPlanConfig[] = []
 
-param logAnalyticsWorkspaceResourceId string
-
 @description('Deploy diagnostic settings for resources created by this module.')
 param deployDiagnosticSettings bool = true
+
+@description('Optional resource ID of the Log Analytics workspace that receives diagnostic logs. If empty, the module resolves the workspace from the deterministic monitoring resource group and workspace name.')
+param logAnalyticsWorkspaceResourceId string = ''
 
 // Variables
 
@@ -155,10 +159,28 @@ var workspaceDeployments = [
   }
 ]
 
-var diagnosticSettings = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
+// Diagnostics and Monitoring resources deterministically resolved
+var monitoringResourceGroupName = resourceGroupNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.monitoring,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var hostPoolDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
   ? [
       {
-        name: 'diag-log'
+        name: 'diag-host-pools'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
         logCategoriesAndGroups: [
           {
@@ -175,6 +197,81 @@ var diagnosticSettings = deployDiagnosticSettings && !empty(logAnalyticsWorkspac
       }
     ]
   : []
+
+var desktopApplicationGroupsDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
+? [
+    {
+      name: 'diag-desktop-application-groups'
+      workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+      logCategoriesAndGroups: [
+        {
+          categoryGroup: 'allLogs'
+          enabled: true
+        }
+      ]
+      metricCategories: [
+        {
+          category: 'AllMetrics'
+          enabled: true
+        }
+      ]
+    }
+  ]
+: []
+
+var workspaceDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
+? [
+    {
+      name: 'diag-workspace'
+      workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+      logCategoriesAndGroups: [
+        {
+          categoryGroup: 'allLogs'
+          enabled: true
+        }
+      ]
+      metricCategories: [
+        {
+          category: 'AllMetrics'
+          enabled: true
+        }
+      ]
+    }
+  ]
+: []
+
+var scalingPlanDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
+? [
+    {
+      name: 'diag-scaling-plan'
+      workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+      logCategoriesAndGroups: [
+        {
+          categoryGroup: 'allLogs'
+          enabled: true
+        }
+      ]
+      metricCategories: [
+        {
+          category: 'AllMetrics'
+          enabled: true
+        }
+      ]
+    }
+  ]
+: []
+
+// Resources
+
+// Existing Log Analytics workspace used as the diagnostics target for resources.
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
+
+var effectiveLogAnalyticsWorkspaceResourceId = empty(logAnalyticsWorkspaceResourceId)
+  ? logAnalyticsWorkspace.id
+  : logAnalyticsWorkspaceResourceId
 
 // Modules
 
@@ -201,7 +298,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
         kind: commonConfig.lockKind
       }
 
-      diagnosticSettings: diagnosticSettings
+      diagnosticSettings: hostPoolDiagnosticSettings
     }
   }
 ]
@@ -236,7 +333,7 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
         kind: commonConfig.lockKind
       }
 
-      diagnosticSettings: diagnosticSettings
+      diagnosticSettings: desktopApplicationGroupsDiagnosticSettings
     }
   }
 ]
@@ -268,7 +365,7 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
         kind: commonConfig.lockKind
       }
 
-      diagnosticSettings: diagnosticSettings
+      diagnosticSettings: workspaceDiagnosticSettings
     }
   }
 ]
@@ -309,7 +406,7 @@ module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.5.0'
         kind: commonConfig.lockKind
       }
       enableTelemetry: false
-      diagnosticSettings: diagnosticSettings
+      diagnosticSettings: scalingPlanDiagnosticSettings
     }
   }
 ]

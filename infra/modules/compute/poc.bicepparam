@@ -74,3 +74,5 @@ param localAdminPassword = ''
 param localAdminUsername = ''
 
 param deployDiagnosticSettings = true
+
+param deployAzureMonitorAgent = true

@@ -103,6 +103,9 @@ param deployDiagnosticSettings bool = true
 @description('Optional resource ID of the Log Analytics workspace that receives diagnostic logs. If empty, the module resolves the workspace from the deterministic monitoring resource group and workspace name.')
 param logAnalyticsWorkspaceResourceId string = ''
 
+@description('Deploy Azure Monitor Agent and associate session hosts with the AVD telemetry Data Collection Rule.')
+param deployAzureMonitorAgent bool = true
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -184,6 +187,15 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
   environmentConfig.shortName
 )
 
+var avdSessionHostDcrName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.dataCollectionRule,
+  resourcePurpose.sessionHosts,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
 // Resources
 
 // Existing Log Analytics workspace used as the diagnostics target for resources.
@@ -241,6 +253,11 @@ module sessionHostWorkload './resources.bicep' = [
 
       logAnalyticsWorkspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
       deployDiagnosticSettings: deployDiagnosticSettings
+      deployAzureMonitorAgent: deployAzureMonitorAgent
+
+      monitoringResourceGroupName: monitoringResourceGroupName
+      avdSessionHostDcrName: avdSessionHostDcrName
+
     }
     dependsOn: [
       avdResourceGroups

@@ -130,6 +130,12 @@ param logAnalyticsWorkspaceResourceId string
 @description('Deploy diagnostic settings for resources created by this module.')
 param deployDiagnosticSettings bool = true
 
+@description('Deploy Azure Monitor Agent and associate session hosts with the AVD telemetry Data Collection Rule.')
+param deployAzureMonitorAgent bool = true
+
+param monitoringResourceGroupName string
+param avdSessionHostDcrName string
+
 // Variables
 
 var plannedSessionHosts = [
@@ -172,6 +178,8 @@ var nicDiagnosticSettings = diagnosticSettingsEnabled
     ]
   : []
 
+// Resources
+
 // Existing VM symbols used only so extension diagnostic settings can be scoped to the VMs
 // created inside the AVM module. Bicep extension resources need a symbolic scope.
 resource deployedSessionHostVirtualMachines 'Microsoft.Compute/virtualMachines@2024-07-01' existing = [
@@ -179,6 +187,11 @@ resource deployedSessionHostVirtualMachines 'Microsoft.Compute/virtualMachines@2
     name: sessionHost.sessionHostName
   }
 ]
+
+resource avdSessionHostDcr 'Microsoft.Insights/dataCollectionRules@2024-03-11' existing = {
+  name: avdSessionHostDcrName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
 
 // Modules
 
@@ -246,10 +259,25 @@ module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.2
         }
       ]
 
+      extensionMonitoringAgentConfig: {
+        enabled: deployAzureMonitorAgent
+        name: 'AzureMonitorWindowsAgent'
+        autoUpgradeMinorVersion: true
+        enableAutomaticUpgrade: true
+        typeHandlerVersion: '1.22'
+        dataCollectionRuleAssociations: [
+          {
+            name: 'avd-sessionhost-dcr'
+            dataCollectionRuleResourceId: avdSessionHostDcr.id
+          }
+        ]
+        tags: tags
+      }
+
       extensionDomainJoinPassword: deployDomainJoinExtension ? domainJoinPassword : ''
       extensionDomainJoinConfig: deployDomainJoinExtension
         ? {
-            enabled: true
+            enabled: false
             name: 'joindomain'
             domainName: domainName
             ouPath: domainJoinOuPath
@@ -267,7 +295,7 @@ module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.2
 @description('Send VM platform metrics to Log Analytics.')
 resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [
   for (sessionHost, index) in plannedSessionHosts: if (diagnosticSettingsEnabled) {
-    name: 'diag-vm'
+    name: '${deployment().name}-${index}-vm-diag'
     scope: deployedSessionHostVirtualMachines[index]
     properties: {
       workspaceId: logAnalyticsWorkspaceResourceId

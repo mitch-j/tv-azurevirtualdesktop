@@ -90,6 +90,7 @@ stages:
     parameters:
       deploymentUnitName: serviceobjects
       validationDependsOn:
+        - Validate_monitoring
       deployDependsOn:
         - Deploy_monitoring
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
@@ -107,6 +108,7 @@ stages:
     parameters:
       deploymentUnitName: network
       validationDependsOn:
+        - Validate_monitoring
       deployDependsOn:
         - Deploy_monitoring
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)

@@ -251,6 +251,7 @@ var resourceAbbreviationMap ResourceAbbreviationMap = {
   workspace: 'vdws'
   actionGroup: 'ag'
   routeTable: 'rt'
+
 }
 
 // Resource Purpose Naming
@@ -264,6 +265,7 @@ var resourceGroupPurpose ResourceGroupPurposeConfigMap = {
   compute: 'compute'
   sharedResources: 'sharedResources'
   images: 'images'
+  monitoring: 'monitoring'
 }
 
 @description('Standard resource group purpose name segments used in resource group names.')
@@ -275,6 +277,7 @@ var resourceGroupPurposeMap ResourceGroupPurposeSegmentMap = {
   compute: 'compute'
   sharedResources: 'shared'
   images: 'images'
+  monitoring: 'monitoring'
 }
 
 @description('Standard resource purpose keys used for naming.')
@@ -305,6 +308,7 @@ var resourcePurpose ResourcePurposeConfigMap = {
   hubToAvd: 'hubToAvd'
   pooledAutoscale: 'personalAutoscale'
   personalAutoscale: 'personalAutoscale'
+  monitoring: 'monitoring'
 }
 
 @description('Standard resource purpose name segments used in resource names.')
@@ -335,6 +339,7 @@ var resourcePurposeMap ResourcePurposeSegmentMap = {
   hubToAvd: 'hub2avd'
   pooledAutoscale: 'pooled'
   personalAutoscale: 'personal'
+  monitoring: 'monitoring'
 }
 
 // Role Definition IDs
@@ -351,4 +356,12 @@ var roleDefinitionIds RoleDefinitionIds = {
     fileDataSmbShareContributor: '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb'
     fileDataSmbShareElevatedContributor: 'a7264617-510b-434b-a828-9731dc254ea7'
   }
+}
+
+@description('Shared monitoring resource naming configuration.')
+@export()
+var monitoringConfig = {
+  resourceGroupPurpose: resourcePurpose.monitoring
+  logAnalyticsWorkspacePurpose: resourcePurpose.logs
+  logAnalyticsWorkspaceResourceType: 'Microsoft.OperationalInsights/workspaces'
 }

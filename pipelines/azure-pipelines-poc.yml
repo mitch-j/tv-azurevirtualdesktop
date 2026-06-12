@@ -71,10 +71,27 @@ stages:
 
   - template: templates/bicep-deployment-template.yml
     parameters:
+      deploymentUnitName: monitoring
+#     validationDependsOn:
+#     deployDependsOn:
+#       - Deploy_bootstrap
+      azureDevOpsEnvironment: $(avdDevOpsEnvironment)
+      azureServiceConnection: $(azureServiceConnection)
+      environmentName: poc
+      workloadName: $(workloadName)-monitoring
+      deploymentScope: Subscription
+      deploymentLocation: $(azureLocation)
+      templateFile: "$(Build.SourcesDirectory)/infra/modules/monitoring/main.bicep"
+      parameterFile: "$(Build.SourcesDirectory)/infra/modules/monitoring/poc.bicepparam"
+      validationLevel: Provider
+      whatIfResultFormat: FullResourcePayloads
+
+  - template: templates/bicep-deployment-template.yml
+    parameters:
       deploymentUnitName: serviceobjects
-      #      validationDependsOn:
-      #      deployDependsOn:
-      #        - Deploy_bootstrap
+      validationDependsOn:
+      deployDependsOn:
+        - Deploy_monitoring
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
@@ -89,9 +106,9 @@ stages:
   - template: templates/bicep-deployment-template.yml
     parameters:
       deploymentUnitName: network
-      #      validationDependsOn:
-      #      deployDependsOn:
-      #        - Deploy_bootstrap
+      validationDependsOn:
+      deployDependsOn:
+        - Deploy_monitoring
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
       azureServiceConnection: $(azureServiceConnection)
       environmentName: poc
@@ -107,7 +124,7 @@ stages:
     parameters:
       deploymentUnitName: networkpeering
       validationDependsOn:
-        - Deploy_network
+        - Validate_network
       deployDependsOn:
         - Deploy_network
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
@@ -125,7 +142,7 @@ stages:
     parameters:
       deploymentUnitName: storage
       validationDependsOn:
-        - Deploy_network
+        - Validate_network
       deployDependsOn:
         - Deploy_network
       azureDevOpsEnvironment: $(avdDevOpsEnvironment)
@@ -143,8 +160,8 @@ stages:
     parameters:
       deploymentUnitName: compute
       validationDependsOn:
-        - Deploy_storage
-        - Deploy_serviceobjects
+        - Validate_storage
+        - Validate_serviceobjects
       deployDependsOn:
         - Deploy_storage
         - Deploy_serviceobjects
@@ -158,7 +175,6 @@ stages:
       parameterFile: "$(Build.SourcesDirectory)/infra/modules/compute/poc.bicepparam"
       validationLevel: Provider
       whatIfResultFormat: FullResourcePayloads
-
       keyVaultName: tv-avd-kv-shared-eus-553
       keyVaultSecretsFilter: avd-local-admin-username,avd-local-admin-password,avd-domain-join-username,avd-domain-join-password
       additionalScriptArguments: -SkipBuild

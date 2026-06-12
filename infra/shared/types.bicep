@@ -457,6 +457,7 @@ type ResourceGroupPurposeName =
   | 'compute'
   | 'sharedResources'
   | 'images'
+  | 'monitoring'
 
 @description('Standard resource group purpose keys used for naming.')
 @sealed()
@@ -468,6 +469,7 @@ type ResourceGroupPurposeConfigMap = {
   compute: ResourceGroupPurposeName
   sharedResources: ResourceGroupPurposeName
   images: ResourceGroupPurposeName
+  monitoring: ResourceGroupPurposeName
 }
 
 @description('Resource group purpose name segment map used by naming functions.')
@@ -480,6 +482,7 @@ type ResourceGroupPurposeSegmentMap = {
   compute: string
   sharedResources: string
   images: string
+  monitoring: string
 }
 
 @description('Supported general resource purpose keys for standard naming.')
@@ -510,6 +513,7 @@ type PurposeName =
   | 'hubToAvd'
   | 'pooledAutoscale'
   | 'personalAutoscale'
+  | 'monitoring'
 
 
 @description('Standard resource purpose keys used for naming.')
@@ -541,6 +545,7 @@ type ResourcePurposeConfigMap = {
   hubToAvd: PurposeName
   pooledAutoscale: PurposeName
   personalAutoscale: PurposeName
+  monitoring: PurposeName
 }
 
 @description('Resource purpose name segment map used by naming functions.')
@@ -572,6 +577,7 @@ type ResourcePurposeSegmentMap = {
   hubToAvd: string
   pooledAutoscale: string
   personalAutoscale: string
+  monitoring: string
 }
 
 // Existing Resource References

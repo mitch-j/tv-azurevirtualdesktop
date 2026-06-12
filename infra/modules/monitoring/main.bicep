@@ -31,7 +31,7 @@ param environment EnvironmentName
 @description('Azure region where storage resources are deployed.')
 param location LocationName
 
-@description ('Cost optimization quota for logs')
+@description('Daily ingestion quota in GB for the Log Analytics workspace.')
 param dailyQuotaGb string = '2'
 
 // Variables
@@ -92,3 +92,17 @@ module subscriptionActivityLogDiagnostics 'br/public:avm/res/insights/diagnostic
 }
 
 // Outputs
+
+// Outputs
+
+@description('Resource ID of the Log Analytics workspace used for AVD monitoring and diagnostics.')
+output logAnalyticsWorkspaceResourceId string = resources.outputs.logAnalyticsWorkspaceResourceId
+
+@description('Name of the Log Analytics workspace used for AVD monitoring and diagnostics.')
+output logAnalyticsWorkspaceName string = resources.outputs.logAnalyticsWorkspaceName
+
+@description('Resource ID of the Data Collection Rule used by AVD session hosts.')
+output avdSessionHostDataCollectionRuleResourceId string = resources.outputs.avdSessionHostDataCollectionRuleResourceId
+
+@description('Name of the Data Collection Rule used by AVD session hosts.')
+output avdSessionHostDataCollectionRuleName string = resources.outputs.avdSessionHostDataCollectionRuleName

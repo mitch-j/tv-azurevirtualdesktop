@@ -7,16 +7,16 @@ Scope:
 - Resource Group
 
 Deploys:
-- Network interfaces for planned session hosts
 - Session host virtual machines
-- Optional AD DS domain join extension
+- Network interfaces for session host virtual machines, through the AVM VM module
+- Optional AD DS domain join extension, through the AVM VM module
+- VM platform diagnostic settings to Log Analytics
 
 Does not deploy:
 - Resource groups
 - Virtual networks or subnets
 - AVD host pools, workspaces, or application groups
 - FSLogix storage accounts or file shares
-- Session host virtual machines
 */
 
 import {
@@ -49,7 +49,7 @@ type PlannedSessionHostGroup = {
   sessionHostNamePrefix: string
 
   @minValue(0)
-  @description('Number of session hosts to plan for this workload.')
+  @description('Number of session hosts to deploy for this workload.')
   vmCount: int
 
   @description('Azure VM SKU for this workload.')
@@ -124,8 +124,11 @@ param domainJoinOptions int = 3
 @description('Whether the domain join extension should restart the VM after joining the domain.')
 param restartAfterDomainJoin bool = true
 
-@description('')
+@description('Resource ID of the Log Analytics workspace that receives diagnostic logs.')
 param logAnalyticsWorkspaceResourceId string
+
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
 
 // Variables
 
@@ -150,112 +153,142 @@ var plannedSessionHosts = [
   }
 ]
 
-// Modules
+var diagnosticSettingsEnabled = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
 
-@description('Create NICs for each planned session host.')
-module sessionHostNetworkInterfaces 'br/public:avm/res/network/network-interface:0.5.3' = [
-  for (sessionHost, index) in plannedSessionHosts: {
-    name: '${deployment().name}-nic-${index}'
-    params: {
-      name: sessionHost.nicName
-      location: location
-      tags: tags
-      ipConfigurations: [
-        {
-          name: 'ipconfig01'
-          subnetResourceId: sessionHost.subnetResourceId
-          privateIPAllocationMethod: 'Dynamic'
-        }
-      ]
-    }
-  }
-]
-
-@description('Create session host virtual machines.')
-resource sessionHostVirtualMachines 'Microsoft.Compute/virtualMachines@2024-07-01' = [
-  for (sessionHost, index) in plannedSessionHosts: {
-    name: sessionHost.sessionHostName
-    location: location
-    tags: tags
-    identity: {
-      type: 'SystemAssigned'
-    }
-    properties: {
-      hardwareProfile: {
-        vmSize: sessionHost.vmSize
-      }
-      storageProfile: {
-        imageReference: {
-          id: sessionHostImageVersionResourceId
-        }
-        osDisk: {
-          createOption: 'FromImage'
-          caching: 'ReadWrite'
-          managedDisk: {
-            storageAccountType: sessionHost.osDisk.storageAccountType
-          }
-          diskSizeGB: sessionHost.osDisk.diskSizeGB
-        }
-      }
-      osProfile: {
-        computerName: sessionHost.sessionHostName
-        adminUsername: localAdminUsername
-        adminPassword: localAdminPassword
-        windowsConfiguration: {
-          provisionVMAgent: true
-          enableAutomaticUpdates: true
-          patchSettings: {
-            patchMode: patchMode
-          }
-        }
-      }
-      networkProfile: {
-        networkInterfaces: [
+var nicDiagnosticSettings = diagnosticSettingsEnabled
+  ? [
+      {
+        name: 'diag-nic'
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+        logAnalyticsDestinationType: 'Dedicated'
+        logCategoriesAndGroups: []
+        metricCategories: [
           {
-            id: resourceId('Microsoft.Network/networkInterfaces', sessionHost.nicName)
-            properties: {
-              primary: true
-            }
+            category: 'AllMetrics'
+            enabled: true
           }
         ]
       }
-      licenseType: licenseType
-      securityProfile: enableTrustedLaunch ? {
-        securityType: 'TrustedLaunch'
-        uefiSettings: {
-          secureBootEnabled: secureBootEnabled
-          vTpmEnabled: vTpmEnabled
-        }
-      } : null
-    }
-    dependsOn: [
-      sessionHostNetworkInterfaces
     ]
+  : []
+
+// Existing VM symbols used only so extension diagnostic settings can be scoped to the VMs
+// created inside the AVM module. Bicep extension resources need a symbolic scope.
+resource deployedSessionHostVirtualMachines 'Microsoft.Compute/virtualMachines@2024-07-01' existing = [
+  for sessionHost in plannedSessionHosts: {
+    name: sessionHost.sessionHostName
   }
 ]
 
-@description('Join session host virtual machines to Active Directory Domain Services.')
-resource domainJoinExtensions 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = [
-  for (sessionHost, index) in plannedSessionHosts: if (deployDomainJoinExtension) {
-    parent: sessionHostVirtualMachines[index]
-    name: 'joindomain'
-    location: location
-    properties: {
-      publisher: 'Microsoft.Compute'
-      type: 'JsonADDomainExtension'
-      typeHandlerVersion: '1.3'
-      autoUpgradeMinorVersion: true
-      settings: {
-        Name: domainName
-        OUPath: domainJoinOuPath
-        User: domainJoinUserName
-        Restart: string(restartAfterDomainJoin)
-        Options: domainJoinOptions
+// Modules
+
+@description('Create session host virtual machines and their network interfaces.')
+module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.22.1' = [
+  for (sessionHost, index) in plannedSessionHosts: {
+    name: '${deployment().name}-vm-${index}'
+    params: {
+      name: sessionHost.sessionHostName
+      computerName: sessionHost.sessionHostName
+      location: location
+      tags: tags
+
+      osType: 'Windows'
+      vmSize: sessionHost.vmSize
+      availabilityZone: -1
+      licenseType: licenseType
+
+      imageReference: {
+        id: sessionHostImageVersionResourceId
       }
-      protectedSettings: {
-        Password: domainJoinPassword
+
+      osDisk: {
+        createOption: 'FromImage'
+        caching: 'ReadWrite'
+        diskSizeGB: sessionHost.osDisk.diskSizeGB
+        managedDisk: {
+          storageAccountType: sessionHost.osDisk.storageAccountType
+        }
       }
+
+      adminUsername: localAdminUsername
+      adminPassword: localAdminPassword
+      provisionVMAgent: true
+      enableAutomaticUpdates: true
+      patchMode: patchMode
+
+      securityType: enableTrustedLaunch ? 'TrustedLaunch' : null
+      secureBootEnabled: enableTrustedLaunch ? secureBootEnabled : false
+      vTpmEnabled: enableTrustedLaunch ? vTpmEnabled : false
+
+      managedIdentities: {
+        systemAssigned: true
+      }
+
+      bootDiagnostics: true
+
+      nicConfigurations: [
+        {
+          name: sessionHost.nicName
+          deleteOption: 'Delete'
+          enableAcceleratedNetworking: true
+          ipConfigurations: [
+            {
+              name: 'ipconfig01'
+              subnetResourceId: sessionHost.subnetResourceId
+              privateIPAllocationMethod: 'Dynamic'
+            }
+          ]
+          diagnosticSettings: nicDiagnosticSettings
+          tags: tags
+        }
+      ]
+
+      extensionDomainJoinPassword: deployDomainJoinExtension ? domainJoinPassword : ''
+      extensionDomainJoinConfig: deployDomainJoinExtension
+        ? {
+            enabled: true
+            name: 'joindomain'
+            domainName: domainName
+            ouPath: domainJoinOuPath
+            user: domainJoinUserName
+            restart: string(restartAfterDomainJoin)
+            options: domainJoinOptions
+          }
+        : {
+            enabled: false
+          }
     }
+  }
+]
+
+@description('Send VM platform logs and metrics to Log Analytics.')
+resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [
+  for (sessionHost, index) in plannedSessionHosts: if (diagnosticSettingsEnabled) {
+    name: 'diag-vm'
+    scope: deployedSessionHostVirtualMachines[index]
+    properties: {
+      workspaceId: logAnalyticsWorkspaceResourceId
+      logAnalyticsDestinationType: 'Dedicated'
+      logs: [
+        {
+          category: 'SoftwareUpdateProfile'
+          enabled: true
+        }
+        {
+          category: 'SoftwareUpdates'
+          enabled: true
+        }
+      ]
+      metrics: [
+        {
+          category: 'AllMetrics'
+          enabled: true
+        }
+      ]
+    }
+    dependsOn: [
+      sessionHostVirtualMachines
+    ]
   }
 ]
 
@@ -264,7 +297,7 @@ resource domainJoinExtensions 'Microsoft.Compute/virtualMachines/extensions@2024
 @description('Session hosts planned for this workload.')
 output plannedSessionHosts array = plannedSessionHosts
 
-@description('Network interfaces created or planned for this workload.')
+@description('Network interfaces created for this workload.')
 output sessionHostNetworkInterfaces array = [
   for sessionHost in plannedSessionHosts: {
     name: sessionHost.nicName
@@ -273,11 +306,11 @@ output sessionHostNetworkInterfaces array = [
   }
 ]
 
-@description('Session host virtual machines deployed or planned for this workload.')
+@description('Session host virtual machines deployed for this workload.')
 output sessionHostVirtualMachines array = [
-  for sessionHost in plannedSessionHosts: {
+  for (sessionHost, index) in plannedSessionHosts: {
     name: sessionHost.sessionHostName
-    resourceId: resourceId('Microsoft.Compute/virtualMachines', sessionHost.sessionHostName)
+    resourceId: sessionHostVirtualMachines[index].outputs.resourceId
     resourceGroupName: resourceGroup().name
     hostPoolName: sessionHost.hostPoolName
     nicResourceId: resourceId('Microsoft.Network/networkInterfaces', sessionHost.nicName)
@@ -300,7 +333,5 @@ output domainJoinTargets array = [
   }
 ]
 
-// Output
-
-@description('')
+@description('Log Analytics workspace resource ID used by diagnostic settings.')
 output logAnalyticsWorkspaceResourceId string = logAnalyticsWorkspaceResourceId

@@ -8,16 +8,15 @@ Scope:
 
 Deploys:
 - Session host resource groups
-- Resource group scoped compute workload deployments
-- Network interfaces for planned session hosts
+- Resource-group scoped compute workload deployments
 - Session host virtual machines
-- Optional AD DS domain join extension
+- Network interfaces through the AVM VM module
+- Optional AD DS domain join extension through the AVM VM module
 
 Does not deploy:
 - Virtual networks or subnets
 - AVD host pools, workspaces, or application groups
 - FSLogix storage accounts or file shares
-- Session host virtual machines
 */
 
 // Imports
@@ -98,9 +97,11 @@ param domainJoinOptions int = 3
 @description('Whether the domain join extension should restart the VM after joining the domain.')
 param restartAfterDomainJoin bool = true
 
-@description('Optional Log Analytics workspace resource ID for Key Vault diagnostics.')
-param logAnalyticsWorkspaceResourceId string = ''
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
 
+@description('Optional resource ID of the Log Analytics workspace that receives diagnostic logs. If empty, the module resolves the workspace from the deterministic monitoring resource group and workspace name.')
+param logAnalyticsWorkspaceResourceId string = ''
 
 // Variables
 
@@ -165,6 +166,36 @@ var plannedSessionHostGroups = [
   }
 ]
 
+// Diagnostics and Monitoring resources deterministically resolved
+var monitoringResourceGroupName = resourceGroupNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.monitoring,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+// Resources
+
+// Existing Log Analytics workspace used as the diagnostics target for resources.
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
+
+var effectiveLogAnalyticsWorkspaceResourceId = empty(logAnalyticsWorkspaceResourceId)
+  ? logAnalyticsWorkspace.id
+  : logAnalyticsWorkspaceResourceId
+
 // Modules
 
 @description('Create resource groups for each session host workload.')
@@ -173,7 +204,7 @@ module avdResourceGroups 'br/public:avm/res/resources/resource-group:0.4.3' = [
     name: 'rg-${index}-${environment}'
     params: {
       name: sessionHostGroup.resourceGroupName
-      location: commonConfig.location
+      location: location
       tags: tags
       lock: {
         kind: commonConfig.lockKind
@@ -187,7 +218,7 @@ module sessionHostWorkload './resources.bicep' = [
     name: '${environmentConfig.shortName}-cmp-${index}'
     scope: resourceGroup(sessionHostGroup.resourceGroupName)
     params: {
-      location: commonConfig.location
+      location: location
       tags: tags
       sessionHostGroup: sessionHostGroup
 
@@ -208,7 +239,8 @@ module sessionHostWorkload './resources.bicep' = [
       domainJoinOptions: domainJoinOptions
       restartAfterDomainJoin: restartAfterDomainJoin
 
-      logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+      logAnalyticsWorkspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
+      deployDiagnosticSettings: deployDiagnosticSettings
     }
     dependsOn: [
       avdResourceGroups

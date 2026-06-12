@@ -73,4 +73,4 @@ param domainJoinPassword = ''
 param localAdminPassword = ''
 param localAdminUsername = ''
 
-param logAnalyticsWorkspaceResourceId = ''
+param deployDiagnosticSettings = true

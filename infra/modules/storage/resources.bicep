@@ -25,10 +25,6 @@ import {
   StorageAccountSkuName
 } from '../../shared/types.bicep'
 
-import {
-  roleDefinitionIds
-} from '../../shared/config.bicep'
-
 // Types
 
 @description('Supported storage account kind values for this module.')
@@ -91,6 +87,21 @@ param deployDiagnosticSettings bool = true
 
 // Variables
 
+// Built-in Azure RBAC role definition IDs for Azure Files SMB share access.
+// Kept local to avoid Bicep compile-time import/type-alias language server crashes.
+var storageFileDataSmbShareContributorRoleDefinitionGuid = '0c867c2a-1d8c-454a-a3db-ab2ea1bdc8bb'
+var storageFileDataSmbShareElevatedContributorRoleDefinitionGuid = 'a7264617-510b-434b-a828-9731dc254ea7'
+
+var storageFileDataSmbShareContributorRoleDefinitionId = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  storageFileDataSmbShareContributorRoleDefinitionGuid
+)
+
+var storageFileDataSmbShareElevatedContributorRoleDefinitionId = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  storageFileDataSmbShareElevatedContributorRoleDefinitionGuid
+)
+
 var fslogixShareResourceId = resourceId(
   'Microsoft.Storage/storageAccounts/fileServices/shares',
   storageAccountName,
@@ -104,16 +115,6 @@ var fslogixShareRoleAssignmentScopeResourceId = replace(
   fslogixShareResourceId,
   '/shares/',
   '/fileshares/'
-)
-
-var storageFileDataSmbShareContributorRoleDefinitionId = subscriptionResourceId(
-  'Microsoft.Authorization/roleDefinitions',
-  roleDefinitionIds.storage.fileDataSmbShareContributor
-)
-
-var storageFileDataSmbShareElevatedContributorRoleDefinitionId = subscriptionResourceId(
-  'Microsoft.Authorization/roleDefinitions',
-  roleDefinitionIds.storage.fileDataSmbShareElevatedContributor
 )
 
 var avdUserGroupObjectIdsForShareRoleAssignments = deployStorageAuth ? avdUserGroupObjectIds : []

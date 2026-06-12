@@ -215,17 +215,18 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
 
 // Resource IDs
 
-var sessionHostNetworkSecurityGroupResourceId = resourceId(
-  networkResourceGroupName,
-  'Microsoft.Network/networkSecurityGroups',
-  sessionHostNetworkSecurityGroupName
-)
+resource sessionHostNetworkSecurityGroupExisting 'Microsoft.Network/networkSecurityGroups@2025-07-01' existing = {
+  name: sessionHostNetworkSecurityGroupName
+  scope: resourceGroup(networkResourceGroupName)
+}
 
-var privateEndpointNetworkSecurityGroupResourceId = resourceId(
-  networkResourceGroupName,
-  'Microsoft.Network/networkSecurityGroups',
-  privateEndpointNetworkSecurityGroupName
-)
+resource privateEndpointNetworkSecurityGroupExisting 'Microsoft.Network/networkSecurityGroups@2025-07-01' existing = {
+  name: privateEndpointNetworkSecurityGroupName
+  scope: resourceGroup(networkResourceGroupName)
+}
+
+var sessionHostNetworkSecurityGroupResourceId = sessionHostNetworkSecurityGroupExisting.id
+var privateEndpointNetworkSecurityGroupResourceId = privateEndpointNetworkSecurityGroupExisting.id
 
 // Resources
 

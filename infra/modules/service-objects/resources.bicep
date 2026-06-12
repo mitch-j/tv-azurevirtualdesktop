@@ -180,7 +180,7 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
 var hostPoolDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
   ? [
       {
-        name: 'diag-host-pools'
+        name: 'diag-avd-host-pools'
         workspaceResourceId: logAnalyticsWorkspaceResourceId
         logCategoriesAndGroups: [
           {
@@ -201,7 +201,7 @@ var hostPoolDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLog
 var desktopApplicationGroupsDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
 ? [
     {
-      name: 'diag-desktop-application-groups'
+      name: 'diag-avd-application-group'
       workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
       logCategoriesAndGroups: [
         {
@@ -222,7 +222,7 @@ var desktopApplicationGroupsDiagnosticSettings = deployDiagnosticSettings && !em
 var workspaceDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
 ? [
     {
-      name: 'diag-workspace'
+      name: 'diag-avd-workspace'
       workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
       logCategoriesAndGroups: [
         {
@@ -243,7 +243,7 @@ var workspaceDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLo
 var scalingPlanDiagnosticSettings = deployDiagnosticSettings && !empty(effectiveLogAnalyticsWorkspaceResourceId)
 ? [
     {
-      name: 'diag-scaling-plan'
+      name: 'diag-avd-scaling-plan'
       workspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
       logCategoriesAndGroups: [
         {

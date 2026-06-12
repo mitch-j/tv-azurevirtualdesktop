@@ -1,8 +1,25 @@
 targetScope = 'subscription'
 
+/*
+AVD Deployment / Monitoring
 
+Scope:
+- Subscription
 
+Deploys:
+- Monitoring resource group
+- Resource-group scoped monitoring resources
+- Log Analytics workspace
+- Data Collection Rules for AVD telemetry
+- Subscription activity log diagnostic settings
 
+Does not deploy:
+- AVD host pools, workspaces, or application groups
+- Session host virtual machines
+- Azure Monitor Agent extensions
+- Data Collection Rule associations to session hosts
+- FSLogix storage accounts or file shares
+*/
 
 // Imports
 

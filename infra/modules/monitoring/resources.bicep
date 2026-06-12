@@ -1,5 +1,27 @@
 targetScope = 'resourceGroup'
 
+/*
+AVD Deployment / Monitoring Resources
+
+Scope:
+- Resource group
+
+Deploys:
+- Log Analytics workspace
+- Data Collection Rules for AVD session host guest telemetry
+- Monitoring outputs consumed or reconstructed by downstream modules
+
+Does not deploy:
+- Monitoring resource group
+- Subscription activity log diagnostic settings
+- AVD host pools, workspaces, or application groups
+- Session host virtual machines
+- Azure Monitor Agent extensions
+- Data Collection Rule associations to session hosts
+*/
+
+// Imports
+
 import {
   EnvironmentName
   LocationName

@@ -24,4 +24,18 @@ param environment = 'poc'
 
 param location = 'eastus'
 
-param dailyQuotaGb = '2'
+param dailyQuotaGb = 2
+
+param dailyQuotaThresholdGb = dailyQuotaGb * 75 / 100
+
+param deployAlertActionGroup = true
+param alertEmailReceivers = [
+  {
+    name: 'systems-engineering'
+    emailAddress: 'mitch.jurischg@doitbest.com'
+  }
+]
+
+param deployScheduledQueryAlerts = true
+
+param scheduledQueryAlertsEnabled = false

@@ -49,7 +49,25 @@ param environment EnvironmentName
 param location LocationName
 
 @description('Daily ingestion quota in GB for the Log Analytics workspace.')
-param dailyQuotaGb string = '2'
+param dailyQuotaGb int = 2
+
+@description('Deploy alert action group for AVD monitoring alerts.')
+param deployAlertActionGroup bool = true
+
+@description('Resource IDs of existing action groups invoked when alert rules fire.')
+param actionGroupResourceIds string[] = []
+
+@description('Email receivers for AVD monitoring alerts.')
+param alertEmailReceivers array = []
+
+@description('Deploy AVD scheduled query alert rules.')
+param deployScheduledQueryAlerts bool = true
+
+@description('Enable AVD scheduled query alert rules after data ingestion has been validated.')
+param scheduledQueryAlertsEnabled bool = false
+
+@description('Trigger an alert when we are at 75% of the daily quota. Warning, this rounds down, so 75% of 2GB = 1 GB')
+param dailyQuotaThresholdGb int = dailyQuotaGb * 75 / 100
 
 // Variables
 
@@ -93,6 +111,12 @@ module resources './resources.bicep' = {
     location: location
     environment: environment
     dailyQuotaGb: dailyQuotaGb
+    deployAlertActionGroup: deployAlertActionGroup
+    alertEmailReceivers: alertEmailReceivers
+    deployScheduledQueryAlerts: deployScheduledQueryAlerts
+    scheduledQueryAlertsEnabled: scheduledQueryAlertsEnabled
+    dailyQuotaThresholdGb: dailyQuotaThresholdGb
+    actionGroupResourceIds: actionGroupResourceIds
   }
   dependsOn: [
     monitoringResourceGroup
@@ -107,8 +131,6 @@ module subscriptionActivityLogDiagnostics 'br/public:avm/res/insights/diagnostic
     workspaceResourceId: resources.outputs.logAnalyticsWorkspaceResourceId
   }
 }
-
-// Outputs
 
 // Outputs
 

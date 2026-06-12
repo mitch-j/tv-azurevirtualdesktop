@@ -88,6 +88,9 @@ param filePrivateDnsZoneResourceId string
 @description('Deploy diagnostic settings for resources created by this module.')
 param deployDiagnosticSettings bool = true
 
+@description('Optional resource ID of the Log Analytics workspace that receives diagnostic logs. If empty, the module resolves the workspace from the deterministic monitoring resource group and workspace name.')
+param logAnalyticsWorkspaceResourceId string = ''
+
 // Variables
 
 var effectiveFslogixShareName = empty(fslogixShareName) ? fslogixConfig.shareName : fslogixShareName
@@ -153,12 +156,15 @@ var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
 // Resources
 
 // Existing Log Analytics workspace used as the diagnostics target for resources.
+// Existing Log Analytics workspace used as the diagnostics target for resources.
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
   name: logAnalyticsWorkspaceName
   scope: resourceGroup(monitoringResourceGroupName)
 }
 
-var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace.id
+var effectiveLogAnalyticsWorkspaceResourceId = empty(logAnalyticsWorkspaceResourceId)
+  ? logAnalyticsWorkspace.id
+  : logAnalyticsWorkspaceResourceId
 
 // Modules
 
@@ -196,7 +202,7 @@ module fslogixStorage './resources.bicep' = {
     privateEndpointSubnetResourceId: privateEndpointSubnetResourceId
     filePrivateDnsZoneResourceId: filePrivateDnsZoneResourceId
 
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    logAnalyticsWorkspaceResourceId: effectiveLogAnalyticsWorkspaceResourceId
     deployDiagnosticSettings: deployDiagnosticSettings
   }
   dependsOn: [

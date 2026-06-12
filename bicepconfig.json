@@ -1,4 +1,7 @@
 {
+  "extensions": {
+    "microsoftGraphV1": "br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0"
+  },
   "analyzers": {
     "core": {
       "enabled": true,
@@ -93,6 +96,10 @@
         },
         "use-recent-api-versions": {
           "level": "warning"
+        },
+        "use-recent-module-versions": {
+          "level": "warning",
+          "message": "The module version is outdated. Please consider updating to the latest version."
         },
         "use-resource-id-functions": {
           "level": "warning"

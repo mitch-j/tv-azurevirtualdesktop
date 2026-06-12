@@ -405,15 +405,18 @@ output sessionHostSubnetNames array = [
   for sessionHostSubnet in sessionHostSubnetDefinitions: sessionHostSubnet.name
 ]
 
+resource virtualNetworkReference 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+  name: virtualNetworkName
+  scope: resourceGroup(networkResourceGroupName)
+}
+
 @description('Resource IDs of the session host subnets.')
 output sessionHostSubnetResourceIds array = [
-  for sessionHostSubnet in sessionHostSubnetDefinitions: resourceId(
-    networkResourceGroupName,
-    'Microsoft.Network/virtualNetworks/subnets',
-    virtualNetworkName,
-    sessionHostSubnet.name
-  )
+  for sessionHostSubnet in sessionHostSubnetDefinitions: '${virtualNetworkReference.id}/subnets/${sessionHostSubnet.name}'
 ]
+
+@description('Resource ID of the private endpoint subnet.')
+output privateEndpointSubnetResourceId string = '${virtualNetworkReference.id}/subnets/${privateEndpointSubnetDefinition.name}'
 
 @description('Name of the network security group associated with the session host subnet.')
 output sessionHostNetworkSecurityGroupName string = sessionHostNetworkSecurityGroupName
@@ -423,14 +426,6 @@ output sessionHostNetworkSecurityGroupResourceId string = sessionHostNetworkSecu
 
 @description('Name of the subnet used by private endpoints.')
 output privateEndpointSubnetName string = privateEndpointSubnetDefinition.name
-
-@description('Resource ID of the private endpoint subnet.')
-output privateEndpointSubnetResourceId string = resourceId(
-  networkResourceGroupName,
-  'Microsoft.Network/virtualNetworks/subnets',
-  virtualNetworkName,
-  privateEndpointSubnetDefinition.name
-)
 
 @description('Name of the network security group associated with the private endpoint subnet.')
 output privateEndpointNetworkSecurityGroupName string = privateEndpointNetworkSecurityGroupName

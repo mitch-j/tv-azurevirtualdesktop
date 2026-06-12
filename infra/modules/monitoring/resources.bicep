@@ -69,6 +69,42 @@ param dailyQuotaThresholdGb int = dailyQuotaGb * 75 / 100
 @description('Resource IDs of existing action groups invoked when alert rules fire.')
 param actionGroupResourceIds string[] = []
 
+@description('Number of AVD errors allowed in the evaluation window before alerting.')
+param avdErrorsAlertThreshold int = 0
+
+@description('Number of failed AVD connections allowed in the evaluation window before alerting.')
+param failedConnectionsAlertThreshold int = 0
+
+@description('Number of FSLogix errors allowed in the evaluation window before alerting.')
+param fslogixErrorsAlertThreshold int = 0
+
+@description('Minimum free disk percentage before low disk alerts fire.')
+param lowDiskFreePercentThreshold int = 15
+
+@description('Average CPU percentage before high CPU alerts fire.')
+param highCpuPercentThreshold int = 85
+
+@description('Average available memory in MB before low memory alerts fire.')
+param lowMemoryAvailableMbThreshold int = 2048
+
+@description('Severity for AVD platform/control-plane alerts.')
+param avdPlatformAlertSeverity int = 2
+
+@description('Severity for session host capacity alerts.')
+param sessionHostCapacityAlertSeverity int = 3
+
+@description('Severity for FSLogix profile alerts.')
+param fslogixAlertSeverity int = 2
+
+@description('Default evaluation frequency for scheduled query alerts.')
+param scheduledQueryAlertEvaluationFrequency string = 'PT15M'
+
+@description('Default short query window for AVD alert rules.')
+param scheduledQueryShortWindowSize string = 'PT15M'
+
+@description('Default long query window for capacity alert rules.')
+param scheduledQueryLongWindowSize string = 'PT30M'
+
 // Variables
 
 var scheduledQueryAlerts = [
@@ -76,12 +112,12 @@ var scheduledQueryAlerts = [
     name: 'avd-errors'
     displayName: 'AVD errors detected'
     description: 'Detects recent Azure Virtual Desktop errors in WVDErrors.'
-    severity: 2
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT15M'
-    queryTimeRange: 'PT15M'
+    severity: avdPlatformAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryShortWindowSize
+    queryTimeRange: scheduledQueryShortWindowSize
     operator: 'GreaterThan'
-    threshold: 0
+    threshold: avdErrorsAlertThreshold
     timeAggregation: 'Total'
     query: '''
 WVDErrors
@@ -92,13 +128,13 @@ WVDErrors
   {
     name: 'avd-failed-connections'
     displayName: 'AVD failed connections detected'
-    description: 'Detects failed or errored AVD connection attempts.'
-    severity: 2
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT15M'
-    queryTimeRange: 'PT15M'
+    description: 'Detects failed or errored AVD connection attempts. Adjust threshold if too noisy.'
+    severity: avdPlatformAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryShortWindowSize
+    queryTimeRange: scheduledQueryShortWindowSize
     operator: 'GreaterThan'
-    threshold: 0
+    threshold: failedConnectionsAlertThreshold
     timeAggregation: 'Total'
     query: '''
 WVDConnections
@@ -110,13 +146,13 @@ WVDConnections
   {
     name: 'avd-fslogix-errors'
     displayName: 'AVD FSLogix errors detected'
-    description: 'Detects FSLogix warning and error events from session hosts.'
-    severity: 2
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT15M'
-    queryTimeRange: 'PT15M'
+    description: 'Detects FSLogix warning and error events from session hosts. Adjust level to error only if noisy.'
+    severity: fslogixAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryShortWindowSize
+    queryTimeRange: scheduledQueryShortWindowSize
     operator: 'GreaterThan'
-    threshold: 0
+    threshold: fslogixErrorsAlertThreshold
     timeAggregation: 'Total'
     query: '''
 Event
@@ -129,72 +165,71 @@ Event
   {
     name: 'avd-low-disk'
     displayName: 'AVD session host low disk space'
-    description: 'Detects session host disks with less than 15 percent free space.'
-    severity: 2
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT15M'
-    queryTimeRange: 'PT15M'
+    description: 'Detects session host disks with less than the configured free-space percentage.'
+    severity: sessionHostCapacityAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryShortWindowSize
+    queryTimeRange: scheduledQueryShortWindowSize
     operator: 'GreaterThan'
     threshold: 0
     timeAggregation: 'Total'
-    query: '''
+    query: format('''
 Perf
 | where TimeGenerated > ago(15m)
 | where ObjectName == "LogicalDisk"
 | where CounterName == "% Free Space"
-| where InstanceName !in ("_Total")
+| where InstanceName matches regex @"^[A-Z]:$"
 | summarize MinFreePercent = min(CounterValue) by Computer, InstanceName
-| where MinFreePercent < 15
+| where MinFreePercent < {0}
 | summarize AggregatedValue = count()
-'''
+''', lowDiskFreePercentThreshold)
   }
   {
     name: 'avd-high-cpu'
     displayName: 'AVD session host high CPU'
-    description: 'Detects session hosts averaging more than 85 percent CPU over 30 minutes.'
-    severity: 3
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT30M'
-    queryTimeRange: 'PT30M'
+    description: 'Detects session hosts averaging more than 90 percent CPU over 30 minutes.'
+    severity: sessionHostCapacityAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryLongWindowSize
+    queryTimeRange: scheduledQueryLongWindowSize
     operator: 'GreaterThan'
     threshold: 0
     timeAggregation: 'Total'
-    query: '''
+    query: format('''
 Perf
 | where TimeGenerated > ago(30m)
 | where ObjectName == "Processor"
 | where CounterName == "% Processor Time"
 | summarize AvgCpu = avg(CounterValue) by Computer
-| where AvgCpu > 85
+| where AvgCpu > {0}
 | summarize AggregatedValue = count()
-'''
+''', highCpuPercentThreshold)
   }
   {
     name: 'avd-low-memory'
     displayName: 'AVD session host low memory'
     description: 'Detects session hosts with less than 2048 MB available memory over 30 minutes.'
-    severity: 3
-    evaluationFrequency: 'PT15M'
-    windowSize: 'PT30M'
-    queryTimeRange: 'PT30M'
+    severity: sessionHostCapacityAlertSeverity
+    evaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    windowSize: scheduledQueryLongWindowSize
+    queryTimeRange: scheduledQueryLongWindowSize
     operator: 'GreaterThan'
     threshold: 0
     timeAggregation: 'Total'
-    query: '''
+    query: format('''
 Perf
 | where TimeGenerated > ago(30m)
 | where ObjectName == "Memory"
 | where CounterName == "Available MBytes"
-| summarize MinAvailableMB = min(CounterValue) by Computer
-| where MinAvailableMB < 2048
+| summarize AvgAvailableMB = avg(CounterValue) by Computer
+| where AvgAvailableMB < {0}
 | summarize AggregatedValue = count()
-'''
-  }
+''', lowMemoryAvailableMbThreshold)  }
   {
     name: 'avd-log-ingestion'
     displayName: 'AVD Log Analytics ingestion nearing quota'
     description: 'Detects when Log Analytics ingestion approaches the configured daily quota.'
-    severity: 2
+    severity: avdPlatformAlertSeverity
     evaluationFrequency: 'PT1H'
     windowSize: 'PT24H'
     queryTimeRange: 'PT24H'
@@ -208,7 +243,6 @@ Usage
 '''
   }
 ]
-
 
 // Environment-specific naming and tagging values.
 var environmentConfig = environmentConfigMap[environment]

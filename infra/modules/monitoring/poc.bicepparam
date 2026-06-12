@@ -26,8 +26,6 @@ param location = 'eastus'
 
 param dailyQuotaGb = 2
 
-param dailyQuotaThresholdGb = dailyQuotaGb * 75 / 100
-
 param deployAlertActionGroup = true
 param alertEmailReceivers = [
   {
@@ -39,3 +37,18 @@ param alertEmailReceivers = [
 param deployScheduledQueryAlerts = true
 
 param scheduledQueryAlertsEnabled = false
+
+
+param avdErrorsAlertThreshold = 0
+param failedConnectionsAlertThreshold = 0
+param fslogixErrorsAlertThreshold = 0
+param lowDiskFreePercentThreshold = 15
+param highCpuPercentThreshold = 85
+param lowMemoryAvailableMbThreshold = 2048
+param dailyQuotaThresholdGb = dailyQuotaGb * 75 / 100
+param avdPlatformAlertSeverity = 2
+param sessionHostCapacityAlertSeverity = 3
+param fslogixAlertSeverity = 2
+param scheduledQueryAlertEvaluationFrequency = 'PT15M'
+param scheduledQueryShortWindowSize = 'PT15M'
+param scheduledQueryLongWindowSize = 'PT30M'

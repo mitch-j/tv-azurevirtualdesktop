@@ -69,6 +69,42 @@ param scheduledQueryAlertsEnabled bool = false
 @description('Trigger an alert when we are at 75% of the daily quota. Warning, this rounds down, so 75% of 2GB = 1 GB')
 param dailyQuotaThresholdGb int = dailyQuotaGb * 75 / 100
 
+@description('Number of AVD errors allowed in the evaluation window before alerting.')
+param avdErrorsAlertThreshold int = 0
+
+@description('Number of failed AVD connections allowed in the evaluation window before alerting.')
+param failedConnectionsAlertThreshold int = 0
+
+@description('Number of FSLogix errors allowed in the evaluation window before alerting.')
+param fslogixErrorsAlertThreshold int = 0
+
+@description('Minimum free disk percentage before low disk alerts fire.')
+param lowDiskFreePercentThreshold int = 15
+
+@description('Average CPU percentage before high CPU alerts fire.')
+param highCpuPercentThreshold int = 85
+
+@description('Average available memory in MB before low memory alerts fire.')
+param lowMemoryAvailableMbThreshold int = 2048
+
+@description('Severity for AVD platform/control-plane alerts.')
+param avdPlatformAlertSeverity int = 2
+
+@description('Severity for session host capacity alerts.')
+param sessionHostCapacityAlertSeverity int = 3
+
+@description('Severity for FSLogix profile alerts.')
+param fslogixAlertSeverity int = 2
+
+@description('Default evaluation frequency for scheduled query alerts.')
+param scheduledQueryAlertEvaluationFrequency string = 'PT15M'
+
+@description('Default short query window for AVD alert rules.')
+param scheduledQueryShortWindowSize string = 'PT15M'
+
+@description('Default long query window for capacity alert rules.')
+param scheduledQueryLongWindowSize string = 'PT30M'
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -117,6 +153,18 @@ module resources './resources.bicep' = {
     scheduledQueryAlertsEnabled: scheduledQueryAlertsEnabled
     dailyQuotaThresholdGb: dailyQuotaThresholdGb
     actionGroupResourceIds: actionGroupResourceIds
+    avdErrorsAlertThreshold: avdErrorsAlertThreshold
+    failedConnectionsAlertThreshold: failedConnectionsAlertThreshold
+    fslogixErrorsAlertThreshold: fslogixErrorsAlertThreshold
+    lowDiskFreePercentThreshold: lowDiskFreePercentThreshold
+    highCpuPercentThreshold: highCpuPercentThreshold
+    lowMemoryAvailableMbThreshold: lowMemoryAvailableMbThreshold
+    avdPlatformAlertSeverity: avdPlatformAlertSeverity
+    sessionHostCapacityAlertSeverity: sessionHostCapacityAlertSeverity
+    fslogixAlertSeverity: fslogixAlertSeverity
+    scheduledQueryAlertEvaluationFrequency: scheduledQueryAlertEvaluationFrequency
+    scheduledQueryShortWindowSize: scheduledQueryShortWindowSize
+    scheduledQueryLongWindowSize: scheduledQueryLongWindowSize
   }
   dependsOn: [
     monitoringResourceGroup

@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 /*
-AVD Deployment / Storage Account
+AVD Deployment / FSLogix Storage Resources
 
 Scope:
 - Resource Group
@@ -9,11 +9,20 @@ Scope:
 Deploys:
 - FSLogix storage account
 - FSLogix profile file share
+- FSLogix profile share RBAC assignments
+- Azure Files private endpoint
+- Private DNS zone group for Azure Files private endpoint registration
+
+Consumes:
+- Existing private endpoint subnet resource ID
+- Existing Azure Files private DNS zone resource ID
+- Existing Log Analytics workspace resource ID
 
 Does not deploy:
-- Storage RBAC assignments
-- Private endpoints
-- Private DNS records
+- Storage resource group
+- Virtual networks or subnets
+- Private DNS zones
+- Private DNS virtual network links
 - Session host virtual machines
 */
 

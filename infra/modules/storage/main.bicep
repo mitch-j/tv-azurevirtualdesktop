@@ -11,12 +11,20 @@ Deploys:
 - FSLogix storage account
 - FSLogix profile file share
 - FSLogix profile share RBAC assignments
+- Azure Files private endpoint
+- Private DNS zone group for Azure Files private endpoint registration
+
+Consumes:
+- Existing private endpoint subnet resource ID from the network deployment
+- Existing Azure Files private DNS zone resource ID from the network deployment
+- Existing Log Analytics workspace from the monitoring deployment
 
 Does not deploy:
 - AVD host pools, desktop application groups, or workspaces
 - Session host virtual machines
-- Network resources
-- Private endpoints
+- Virtual networks or subnets
+- Private DNS zones
+- Private DNS virtual network links
 */
 
 // Imports

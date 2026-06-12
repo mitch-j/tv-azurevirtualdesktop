@@ -77,6 +77,9 @@ module resources './resources.bicep' = {
     environment: environment
     dailyQuotaGb: dailyQuotaGb
   }
+  dependsOn: [
+    monitoringResourceGroup
+  ]
 }
 
 module subscriptionActivityLogDiagnostics 'br/public:avm/res/insights/diagnostic-setting:0.1.4' = {

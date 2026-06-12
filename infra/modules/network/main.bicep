@@ -83,6 +83,9 @@ param dnsServers array = []
 param managementSubnet SubnetConfig?
 */
 
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -98,7 +101,6 @@ var tags = union(baseTags, {
 
 // Resource Names
 
-// Location is included so the same environment can support regional network deployments without name collisions.
 var networkResourceGroupName = resourceGroupNameWithLocation(
   commonConfig.namePrefix,
   commonConfig.workloadName,
@@ -165,6 +167,34 @@ var filePrivateDnsZoneName = 'privatelink.file.${az.environment().suffixes.stora
 
 var filePrivateDnsZoneVirtualNetworkLinkName = toLower('${virtualNetworkName}-file-dns-link')
 
+// Diagnostics and Monitoring resources deterministically resolved
+var monitoringResourceGroupName = resourceGroupNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.monitoring,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+// Resources
+
+// Existing Log Analytics workspace used as the diagnostics target for resources.
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
+
+var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace.id
+
 // Modules
 
 module networkResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
@@ -192,6 +222,8 @@ module spokeVnet './spoke-vnet.bicep' = {
     privateEndpointSubnet: privateEndpointSubnetDefinition
     sessionHostNetworkSecurityGroupName: sessionHostNetworkSecurityGroupName
     dnsServers: dnsServers
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    deployDiagnosticSettings: deployDiagnosticSettings
   }
   dependsOn: [
     networkResourceGroup
@@ -209,7 +241,6 @@ module filePrivateDnsZone './private-dns-zone.bicep' = {
     virtualNetworkResourceId: spokeVnet.outputs.virtualNetworkResourceId
   }
 }
-
 
 // Outputs
 

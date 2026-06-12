@@ -71,6 +71,11 @@ param sessionHostNetworkSecurityGroupName string
 @description('Optional custom DNS servers for the virtual network. Leave empty to use Azure-provided DNS.')
 param dnsServers array = []
 
+param logAnalyticsWorkspaceResourceId string
+
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
 // Variables
 
 var sessionHostNetworkSecurityGroupResourceId = resourceId(
@@ -108,6 +113,27 @@ var virtualNetworkSubnets = concat(
   ]
 )
 
+var diagnosticSettings = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
+  ? [
+      {
+        name: 'diag-log'
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
+
 // Modules
 
 module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.3' = {
@@ -117,6 +143,7 @@ module sessionHostNetworkSecurityGroup 'br/public:avm/res/network/network-securi
     location: location
     tags: tags
     securityRules: []
+    diagnosticSettings: diagnosticSettings
   }
 }
 
@@ -127,6 +154,7 @@ module privateEndpointNetworkSecurityGroup 'br/public:avm/res/network/network-se
     location: location
     tags: tags
     securityRules: []
+    diagnosticSettings: diagnosticSettings
   }
 }
 
@@ -142,6 +170,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
       kind: commonConfig.lockKind
     }
     subnets: virtualNetworkSubnets
+    diagnosticSettings: diagnosticSettings
   }
   dependsOn: [
     sessionHostNetworkSecurityGroup

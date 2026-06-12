@@ -66,3 +66,5 @@ param dnsServers = [
   '10.113.20.4'
   '172.16.28.10'
 ]
+
+param deployDiagnosticSettings = true

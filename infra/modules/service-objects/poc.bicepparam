@@ -230,3 +230,5 @@ param scalingPlans = [
     ]
   }
 ]
+
+param deployDiagnosticSettings = true

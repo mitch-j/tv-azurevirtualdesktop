@@ -62,6 +62,11 @@ param hostPools HostPoolConfig[]
 @description('Scaling plan configurations to deploy in the target resource group.')
 param scalingPlans ScalingPlanConfig[] = []
 
+param logAnalyticsWorkspaceResourceId string
+
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
 // Variables
 
 // Environment-specific naming values.
@@ -150,6 +155,27 @@ var workspaceDeployments = [
   }
 ]
 
+var diagnosticSettings = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
+  ? [
+      {
+        name: 'diag-log'
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
+
 // Modules
 
 module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
@@ -175,7 +201,7 @@ module hostPool 'br/public:avm/res/desktop-virtualization/host-pool:0.8.1' = [
         kind: commonConfig.lockKind
       }
 
-      enableTelemetry: false
+      diagnosticSettings: diagnosticSettings
     }
   }
 ]
@@ -210,7 +236,7 @@ module desktopApplicationGroup 'br/public:avm/res/desktop-virtualization/applica
         kind: commonConfig.lockKind
       }
 
-      enableTelemetry: false
+      diagnosticSettings: diagnosticSettings
     }
   }
 ]
@@ -242,12 +268,12 @@ module workspace 'br/public:avm/res/desktop-virtualization/workspace:0.9.2' = [
         kind: commonConfig.lockKind
       }
 
-      enableTelemetry: false
+      diagnosticSettings: diagnosticSettings
     }
   }
 ]
 
-module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.3.0' = [
+module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.5.0' = [
   for (scalingPlanItem, i) in scalingPlans: {
     name: '${environmentConfig.shortName}-${locationConfig.shortCode}-vdscaling-${i}'
     dependsOn: [
@@ -264,7 +290,7 @@ module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.3.0'
       exclusionTag: scalingPlanItem.?exclusionTag
       hostPoolReferences: [
         for hostPoolName in scalingPlanItem.hostPoolNames: {
-          hostPoolArmPath: resourceId(
+          hostPoolResourceId: resourceId(
             'Microsoft.DesktopVirtualization/hostPools',
             resourceNameWithPurposeAndLocation(
               commonConfig.namePrefix,
@@ -283,6 +309,7 @@ module scalingPlan 'br/public:avm/res/desktop-virtualization/scaling-plan:0.3.0'
         kind: commonConfig.lockKind
       }
       enableTelemetry: false
+      diagnosticSettings: diagnosticSettings
     }
   }
 ]

@@ -162,7 +162,7 @@ param scalingPlans = [
         }
         rampUpLoadBalancingAlgorithm: 'DepthFirst'
         rampUpMinimumHostsPct: 50
-        rampUpCapacityThresholdPct: 70
+        rampUpCapacityThresholdPct: 80
 
         peakStartTime: {
           hour: 8
@@ -175,12 +175,12 @@ param scalingPlans = [
           minute: 0
         }
         rampDownLoadBalancingAlgorithm: 'DepthFirst'
-        rampDownMinimumHostsPct: 10
+        rampDownMinimumHostsPct: 0
         rampDownCapacityThresholdPct: 90
         rampDownWaitTimeMinutes: 30
         rampDownForceLogoffUsers: false
         rampDownStopHostsWhen: 'ZeroSessions'
-        rampDownNotificationMessage: 'Your AVD session host may be shut down after active sessions end.'
+        rampDownNotificationMessage: 'This VM may be shut down after active sessions end.'
 
         offPeakStartTime: {
           hour: 22
@@ -219,7 +219,7 @@ param scalingPlans = [
         rampDownWaitTimeMinutes: 30
         rampDownForceLogoffUsers: false
         rampDownStopHostsWhen: 'ZeroSessions'
-        rampDownNotificationMessage: 'Your AVD session host may be shut down after active sessions end.'
+        rampDownNotificationMessage: 'This VM may be shut down after active sessions end.'
 
         offPeakStartTime: {
           hour: 18

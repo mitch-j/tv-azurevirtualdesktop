@@ -37,10 +37,14 @@ import {
   locationConfigMap
   resourceGroupPurpose
   roleDefinitionIds
+  monitoringConfig
+  resourceType
+  resourcePurpose
 } from '../../shared/config.bicep'
 
 import {
   resourceGroupNameWithLocation
+  resourceNameWithPurposeAndLocation
 } from '../../shared/naming.bicep'
 
 // Parameters
@@ -66,6 +70,9 @@ param avdAutoscaleServicePrincipalObjectId string = ''
 @description('Deploy Azure RBAC assignments required for AVD autoscale.')
 param deployAutoscaleRbac bool = true
 
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
 // Variables
 
 // Environment-specific naming and tagging values.
@@ -88,6 +95,30 @@ var serviceObjectsResourceGroupName = resourceGroupNameWithLocation(
   resourceGroupPurpose.serviceObjects,
   locationConfig.shortCode,
   environmentConfig.shortName
+)
+
+// Diagnostics and Monitoring resources deterministically resolved
+var monitoringResourceGroupName = resourceGroupNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.monitoring,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceResourceId = resourceId(
+  monitoringResourceGroupName,
+  monitoringConfig.logAnalyticsWorkspaceResourceType,
+  logAnalyticsWorkspaceName
 )
 
 // Resources
@@ -132,6 +163,8 @@ module serviceObjectsResources './resources.bicep' = {
     hostPools: hostPools
     workspaces: workspaces
     scalingPlans: scalingPlans
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    deployDiagnosticSettings: deployDiagnosticSettings
   }
 }
 

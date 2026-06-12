@@ -967,30 +967,71 @@ type ScalingPlanConfig = {
   schedules: ScalingScheduleConfig[]
 }
 
+@description('Days of the week')
+@export()
+type DaysOfWeek =
+  | 'Monday'
+  | 'Tuesday'
+  | 'Wednesday'
+  | 'Thursday'
+  | 'Friday'
+  | 'Saturday'
+  | 'Sunday'
+
 @description('Azure Virtual Desktop scaling schedule configuration.')
 @export()
 type ScalingScheduleConfig = {
   name: string
-  daysOfWeek: string[]
 
+  @description('Days this scaling schedule applies to.')
+  daysOfWeek: DaysOfWeek[]
+
+  @description('Ramp-up start time.')
   rampUpStartTime: ScalingPlanTime
+
+  @description('Ramp-up load balancing algorithm.')
   rampUpLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+
+  @description('Minimum percentage of hosts available during ramp-up.')
   rampUpMinimumHostsPct: int
+
+  @description('Capacity threshold percentage during ramp-up.')
   rampUpCapacityThresholdPct: int
 
+  @description('Peak start time.')
   peakStartTime: ScalingPlanTime
+
+  @description('Peak load balancing algorithm.')
   peakLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
 
+  @description('Ramp-down start time.')
   rampDownStartTime: ScalingPlanTime
+
+  @description('Ramp-down load balancing algorithm.')
   rampDownLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
+
+  @description('Minimum percentage of hosts available during ramp-down.')
   rampDownMinimumHostsPct: int
+
+  @description('Capacity threshold percentage during ramp-down.')
   rampDownCapacityThresholdPct: int
+
+  @description('Minutes to wait before ramp-down actions.')
   rampDownWaitTimeMinutes: int
+
+  @description('Whether users are force logged off during ramp-down.')
   rampDownForceLogoffUsers: bool
+
+  @description('Condition used to stop hosts during ramp-down.')
   rampDownStopHostsWhen: 'ZeroSessions' | 'ZeroActiveSessions'
+
+  @description('Notification message shown before ramp-down logoff actions.')
   rampDownNotificationMessage: string?
 
+  @description('Off-peak start time.')
   offPeakStartTime: ScalingPlanTime
+
+  @description('Off-peak load balancing algorithm.')
   offPeakLoadBalancingAlgorithm: 'BreadthFirst' | 'DepthFirst'
 }
 

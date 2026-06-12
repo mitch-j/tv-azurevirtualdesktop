@@ -358,10 +358,11 @@ var roleDefinitionIds RoleDefinitionIds = {
   }
 }
 
-@description('Shared monitoring resource naming configuration.')
+@description('Shared monitoring configuration.')
 @export()
 var monitoringConfig = {
   resourceGroupPurpose: resourcePurpose.monitoring
   logAnalyticsWorkspacePurpose: resourcePurpose.logs
   logAnalyticsWorkspaceResourceType: 'Microsoft.OperationalInsights/workspaces'
+  diagnosticSettingName: 'diag-log'
 }

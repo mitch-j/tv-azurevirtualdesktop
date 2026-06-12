@@ -77,6 +77,9 @@ param privateEndpointSubnetResourceId string
 @description('Resource ID of the Azure Files private DNS zone.')
 param filePrivateDnsZoneResourceId string
 
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
 // Variables
 
 var effectiveFslogixShareName = empty(fslogixShareName) ? fslogixConfig.shareName : fslogixShareName
@@ -121,6 +124,34 @@ var fslogixStorageAccountName = storageAccountNameWithLocation(
   storageResourceGroupResourceId
 )
 
+// Diagnostics and Monitoring resources deterministically resolved
+var monitoringResourceGroupName = resourceGroupNameWithLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceGroupPurpose.monitoring,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+var logAnalyticsWorkspaceName = resourceNameWithPurposeAndLocation(
+  commonConfig.namePrefix,
+  commonConfig.workloadName,
+  resourceType.logAnalyticsWorkspace,
+  resourcePurpose.logs,
+  locationConfig.shortCode,
+  environmentConfig.shortName
+)
+
+// Resources
+
+// Existing Log Analytics workspace used as the diagnostics target for resources.
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-07-01' existing = {
+  name: logAnalyticsWorkspaceName
+  scope: resourceGroup(monitoringResourceGroupName)
+}
+
+var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace.id
+
 // Modules
 
 module storageResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3' = {
@@ -146,6 +177,8 @@ module fslogixStorage './storage-account.bicep' = {
     publicNetworkAccess: resourceDefaults.publicNetworkAccess
     fslogixShareName: effectiveFslogixShareName
     fslogixShareQuotaGiB: fslogixShareQuotaGiB
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    deployDiagnosticSettings: deployDiagnosticSettings
   }
   dependsOn: [
     storageResourceGroup
@@ -173,6 +206,8 @@ module storageFilePrivateEndpoint './private-endpoint.bicep' = {
     privateEndpointSubnetResourceId: privateEndpointSubnetResourceId
     filePrivateDnsZoneResourceId: filePrivateDnsZoneResourceId
     storageAccountName: fslogixStorage.outputs.storageAccountName
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    deployDiagnosticSettings: deployDiagnosticSettings
   }
 }
 

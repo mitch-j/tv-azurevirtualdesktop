@@ -25,6 +25,10 @@ import {
   StorageAccountSkuName
 } from '../../shared/types.bicep'
 
+import {
+  resourceAbbreviationMap
+} from '../../shared/config.bicep'
+
 // Types
 
 @description('Supported storage account kind values for this module.')
@@ -58,8 +62,43 @@ param fslogixShareName string = 'profiles'
 @description('Provisioned size of the FSLogix profile file share in GiB.')
 param fslogixShareQuotaGiB int = 1024
 
+param logAnalyticsWorkspaceResourceId string
+
+@description('Deploy diagnostic settings for resources created by this module.')
+param deployDiagnosticSettings bool = true
+
+// Variables
+
+var diagnosticSettings = deployDiagnosticSettings && !empty(logAnalyticsWorkspaceResourceId)
+  ? [
+      {
+        name: 'diag-log'
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+            enabled: true
+          }
+        ]
+      }
+    ]
+  : []
+
 // Resources
 
+module fslogixStorageAccount 'br/public:avm/res/storage/storage-account:0.32.1' = {
+  name: '${environmentConfig.shortName}-${locationConfig.shortCode}-${resourceAbbreviationMap.storageAccount}'
+
+
+}
+
+/*
 resource fslogixStorageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = {
   name: storageAccountName
   location: location
@@ -78,7 +117,9 @@ resource fslogixStorageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = 
     supportsHttpsTrafficOnly: true
   }
 }
+*/
 
+/*
 resource defaultFileService 'Microsoft.Storage/storageAccounts/fileServices@2025-01-01' = {
   name: 'default'
   parent: fslogixStorageAccount
@@ -89,7 +130,9 @@ resource defaultFileService 'Microsoft.Storage/storageAccounts/fileServices@2025
     }
   }
 }
+*/
 
+/*
 resource fslogixShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2025-01-01' = {
   name: fslogixShareName
   parent: defaultFileService
@@ -99,6 +142,7 @@ resource fslogixShare 'Microsoft.Storage/storageAccounts/fileServices/shares@202
     shareQuota: fslogixShareQuotaGiB
   }
 }
+*/
 
 // Outputs
 

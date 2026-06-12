@@ -51,3 +51,5 @@ param avdAdminGroupObjectIds = [
 param privateEndpointSubnetResourceId = '/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/virtualNetworks/tv-avd-vnet-pri-eus-poc/subnets/tv-avd-snet-private-endpoints-eus-poc'
 
 param filePrivateDnsZoneResourceId = '/subscriptions/b908e3b2-448e-4a3f-9d79-996703913a99/resourceGroups/tv-avd-rg-network-eus-poc/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net'
+
+param deployDiagnosticSettings = true

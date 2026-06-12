@@ -32,7 +32,7 @@ param deployAlertActionGroup = true
 param alertEmailReceivers = [
   {
     name: 'systems-engineering'
-    emailAddress: 'mitch.jurischg@doitbest.com'
+    emailAddress: 'mitch.jurisch@doitbest.com'
   }
 ]
 

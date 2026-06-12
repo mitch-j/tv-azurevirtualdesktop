@@ -14,9 +14,9 @@ type NamePrefix =
 type WorkloadName =
   | 'avd'
   | 'connectivity'
-  | 'security'
-  | 'management'
   | 'identity'
+  | 'management'
+  | 'security'
 
 // Environment Types
 
@@ -173,15 +173,15 @@ type LocationConfigMap = {
 @description('Azure policy-compliant Division tag values.')
 @export()
 type DivisionName =
-  | 'Information Technology'
-  | 'Finance'
-  | 'Marketing'
-  | 'Ecommerce'
-  | 'Sales and Business Development'
-  | 'Lumber and Building Materials'
   | 'Administration'
+  | 'Ecommerce'
+  | 'Finance'
+  | 'Information Technology'
   | 'Logistics'
+  | 'Lumber and Building Materials'
+  | 'Marketing'
   | 'Merchandising'
+  | 'Sales and Business Development'
   | 'Shared'
 
 @description('Base Azure resource tags shared by all resources before environment-specific tags are added.')
@@ -351,12 +351,14 @@ type AvdRdpPropertyPresets = {
 @description('Supported Azure resource type keys for standard naming.')
 @export()
 type ResourceTypeName =
+  | 'actionGroup'
   | 'appService'
   | 'appServicePlan'
   | 'applicationInsights'
   | 'automationAccount'
   | 'computeGallery'
   | 'containerRegistry'
+  | 'dataCollectionRule'
   | 'desktopApplicationGroup'
   | 'functionApp'
   | 'galleryImageDefinition'
@@ -378,18 +380,20 @@ type ResourceTypeName =
   | 'virtualNetworkPeering'
   | 'vmImageDefinition'
   | 'workspace'
-  | 'actionGroup'
+
 
 @description('Standard resource type keys used for naming.')
 @sealed()
 @export()
 type ResourceTypeConfigMap = {
+  actionGroup: ResourceTypeName
   appService: ResourceTypeName
   appServicePlan: ResourceTypeName
   applicationInsights: ResourceTypeName
   automationAccount: ResourceTypeName
   computeGallery: ResourceTypeName
   containerRegistry: ResourceTypeName
+  dataCollectionRule: ResourceTypeName
   desktopApplicationGroup: ResourceTypeName
   functionApp: ResourceTypeName
   galleryImageDefinition: ResourceTypeName
@@ -411,19 +415,20 @@ type ResourceTypeConfigMap = {
   virtualNetworkPeering: ResourceTypeName
   vmImageDefinition: ResourceTypeName
   workspace: ResourceTypeName
-  actionGroup: ResourceTypeName
 }
 
 @description('Resource type abbreviation map used by naming functions.')
 @sealed()
 @export()
 type ResourceAbbreviationMap = {
+  actionGroup: string
   appService: string
   appServicePlan: string
   applicationInsights: string
   automationAccount: string
   computeGallery: string
   containerRegistry: string
+  dataCollectionRule: string
   desktopApplicationGroup: string
   functionApp: string
   galleryImageDefinition: string
@@ -436,6 +441,7 @@ type ResourceAbbreviationMap = {
   privateDnsZone: string
   privateEndpoint: string
   resourceGroup: string
+  routeTable: string
   scalingPlan: string
   sessionHost: string
   storageAccount: string
@@ -444,140 +450,137 @@ type ResourceAbbreviationMap = {
   virtualNetworkPeering: string
   vmImageDefinition: string
   workspace: string
-  actionGroup: string
-  routeTable: string
 }
 
 @description('Supported resource group purpose keys for standard naming.')
 @export()
 type ResourceGroupPurposeName =
-  | 'serviceObjects'
-  | 'storage'
-  | 'network'
   | 'compute'
-  | 'sharedResources'
   | 'images'
   | 'monitoring'
+  | 'network'
+  | 'serviceObjects'
+  | 'sharedResources'
+  | 'storage'
 
 @description('Standard resource group purpose keys used for naming.')
 @sealed()
 @export()
 type ResourceGroupPurposeConfigMap = {
-  serviceObjects: ResourceGroupPurposeName
-  storage: ResourceGroupPurposeName
-  network: ResourceGroupPurposeName
   compute: ResourceGroupPurposeName
-  sharedResources: ResourceGroupPurposeName
   images: ResourceGroupPurposeName
   monitoring: ResourceGroupPurposeName
+  network: ResourceGroupPurposeName
+  serviceObjects: ResourceGroupPurposeName
+  sharedResources: ResourceGroupPurposeName
+  storage: ResourceGroupPurposeName
 }
 
 @description('Resource group purpose name segment map used by naming functions.')
 @sealed()
 @export()
 type ResourceGroupPurposeSegmentMap = {
-  serviceObjects: string
-  storage: string
-  network: string
   compute: string
-  sharedResources: string
   images: string
   monitoring: string
+  network: string
+  serviceObjects: string
+  sharedResources: string
+  storage: string
 }
 
 @description('Supported general resource purpose keys for standard naming.')
 @export()
 type PurposeName =
-  | 'serviceObjects'
-  | 'storage'
-  | 'network'
-  | 'compute'
-  | 'sharedResources'
-  | 'sessionHosts'
-  | 'privateEndpoints'
-  | 'opsPooled'
-  | 'opsPersonal'
-  | 'devPooled'
-  | 'devPersonal'
-  | 'opsPooledDesktop'
-  | 'opsPersonalDesktop'
-  | 'devPooledDesktop'
-  | 'devPersonalDesktop'
-  | 'primary'
-  | 'diagnostics'
+  | 'avdToHub'
   | 'bootDiagnostics'
+  | 'compute'
+  | 'devPersonal'
+  | 'devPersonalDesktop'
+  | 'devPooled'
+  | 'devPooledDesktop'
+  | 'diagnostics'
+  | 'fslogix'
+  | 'hubToAvd'
   | 'images'
   | 'logs'
-  | 'fslogix'
-  | 'avdToHub'
-  | 'hubToAvd'
-  | 'pooledAutoscale'
-  | 'personalAutoscale'
   | 'monitoring'
-
+  | 'network'
+  | 'opsPersonal'
+  | 'opsPersonalDesktop'
+  | 'opsPooled'
+  | 'opsPooledDesktop'
+  | 'personalAutoscale'
+  | 'pooledAutoscale'
+  | 'primary'
+  | 'privateEndpoints'
+  | 'serviceObjects'
+  | 'sessionHosts'
+  | 'sharedResources'
+  | 'storage'
 
 @description('Standard resource purpose keys used for naming.')
 @sealed()
 @export()
 type ResourcePurposeConfigMap = {
-  serviceObjects: PurposeName
-  storage: PurposeName
-  network: PurposeName
-  compute: PurposeName
-  sharedResources: PurposeName
-  sessionHosts: PurposeName
-  privateEndpoints: PurposeName
-  opsPooled: PurposeName
-  opsPersonal: PurposeName
-  devPooled: PurposeName
-  devPersonal: PurposeName
-  opsPooledDesktop: PurposeName
-  opsPersonalDesktop: PurposeName
-  devPooledDesktop: PurposeName
-  devPersonalDesktop: PurposeName
-  primary: PurposeName
-  diagnostics: PurposeName
+  avdToHub: PurposeName
   bootDiagnostics: PurposeName
+  compute: PurposeName
+  devPersonal: PurposeName
+  devPersonalDesktop: PurposeName
+  devPooled: PurposeName
+  devPooledDesktop: PurposeName
+  diagnostics: PurposeName
+  fslogix: PurposeName
+  hubToAvd: PurposeName
   images: PurposeName
   logs: PurposeName
-  fslogix: PurposeName
-  avdToHub: PurposeName
-  hubToAvd: PurposeName
-  pooledAutoscale: PurposeName
-  personalAutoscale: PurposeName
   monitoring: PurposeName
+  network: PurposeName
+  opsPersonal: PurposeName
+  opsPersonalDesktop: PurposeName
+  opsPooled: PurposeName
+  opsPooledDesktop: PurposeName
+  personalAutoscale: PurposeName
+  pooledAutoscale: PurposeName
+  primary: PurposeName
+  privateEndpoints: PurposeName
+  serviceObjects: PurposeName
+  sessionHosts: PurposeName
+  sharedResources: PurposeName
+  storage: PurposeName
 }
 
 @description('Resource purpose name segment map used by naming functions.')
 @sealed()
 @export()
 type ResourcePurposeSegmentMap = {
-  serviceObjects: string
-  storage: string
-  network: string
-  compute: string
-  sharedResources: string
-  sessionHosts: string
-  privateEndpoints: string
-  opsPooled: string
-  opsPersonal: string
-  devPooled: string
-  devPersonal: string
-  opsPooledDesktop: string
-  opsPersonalDesktop: string
-  devPooledDesktop: string
-  devPersonalDesktop: string
-  primary: string
-  diagnostics: string
+  avdToHub: string
   bootDiagnostics: string
+  compute: string
+  devPersonal: string
+  devPersonalDesktop: string
+  devPooled: string
+  devPooledDesktop: string
+  diagnostics: string
+  fslogix: string
+  hubToAvd: string
   images: string
   logs: string
-  fslogix: string
-  avdToHub: string
-  hubToAvd: string
-  pooledAutoscale: string
-  personalAutoscale: string
   monitoring: string
+  network: string
+  opsPersonal: string
+  opsPersonalDesktop: string
+  opsPooled: string
+  opsPooledDesktop: string
+  personalAutoscale: string
+  pooledAutoscale: string
+  primary: string
+  privateEndpoints: string
+  serviceObjects: string
+  sessionHosts: string
+  sharedResources: string
+  storage: string
 }
 
 // Existing Resource References
@@ -821,10 +824,10 @@ type PreferredAppGroupType =
 @description('Supported session host role codes used in VM naming.')
 @export()
 type SessionHostRoleCode =
-  | 'ops'
-  | 'opp'
   | 'dvp'
   | 'dvs'
+  | 'ops'
+  | 'opp'
 
 // Azure Virtual Desktop Types
 

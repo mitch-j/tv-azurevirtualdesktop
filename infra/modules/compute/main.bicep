@@ -146,7 +146,7 @@ var plannedSessionHostGroups = [
       commonConfig.workloadName,
       sessionHostGroup.purpose,
       locationConfig.shortCode,
-      environmentConfig.shortNam
+      environmentConfig.shortName
     )
     hostPoolName: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,

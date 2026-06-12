@@ -295,7 +295,7 @@ module sessionHostVirtualMachines 'br/public:avm/res/compute/virtual-machine:0.2
 @description('Send VM platform metrics to Log Analytics.')
 resource sessionHostVirtualMachineDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [
   for (sessionHost, index) in plannedSessionHosts: if (diagnosticSettingsEnabled) {
-    name: '${deployment().name}-${index}-vm-diag'
+    name: 'diag-vm'
     scope: deployedSessionHostVirtualMachines[index]
     properties: {
       workspaceId: logAnalyticsWorkspaceResourceId

@@ -47,7 +47,7 @@ import {
 @description('Deployment environment.')
 param environment EnvironmentName
 
-@description('Azure region where storage resources are deployed.')
+@description('Azure region where resources are deployed.')
 param location LocationName
 
 @description('Session host workload configuration.')
@@ -140,7 +140,13 @@ var virtualNetworkName = resourceNameWithPurposeAndLocation(
 var plannedSessionHostGroups = [
   for sessionHostGroup in sessionHostGroups: {
     purpose: sessionHostGroup.purpose
-    resourceGroupName: toLower('${commonConfig.namePrefix}-${commonConfig.workloadName}-rg-${sessionHostGroup.purpose}-${locationConfig.shortCode}-${environmentConfig.shortName}')
+    resourceGroupName: resourceGroupNameWithLocation(
+      commonConfig.namePrefix,
+      commonConfig.workloadName,
+      sessionHostGroup.purpose,
+      locationConfig.shortCode,
+      environmentConfig.shortNam
+    )
     hostPoolName: resourceNameWithPurposeAndLocation(
       commonConfig.namePrefix,
       commonConfig.workloadName,

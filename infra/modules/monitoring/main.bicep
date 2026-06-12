@@ -87,7 +87,7 @@ module monitoringResourceGroup 'br/public:avm/res/resources/resource-group:0.4.3
 }
 
 module resources './resources.bicep' = {
-  name: '${deployment().name}-monitoring-resources'
+  name:  'mon-res'
   scope: resourceGroup(monitoringResourceGroupName)
   params: {
     location: location

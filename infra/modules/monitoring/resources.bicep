@@ -103,7 +103,7 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
 }
 
 module avdSessionHostDcr 'br/public:avm/res/insights/data-collection-rule:0.11.0' = {
-  name: '${deployment().name}-avd-sessionhost-dcr'
+  name: 'avd-dcr-avdsh'
   params: {
     name: avdSessionHostDcrName
     location: location
